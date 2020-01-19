@@ -4,7 +4,9 @@
 
 .nodeRect{
     fill: #77AAFFFF;
-    transition: all 0.2s;
+    stroke: black;
+    stroke-width: 0.5px;
+    transition: fill 0.2s;
 }
 
 .node:hover .nodeRect {
