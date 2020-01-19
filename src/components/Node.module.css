@@ -1,0 +1,19 @@
+.node {
+    overflow: visible;
+}
+
+.nodeRect{
+    fill: #77AAFFFF;
+    transition: all 0.2s;
+}
+
+.node:hover .nodeRect {
+    fill: #77CCFF88;
+}
+
+.nodeText {
+    cursor: default;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    user-select: none;
+}

@@ -1,0 +1,15 @@
+.handle {
+    fill: #3388FF;
+    stroke: white;
+    transition: all 0.2s;
+}
+
+.handle:hover {
+    fill: #66AAFF;
+    stroke: gray;
+}
+
+.handle:active {
+    fill: #1166CC;
+    stroke: black;
+}
