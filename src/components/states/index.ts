@@ -8,6 +8,7 @@ export interface IPortState extends Flow.Port {
 export interface INodeState extends Omit<Flow.Node, 'input' | 'output'> {
     input: Map<string, IPortState>;
     output: Map<string, IPortState>;
+
 }
 
 export interface IEdgeState extends Flow.Edge {

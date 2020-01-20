@@ -4,6 +4,8 @@ export const clone = (flow: IFlowState) => {
     return new FlowState(Object.assign({}, flow));
 }
 
+type Rect = { x?: number, y?: number, width?: number, height?: number };
+
 class FlowState implements IFlowState {
     nodes: Map<string, INodeState>;
     edges: Map<string, IEdgeState>;
@@ -20,24 +22,28 @@ class FlowState implements IFlowState {
         return this;
     }
 
-    withNodePosition = (nodeId: string | undefined, pos: { x: number, y: number }) => {
+    withNodeLayout = (nodeId: string | undefined, pos: Rect) => {
         if (!nodeId) return this;
 
         const node = this.nodes.get(nodeId);
         if (node) {
-            node.x = pos.x;
-            node.y = pos.y;
+            node.x = pos.x || node.x;
+            node.y = pos.y || node.y;
+            node.width = pos.width || node.width;
+            node.height = pos.height || node.height;
         }
         return this;
     }
 
-    withNodeOffset = (nodeId: string | undefined, offset: { x: number, y: number }) => {
+    withNodeLayoutOffset = (nodeId: string | undefined, offset: Rect) => {
         if (!nodeId) return this;
 
         const node = this.nodes.get(nodeId);
         if (node) {
-            node.x += offset.x;
-            node.y += offset.y;
+            node.x += offset.x || 0;
+            node.y += offset.y || 0;
+            node.width += offset.width || 0;
+            node.height += offset.height || 0;
         }
         return this;
     }

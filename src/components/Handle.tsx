@@ -7,6 +7,7 @@ export interface HandleProps {
     r: string | number;
     cursor: string;
     visible: boolean;
+    onMouseDown: (e: React.MouseEvent) => void;
 }
 
 export const Handle: React.FC<HandleProps> = (props) => {
@@ -18,6 +19,7 @@ export const Handle: React.FC<HandleProps> = (props) => {
             cx={props.x}
             cy={props.y}
             r={props.r}
+            onMouseDown={props.onMouseDown}
         />
     );
 }
