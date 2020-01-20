@@ -1,6 +1,5 @@
 .node {
     overflow: visible;
-    z-index: 1;
 }
 
 .nodeRect {
@@ -12,6 +11,10 @@
 
 .node:hover .nodeRect {
     fill: #77CCFF88;
+}
+
+.node:global(.selected) .nodeRect {
+    fill: #6699CC;
 }
 
 .nodeText {

@@ -47,7 +47,7 @@ export const Node: React.FC<NodeProps> = (props) => {
         <svg
             xmlns='http://www.w3.org/2000/svg'
             id={props.id}
-            className={Style.node}
+            className={Style.node + (props.selected ? " selected" : "")}
             x={props.x}
             y={props.y}
             width={props.width}
