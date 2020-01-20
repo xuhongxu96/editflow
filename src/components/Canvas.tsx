@@ -28,6 +28,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }, [flow, setFlow]);
     useEventListener('mousedown', cancelSelectedNode);
 
+    const selectedNode = flow.nodes.get(flow.selectedNodeId || "");
+
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -37,17 +39,31 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             onMouseLeave={cancelMoving}
         >
 
-            {Array.from(flow.nodes.values()).map(node =>
+            {Array.from(flow.nodes.values())
+                .filter(o => o.id !== flow.selectedNodeId)
+                .map(node =>
+                    <Node
+                        key={node.id}
+                        selected={flow.selectedNodeId === node.id}
+                        onMouseDown={e => {
+                            setFlow(clone(flow).withSelectedNodeId(node.id));
+                            startMoving({ x: e.clientX, y: e.clientY });
+                        }}
+                        {...node}
+                    />
+                )}
+
+            {selectedNode &&
                 <Node
-                    key={node.id}
-                    selected={flow.selectedNodeId === node.id}
+                    key={selectedNode.id}
+                    selected={flow.selectedNodeId === selectedNode.id}
                     onMouseDown={e => {
-                        setFlow(clone(flow).withSelectedNodeId(node.id));
+                        setFlow(clone(flow).withSelectedNodeId(selectedNode.id));
                         startMoving({ x: e.clientX, y: e.clientY });
                     }}
-                    {...node}
+                    {...selectedNode}
                 />
-            )}
+            }
 
         </svg>
     );

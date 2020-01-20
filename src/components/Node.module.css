@@ -1,8 +1,9 @@
 .node {
     overflow: visible;
+    z-index: 1;
 }
 
-.nodeRect{
+.nodeRect {
     fill: #77AAFFFF;
     stroke: black;
     stroke-width: 0.5px;
