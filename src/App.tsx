@@ -4,28 +4,17 @@ import { Flow } from 'flow/Flow';
 import { toState } from 'components/states';
 
 const flow: Flow = {
-  nodes: [
+  nodes: Array.from(Array(50).keys()).map(i => (
     {
-      id: '1',
+      id: i.toString(),
       x: 10,
-      y: 10,
+      y: 10 + 35 * i,
       width: 100,
       height: 30,
-      title: 'Component 1',
+      title: `Component ${i}`,
       input: [],
       output: [],
-    },
-    {
-      id: '2',
-      x: 10,
-      y: 50,
-      width: 100,
-      height: 30,
-      title: 'Component 2',
-      input: [],
-      output: [],
-    }
-  ],
+    })),
   edges: [],
 };
 
@@ -35,7 +24,7 @@ const App: React.FC = () => {
 
   return (
     <div className='App'>
-      <Canvas width='300' height='300' flow={flowState} />
+      <Canvas width='100%' height='700' flow={flowState} />
     </div>
   );
 }
