@@ -16,6 +16,7 @@ export interface CanvasProps {
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
     const [flow, setFlow] = useState<IFlowState>(props.flow);
+
     const selectedNode = flow.nodes.get(flow.selectedNodeId || "");
 
     const cancelSelectedNode = useCallback(() => {

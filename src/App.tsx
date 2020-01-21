@@ -3,14 +3,18 @@ import { Canvas } from 'components/Canvas';
 import { Flow } from 'flow/Flow';
 import { toState } from 'components/states';
 
+const W = 120;
+const H = 40;
+const Space = 10;
+
 const flow: Flow = {
-  nodes: Array.from(Array(50).keys()).map(i => (
+  nodes: Array.from(Array(5).keys()).map(i => (
     {
       id: i.toString(),
-      x: 10,
-      y: 10 + 35 * i,
-      width: 100,
-      height: 30,
+      x: Space,
+      y: Space + (H + Space) * i,
+      width: W,
+      height: H,
       title: `Component ${i}`,
       input: [],
       output: [],
