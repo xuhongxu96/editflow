@@ -30,17 +30,17 @@ export const toState = (flow: Flow.Flow) => {
         connectedInputPorts.add(edge.end);
     }
 
-    const toPortMap = (node: Flow.Node, connectedSet: Set<Flow.NodePort>) =>
-        toMap(node.input, port => port.name, port => ({
+    const toPortMap = (nodeId: string, ports: Flow.Port[], connectedSet: Set<Flow.NodePort>) =>
+        toMap(ports, port => port.name, port => ({
             ...port,
-            connected: connectedSet.has({ nodeId: node.id, portName: port.name }),
+            connected: connectedSet.has({ nodeId: nodeId, portName: port.name }),
         }));
 
     let res: IFlowState = {
         nodes: toMap(flow.nodes, node => node.id, node => ({
             ...node,
-            input: toPortMap(node, connectedInputPorts),
-            output: toPortMap(node, connectedOutputPorts),
+            input: toPortMap(node.id, node.input, connectedInputPorts),
+            output: toPortMap(node.id, node.output, connectedOutputPorts),
         })),
         edges: toMap(flow.edges, IndexKeySelector, (edge, i) => ({
             ...edge,

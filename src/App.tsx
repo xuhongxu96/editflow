@@ -7,6 +7,13 @@ const W = 120;
 const H = 40;
 const Space = 10;
 
+const generatePorts = (namePrefix: string, n: number) => {
+  return Array.from(Array(n).keys()).map((i) => ({
+    name: `${namePrefix} ${i}`,
+    type: 'null',
+  }));
+}
+
 const flow: Flow = {
   nodes: Array.from(Array(5).keys()).map(i => (
     {
@@ -16,8 +23,8 @@ const flow: Flow = {
       width: W,
       height: H,
       title: `Component ${i}`,
-      input: [],
-      output: [],
+      input: generatePorts("In", 10),
+      output: generatePorts("Out", 3),
     })),
   edges: [],
 };

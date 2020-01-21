@@ -1,0 +1,39 @@
+.portBox {
+    x: 0;
+    y: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.inputPort {
+    fill: goldenrod;
+    stroke: brown;
+    transition: fill 0.2s, stroke 0.2s;
+}
+
+.inputPort:hover {
+    fill: gold;
+    stroke: gray;
+}
+
+.inputPort:active {
+    fill: black;
+    stroke: black;
+}
+
+.outputPort {
+    fill: greenyellow;
+    stroke: green;
+    transition: fill 0.2s, stroke 0.2s;
+}
+
+.outputPort:hover {
+    fill: white;
+    stroke: gray;
+}
+
+.outputPort:active {
+    fill: black;
+    stroke: black;
+}

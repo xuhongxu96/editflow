@@ -1,27 +1,19 @@
 import React from 'react';
 import Style from './HandleBox.module.css';
 
-export interface HandleProps {
-    x: string | number;
-    y: string | number;
-    r: string | number;
-    cursor: string;
-    onMouseDown: (e: React.MouseEvent) => void;
-}
+export const HandleBody: React.FC = (props) => {
+    const r = 6;
 
-export const Handle: React.FC<HandleProps> = (props) => {
     return (
-        <circle
+        <rect
             className={Style.handle}
-            cursor={props.cursor}
-            cx={props.x}
-            cy={props.y}
-            r={props.r}
-            onMouseDown={props.onMouseDown}
+            x={-r / 2}
+            y={-r / 2}
+            width={r}
+            height={r}
         />
     );
 }
-
 
 const handlePositions = [
     ['0', '0', 'nwse-resize', 'left-top'],
@@ -43,11 +35,11 @@ export interface HandleBoxProps {
 
     onHandleMouseDown: (e: React.MouseEvent, direction: HandleDirection) => void;
 
-    handle?: React.FC<HandleProps>;
+    handleBody?: React.FC;
 }
 
 export const HandleBox: React.FC<HandleBoxProps> = (props) => {
-    const MyHandle = props.handle || Handle;
+    const MyHandleBody = props.handleBody || HandleBody;
     const visible = props.visible === undefined ? true : props.visible;
 
     return (
@@ -61,19 +53,23 @@ export const HandleBox: React.FC<HandleBoxProps> = (props) => {
             height={props.height}
         >
             {Array.from(handlePositions.entries()).map(p =>
-                <MyHandle
+                <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className={Style.handleWrapper}
                     key={p[0]}
                     cursor={p[1][2]}
                     x={p[1][0]}
                     y={p[1][1]}
-                    r='3'
                     onMouseDown={e => {
                         props.onHandleMouseDown(e, p[1][3] as HandleDirection);
                         e.stopPropagation();
                     }}
-                />
-            )}
+                >
+                    <MyHandleBody />
+                </svg>
+            )
+            }
 
-        </svg>
+        </svg >
     );
 }

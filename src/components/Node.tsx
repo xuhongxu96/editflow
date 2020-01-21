@@ -1,6 +1,7 @@
 import React from 'react';
 import Style from './Node.module.css';
 import { INodeState } from './states';
+import { PortBox } from './PortBox';
 
 export interface NodeBodyProps {
     title: string;
@@ -24,9 +25,13 @@ export interface NodeProps extends INodeState {
     selected: boolean,
 
     onMouseDown: (e: React.MouseEvent) => void;
+
+    nodeBody?: React.FC<NodeBodyProps>;
 }
 
 export const Node: React.FC<NodeProps> = (props) => {
+    const MyNodeBody = props.nodeBody || NodeBody;
+
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -41,7 +46,9 @@ export const Node: React.FC<NodeProps> = (props) => {
                 e.stopPropagation();
             }}
         >
-            <NodeBody title={props.title} />
+            <MyNodeBody title={props.title} />
+
+            <PortBox input={props.input} output={props.output} />
         </svg>
     );
 }

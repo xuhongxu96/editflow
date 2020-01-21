@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { Node } from './Node';
 import { IFlowState } from './states';
-import { useEventListener } from './hook';
+import { useEventListener, useMoving, Offset } from './hooks';
 import { clone } from './states/transformers';
-import { useMoving, Offset } from './hook/useMoving';
 import { HandleBox, HandleDirection } from './HandleBox';
+
+const MinNodeWidth = 100;
+const MinNodeHeight = 40;
 
 export interface CanvasProps {
     width: string | number;
@@ -78,14 +80,14 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
             {Array.from(flow.nodes.values())
                 .filter(o => o.id !== flow.selectedNodeId)
-                .concat(selectedNode || [])
+                .concat(selectedNode || []) // Move selected Node to topmost
                 .map(node =>
                     <Node
                         key={node.id}
                         selected={flow.selectedNodeId === node.id}
                         onMouseDown={e => {
                             setFlow(clone(flow).withSelectedNodeId(node.id));
-                            startMovingNode({ x: e.clientX, y: e.clientY });
+                            startMovingNode({ x: e.pageX, y: e.pageY });
                         }}
                         {...node}
                     />
@@ -99,7 +101,41 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     height={selectedNode.height}
                     onHandleMouseDown={(e, direction) => {
                         setMovingHandleDirection(direction);
-                        startMovingHandle({ x: e.clientX, y: e.clientY });
+
+                        const getLimit = () => {
+                            switch (direction) {
+                                case 'left-top':
+                                    return {
+                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                                    };
+                                case 'left-middle':
+                                    return {
+                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                                    };
+                                case 'left-bottom':
+                                    return {
+                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                                        y1: selectedNode.y + MinNodeHeight,
+                                    };
+                                case 'right-top':
+                                    return {
+                                        x1: selectedNode.x + MinNodeWidth,
+                                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                                    };
+                                case 'right-middle':
+                                    return {
+                                        x1: selectedNode.x + MinNodeWidth,
+                                    };
+                                case 'right-bottom':
+                                    return {
+                                        x1: selectedNode.x + MinNodeWidth,
+                                        y1: selectedNode.y + MinNodeHeight,
+                                    };
+                            }
+                        };
+
+                        startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
                     }}
                 />
             }
