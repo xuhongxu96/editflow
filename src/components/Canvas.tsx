@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { Node, HandleDirection } from './Node';
+import { Node } from './Node';
 import { IFlowState } from './states';
 import { useEventListener } from './hook';
 import { clone } from './states/transformers';
 import { useMoving, Offset } from './hook/useMoving';
+import { HandleBox, HandleDirection } from './HandleBox';
 
 export interface CanvasProps {
     width: string | number;
@@ -85,13 +86,22 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                             setFlow(clone(flow).withSelectedNodeId(node.id));
                             startMovingNode({ x: e.clientX, y: e.clientY });
                         }}
-                        onHandleMouseDown={(e, direction) => {
-                            setMovingHandleDirection(direction);
-                            startMovingHandle({ x: e.clientX, y: e.clientY });
-                        }}
                         {...node}
                     />
                 )}
+
+            {selectedNode &&
+                <HandleBox
+                    x={selectedNode.x}
+                    y={selectedNode.y}
+                    width={selectedNode.width}
+                    height={selectedNode.height}
+                    onHandleMouseDown={(e, direction) => {
+                        setMovingHandleDirection(direction);
+                        startMovingHandle({ x: e.clientX, y: e.clientY });
+                    }}
+                />
+            }
         </svg>
     );
 }

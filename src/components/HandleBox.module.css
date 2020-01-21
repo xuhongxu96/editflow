@@ -1,3 +1,7 @@
+.handleBox {
+    overflow: visible;
+}
+
 .handle {
     fill: #3388FF;
     stroke: white;
