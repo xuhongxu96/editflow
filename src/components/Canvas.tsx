@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Node } from './Node';
-import { IFlowState } from './states';
+import { IFlowState, INodeState } from './states';
 import { useEventListener, useMoving, Offset } from './hooks';
 import { clone } from './states/transformers';
 import { HandleBox, HandleDirection } from './HandleBox';
@@ -22,8 +22,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const selectedNode = flow.nodes.get(flow.selectedNodeId || "");
 
     const cancelSelectedNode = useCallback(() => {
-        setFlow(clone(flow).withSelectedNodeId(undefined));
-    }, [flow, setFlow]);
+        setFlow(flow => clone(flow).withSelectedNodeId(undefined));
+    }, [setFlow]);
     useEventListener('mousedown', cancelSelectedNode);
 
     const [movingHandleDirection, setMovingHandleDirection] = useState<HandleDirection>();
@@ -52,9 +52,9 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                         return { width: offset.x, height: offset.y };
                 }
             };
-            setFlow(clone(flow).withNodeLayoutOffset(flow.selectedNodeId, getLayoutOffset()));
+            setFlow(flow => clone(flow).withNodeLayoutOffset(flow.selectedNodeId, getLayoutOffset()));
         }
-    }, [flow, selectedNode, movingHandleDirection, setFlow]);
+    }, [selectedNode, movingHandleDirection, setFlow]);
 
     const [startMovingHandle, cancelMovingHandle, onMovingHandle] = useMoving(onMovingHandleOffsetUpdated);
 
@@ -69,6 +69,52 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }, [cancelMovingNode, cancelMovingHandle]);
 
     useEventListener('mouseup', cancelAllMoving);
+
+    const onNodeMouseDown = useCallback((e, node: INodeState) => {
+        setFlow(flow => clone(flow).withSelectedNodeId(node.id));
+        startMovingNode({ x: e.pageX, y: e.pageY });
+    }, [setFlow, startMovingNode]);
+
+    const onHandleMouseDown = useCallback((e, direction) => {
+        if (selectedNode === undefined) return;
+
+        setMovingHandleDirection(direction);
+
+        const getLimit = () => {
+            switch (direction) {
+                case 'left-top':
+                    return {
+                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                    };
+                case 'left-middle':
+                    return {
+                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                    };
+                case 'left-bottom':
+                    return {
+                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                        y1: selectedNode.y + MinNodeHeight,
+                    };
+                case 'right-top':
+                    return {
+                        x1: selectedNode.x + MinNodeWidth,
+                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                    };
+                case 'right-middle':
+                    return {
+                        x1: selectedNode.x + MinNodeWidth,
+                    };
+                case 'right-bottom':
+                    return {
+                        x1: selectedNode.x + MinNodeWidth,
+                        y1: selectedNode.y + MinNodeHeight,
+                    };
+            }
+        };
+
+        startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
+    }, [selectedNode, startMovingHandle, setMovingHandleDirection]);
 
     return (
         <svg
@@ -85,10 +131,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     <Node
                         key={node.id}
                         selected={flow.selectedNodeId === node.id}
-                        onMouseDown={e => {
-                            setFlow(clone(flow).withSelectedNodeId(node.id));
-                            startMovingNode({ x: e.pageX, y: e.pageY });
-                        }}
+                        onMouseDown={onNodeMouseDown}
                         {...node}
                     />
                 )}
@@ -99,44 +142,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     y={selectedNode.y}
                     width={selectedNode.width}
                     height={selectedNode.height}
-                    onHandleMouseDown={(e, direction) => {
-                        setMovingHandleDirection(direction);
-
-                        const getLimit = () => {
-                            switch (direction) {
-                                case 'left-top':
-                                    return {
-                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
-                                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
-                                    };
-                                case 'left-middle':
-                                    return {
-                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
-                                    };
-                                case 'left-bottom':
-                                    return {
-                                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
-                                        y1: selectedNode.y + MinNodeHeight,
-                                    };
-                                case 'right-top':
-                                    return {
-                                        x1: selectedNode.x + MinNodeWidth,
-                                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
-                                    };
-                                case 'right-middle':
-                                    return {
-                                        x1: selectedNode.x + MinNodeWidth,
-                                    };
-                                case 'right-bottom':
-                                    return {
-                                        x1: selectedNode.x + MinNodeWidth,
-                                        y1: selectedNode.y + MinNodeHeight,
-                                    };
-                            }
-                        };
-
-                        startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
-                    }}
+                    onHandleMouseDown={onHandleMouseDown}
                 />
             }
         </svg>

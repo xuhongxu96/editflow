@@ -7,7 +7,7 @@ export interface NodeBodyProps {
     title: string;
 }
 
-const NodeBody: React.FC<NodeBodyProps> = (props) => {
+const NodeBody = React.memo<NodeBodyProps>((props) => {
     return (
         <>
             <rect className={Style.nodeRect} width='100%' height='100%' />
@@ -19,17 +19,17 @@ const NodeBody: React.FC<NodeBodyProps> = (props) => {
             </svg >
         </>
     );
-}
+});
 
 export interface NodeProps extends INodeState {
     selected: boolean,
 
-    onMouseDown: (e: React.MouseEvent) => void;
+    onMouseDown: (e: React.MouseEvent, node: INodeState) => void;
 
     nodeBody?: React.FC<NodeBodyProps>;
 }
 
-export const Node: React.FC<NodeProps> = (props) => {
+export const Node = React.memo<NodeProps>((props) => {
     const MyNodeBody = props.nodeBody || NodeBody;
 
     return (
@@ -42,7 +42,7 @@ export const Node: React.FC<NodeProps> = (props) => {
             width={props.width}
             height={props.height}
             onMouseDown={e => {
-                props.onMouseDown(e);
+                props.onMouseDown(e, props);
                 e.stopPropagation();
             }}
         >
@@ -51,4 +51,4 @@ export const Node: React.FC<NodeProps> = (props) => {
             <PortBox input={props.input} output={props.output} />
         </svg>
     );
-}
+});

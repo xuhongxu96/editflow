@@ -1,7 +1,7 @@
 import React from 'react';
 import Style from './HandleBox.module.css';
 
-export const HandleBody: React.FC = (props) => {
+export const HandleBody = React.memo((props) => {
     const r = 6;
 
     return (
@@ -13,7 +13,7 @@ export const HandleBody: React.FC = (props) => {
             height={r}
         />
     );
-}
+});
 
 const handlePositions = [
     ['0', '0', 'nwse-resize', 'left-top'],
@@ -38,7 +38,7 @@ export interface HandleBoxProps {
     handleBody?: React.FC;
 }
 
-export const HandleBox: React.FC<HandleBoxProps> = (props) => {
+export const HandleBox = React.memo<HandleBoxProps>((props) => {
     const MyHandleBody = props.handleBody || HandleBody;
     const visible = props.visible === undefined ? true : props.visible;
 
@@ -72,4 +72,4 @@ export const HandleBox: React.FC<HandleBoxProps> = (props) => {
 
         </svg >
     );
-}
+});

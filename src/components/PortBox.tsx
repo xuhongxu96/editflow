@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import Style from './PortBox.module.css';
 import { IPortState } from './states';
 
@@ -29,9 +29,13 @@ export interface PortBoxProps {
     output: Map<string, IPortState>;
 }
 
-export const PortBox: React.FC<PortBoxProps> = (props) => {
+export const PortBox = React.memo<PortBoxProps>((props) => {
     const inputOffsetUnit = 100 / (props.input.size + 1);
     const outputOffsetUnit = 100 / (props.output.size + 1);
+
+    const onPortMouseDown = useCallback(e => {
+        e.stopPropagation();
+    }, []);
 
     return (
         <svg
@@ -47,7 +51,7 @@ export const PortBox: React.FC<PortBoxProps> = (props) => {
                     y="0"
                     r={3}
                     cursor="pointer"
-                    onMouseDown={() => { }}
+                    onMouseDown={onPortMouseDown}
                 />
             ))}
 
@@ -59,9 +63,9 @@ export const PortBox: React.FC<PortBoxProps> = (props) => {
                     y="100%"
                     r={3}
                     cursor="pointer"
-                    onMouseDown={() => { }}
+                    onMouseDown={onPortMouseDown}
                 />
             ))}
         </svg>
     );
-}
+});
