@@ -17,9 +17,15 @@ export interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
+    const [realSize, setRealSize] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
+
     const [flow, setFlow] = useState<IFlowState>(props.flow);
 
-    const selectedNode = flow.nodes.get(flow.selectedNodeId || "");
+    const calculateNodeWithRealPosition = (node?: INodeState) => {
+        if (node === undefined) return undefined;
+        return { node: node, x: node.x + flow.offset.x, y: node.y + flow.offset.y };
+    };
+    const selectedNode = calculateNodeWithRealPosition(flow.nodes.get(flow.selectedNodeId || ""));
 
     const cancelSelectedNode = useCallback(() => {
         setFlow(flow => clone(flow).withSelectedNodeId(undefined));
@@ -84,22 +90,22 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             switch (direction) {
                 case 'left-top':
                     return {
-                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
+                        y2: selectedNode.x + selectedNode.node.height - MinNodeHeight,
                     };
                 case 'left-middle':
                     return {
-                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
                     };
                 case 'left-bottom':
                     return {
-                        x2: selectedNode.x + selectedNode.width - MinNodeWidth,
+                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
                         y1: selectedNode.y + MinNodeHeight,
                     };
                 case 'right-top':
                     return {
                         x1: selectedNode.x + MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.height - MinNodeHeight,
+                        y2: selectedNode.y + selectedNode.node.height - MinNodeHeight,
                     };
                 case 'right-middle':
                     return {
@@ -116,23 +122,45 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
     }, [selectedNode, startMovingHandle, setMovingHandleDirection]);
 
+    const rootSvg = useCallback(el => {
+        if (el != null) {
+            setRealSize({ width: el.clientWidth, height: el.clientHeight });
+        }
+    }, []);
+
+    const onWheel = useCallback(e => {
+        const factor = 1;
+        const delta = { x: factor * e.deltaX, y: factor * e.deltaY };
+        setFlow(flow => {
+            return clone(flow).withOffset(delta);
+        });
+    }, [setFlow]);
+
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'
+            ref={rootSvg}
             width={props.width}
             height={props.height}
             onMouseMove={onAllMoving}
+            onWheel={onWheel}
         >
 
             {Array.from(flow.nodes.values())
                 .filter(o => o.id !== flow.selectedNodeId)
+                .map(o => calculateNodeWithRealPosition(o)!!)
+                .filter(o => {
+                    return o.x < realSize.width && o.y < realSize.height && o.x + o.node.width > 0 && o.y + o.node.height > 0;
+                })
                 .concat(selectedNode || []) // Move selected Node to topmost
-                .map(node =>
+                .map(o =>
                     <Node
-                        key={node.id}
-                        selected={flow.selectedNodeId === node.id}
+                        key={o.node.id}
+                        {...o.node}
+                        selected={flow.selectedNodeId === o.node.id}
                         onMouseDown={onNodeMouseDown}
-                        {...node}
+                        x={o.x}
+                        y={o.y}
                     />
                 )}
 
@@ -140,8 +168,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 <HandleBox
                     x={selectedNode.x}
                     y={selectedNode.y}
-                    width={selectedNode.width}
-                    height={selectedNode.height}
+                    width={selectedNode.node.width}
+                    height={selectedNode.node.height}
                     onHandleMouseDown={onHandleMouseDown}
                 />
             }

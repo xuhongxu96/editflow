@@ -19,6 +19,8 @@ export interface IFlowState extends Omit<Flow.Flow, 'nodes' | 'edges'> {
     edges: Map<string, IEdgeState>;
 
     selectedNodeId?: string;
+
+    offset: { x: number, y: number };
 }
 
 export const toState = (flow: Flow.Flow) => {
@@ -46,6 +48,7 @@ export const toState = (flow: Flow.Flow) => {
             ...edge,
             id: i,
         })),
+        offset: { x: 0, y: 0 },
     };
 
     return res;

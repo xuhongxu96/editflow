@@ -10,7 +10,7 @@ export interface NodeBodyProps {
 const NodeBody = React.memo<NodeBodyProps>((props) => {
     return (
         <>
-            <rect className={Style.nodeRect} width='100%' height='100%' />
+            <rect className={Style.nodeRect} width='100%' height='100%' rx={4} ry={4} />
 
             <svg xmlns='http://www.w3.org/2000/svg'>
                 <text className={Style.nodeText} x='50%' y='50%' >

@@ -15,7 +15,7 @@ const generatePorts = (namePrefix: string, n: number) => {
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(5).keys()).map(i => (
+  nodes: Array.from(Array(10000).keys()).map(i => (
     {
       id: i.toString(),
       x: Space,
@@ -35,7 +35,7 @@ const App: React.FC = () => {
 
   return (
     <div className='App'>
-      <Canvas width='100%' height='700' flow={flowState} />
+      <Canvas width='100%' height='600' flow={flowState} />
     </div>
   );
 }

@@ -10,11 +10,20 @@ class FlowState implements IFlowState {
     nodes: Map<string, INodeState>;
     edges: Map<string, IEdgeState>;
     selectedNodeId?: string | undefined;
+    offset: { x: number, y: number };
 
     constructor(flow: IFlowState) {
         this.nodes = flow.nodes;
         this.edges = flow.edges;
         this.selectedNodeId = flow.selectedNodeId;
+        this.offset = flow.offset;
+    }
+
+    withOffset = (delta: { x: number, y: number }) => {
+        this.offset.x -= delta.x;
+        this.offset.y -= delta.y;
+
+        return this;
     }
 
     withSelectedNodeId = (nodeId: string | undefined) => {
