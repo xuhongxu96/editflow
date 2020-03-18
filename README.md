@@ -1,3 +1,15 @@
+# editflow
+
+DAG workflow editor.
+
+## Demo
+
+![demo.gif](demo.gif)
+
+---
+
+# Readme from CRA
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts

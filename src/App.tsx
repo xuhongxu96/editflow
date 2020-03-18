@@ -15,7 +15,7 @@ const generatePorts = (namePrefix: string, n: number) => {
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(10000).keys()).map(i => (
+  nodes: Array.from(Array(1000).keys()).map(i => (
     {
       id: i.toString(),
       x: Space,
