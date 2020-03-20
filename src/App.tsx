@@ -6,6 +6,7 @@ import { toState } from 'components/states';
 const W = 120;
 const H = 40;
 const Space = 10;
+const ColSize = 15;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((i) => ({
@@ -15,11 +16,11 @@ const generatePorts = (namePrefix: string, n: number) => {
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(1000).keys()).map(i => (
+  nodes: Array.from(Array(10000).keys()).map(i => (
     {
       id: i.toString(),
-      x: Space,
-      y: Space + (H + Space) * i,
+      x: Space + (W + Space) * Math.floor(i / ColSize),
+      y: Space + (H + Space) * (i % ColSize),
       width: W,
       height: H,
       title: `Component ${i}`,

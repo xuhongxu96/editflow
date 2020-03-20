@@ -91,7 +91,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 case 'left-top':
                     return {
                         x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
-                        y2: selectedNode.x + selectedNode.node.height - MinNodeHeight,
+                        y2: selectedNode.y + selectedNode.node.height - MinNodeHeight,
                     };
                 case 'left-middle':
                     return {
