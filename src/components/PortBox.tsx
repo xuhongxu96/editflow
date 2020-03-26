@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import Style from './PortBox.module.css';
-import { IPortState } from './states';
+import { PortState } from '../states/FlowState';
 
 export interface PortProps {
     className: string;
@@ -25,8 +25,8 @@ export const Port: React.FC<PortProps> = (props) => {
 }
 
 export interface PortBoxProps {
-    input: Map<string, IPortState>;
-    output: Map<string, IPortState>;
+    input: Map<string, PortState>;
+    output: Map<string, PortState>;
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {

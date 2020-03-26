@@ -1,12 +1,12 @@
 import React from 'react';
 import Style from './Node.module.css';
-import { INodeState } from './states';
+import { NodeState } from '../states/FlowState';
 import { PortBox } from './PortBox';
 
-export interface NodeProps extends INodeState {
+export interface NodeProps extends NodeState {
     selected: boolean,
 
-    onMouseDown: (e: React.MouseEvent, node: INodeState) => void;
+    onMouseDown: (e: React.MouseEvent, node: NodeState) => void;
 }
 
 export const Node = React.memo<NodeProps>((props) => {

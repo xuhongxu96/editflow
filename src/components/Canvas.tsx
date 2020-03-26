@@ -1,9 +1,12 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useReducer } from 'react';
 import { Node } from './Node';
-import { IFlowState, INodeState } from './states';
-import { useEventListener, useMoving, Offset } from './hooks';
-import { clone } from './states/transformers';
+import { FlowState, NodeState } from '../states/FlowState';
+import { useEventListener, useMoving, Offset } from '../hooks';
+import { FlowReducer } from '../reducers/FlowReducer';
 import { HandleBox, HandleDirection } from './HandleBox';
+import { useClientSize } from 'hooks/useClientSize';
+import { FlowContext } from 'contexts/FlowContext';
+import { Rect } from 'models/BasicTypes';
 
 const MinNodeWidth = 100;
 const MinNodeHeight = 40;
@@ -12,55 +15,66 @@ export interface CanvasProps {
     width: string | number;
     height: string | number;
     readonly?: boolean;
-
-    flow: IFlowState;
+    flow: FlowState;
 }
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
-    const [realSize, setRealSize] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
+    const [clientSize, rootRef] = useClientSize();
+    const [flow, dispatch] = useReducer(FlowReducer, props.flow);
 
-    const [flow, setFlow] = useState<IFlowState>(props.flow);
-
-    const calculateNodeWithRealPosition = (node?: INodeState) => {
+    const calculateNodeWithRealPosition = (node?: NodeState) => {
         if (node === undefined) return undefined;
         return { node: node, x: node.x + flow.offset.x, y: node.y + flow.offset.y };
     };
     const selectedNode = calculateNodeWithRealPosition(flow.nodes.get(flow.selectedNodeId || ""));
 
     const cancelSelectedNode = useCallback(() => {
-        setFlow(flow => clone(flow).withSelectedNodeId(undefined));
-    }, [setFlow]);
+        dispatch({
+            type: 'setSelectedNodeId',
+            nodeId: undefined,
+        });
+    }, []);
     useEventListener('mousedown', cancelSelectedNode);
 
     const [movingHandleDirection, setMovingHandleDirection] = useState<HandleDirection>();
 
     const onMovingNodeOffsetUpdated = useCallback((offset: Offset) => {
-        setFlow(clone(flow).withNodeLayoutOffset(flow.selectedNodeId, offset));
-    }, [flow, setFlow]);
+        if (flow.selectedNodeId) {
+            dispatch({
+                type: 'updateNodeLayoutByOffset',
+                nodeId: flow.selectedNodeId,
+                offset: offset,
+            });
+        }
+    }, [flow.selectedNodeId]);
 
     const [startMovingNode, cancelMovingNode, onMovingNode] = useMoving(onMovingNodeOffsetUpdated);
 
     const onMovingHandleOffsetUpdated = useCallback((offset: Offset) => {
         if (selectedNode && movingHandleDirection) {
-            const getLayoutOffset = () => {
+            const getLayoutOffset = (): Partial<Rect> => {
                 switch (movingHandleDirection) {
                     case 'left-top':
-                        return { x: offset.x, y: offset.y, width: -offset.x, height: -offset.y };
+                        return { x: offset.x, y: offset.y, w: -offset.x, h: -offset.y };
                     case 'left-middle':
-                        return { x: offset.x, width: -offset.x };
+                        return { x: offset.x, w: -offset.x };
                     case 'left-bottom':
-                        return { x: offset.x, width: -offset.x, height: offset.y };
+                        return { x: offset.x, w: -offset.x, h: offset.y };
                     case 'right-top':
-                        return { y: offset.y, width: offset.x, height: -offset.y };
+                        return { y: offset.y, w: offset.x, h: -offset.y };
                     case 'right-middle':
-                        return { width: offset.x };
+                        return { w: offset.x };
                     case 'right-bottom':
-                        return { width: offset.x, height: offset.y };
+                        return { w: offset.x, h: offset.y };
                 }
             };
-            setFlow(flow => clone(flow).withNodeLayoutOffset(flow.selectedNodeId, getLayoutOffset()));
+            dispatch({
+                type: 'updateNodeLayoutByOffset',
+                nodeId: selectedNode.node.id,
+                offset: getLayoutOffset(),
+            });
         }
-    }, [selectedNode, movingHandleDirection, setFlow]);
+    }, [selectedNode, movingHandleDirection]);
 
     const [startMovingHandle, cancelMovingHandle, onMovingHandle] = useMoving(onMovingHandleOffsetUpdated);
 
@@ -76,10 +90,13 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     useEventListener('mouseup', cancelAllMoving);
 
-    const onNodeMouseDown = useCallback((e, node: INodeState) => {
-        setFlow(flow => clone(flow).withSelectedNodeId(node.id));
+    const onNodeMouseDown = useCallback((e, node: NodeState) => {
+        dispatch({
+            type: 'setSelectedNodeId',
+            nodeId: node.id,
+        });
         startMovingNode({ x: e.pageX, y: e.pageY });
-    }, [setFlow, startMovingNode]);
+    }, [startMovingNode]);
 
     const onHandleMouseDown = useCallback((e, direction) => {
         if (selectedNode === undefined) return;
@@ -122,57 +139,54 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
     }, [selectedNode, startMovingHandle, setMovingHandleDirection]);
 
-    const rootSvg = useCallback(el => {
-        if (el != null) {
-            setRealSize({ width: el.clientWidth, height: el.clientHeight });
-        }
-    }, []);
-
     const onWheel = useCallback(e => {
         const factor = 1;
-        const delta = { x: factor * e.deltaX, y: factor * e.deltaY };
-        setFlow(flow => {
-            return clone(flow).withOffset(delta);
+        const delta = { x: -factor * e.deltaX, y: -factor * e.deltaY };
+        dispatch({
+            type: 'updateOffsetByDelta',
+            delta: delta,
         });
-    }, [setFlow]);
+    }, []);
 
     return (
-        <svg
-            xmlns='http://www.w3.org/2000/svg'
-            ref={rootSvg}
-            width={props.width}
-            height={props.height}
-            onMouseMove={onAllMoving}
-            onWheel={onWheel}
-        >
+        <FlowContext.Provider value={flow}>
+            <svg
+                xmlns='http://www.w3.org/2000/svg'
+                ref={rootRef}
+                width={props.width}
+                height={props.height}
+                onMouseMove={onAllMoving}
+                onWheel={onWheel}
+            >
 
-            {Array.from(flow.nodes.values())
-                .filter(o => o.id !== flow.selectedNodeId)
-                .map(o => calculateNodeWithRealPosition(o)!!)
-                .filter(o => {
-                    return o.x < realSize.width && o.y < realSize.height && o.x + o.node.width > 0 && o.y + o.node.height > 0;
-                })
-                .concat(selectedNode || []) // Move selected Node to topmost
-                .map(o =>
-                    <Node
-                        key={o.node.id}
-                        {...o.node}
-                        selected={flow.selectedNodeId === o.node.id}
-                        onMouseDown={onNodeMouseDown}
-                        x={o.x}
-                        y={o.y}
+                {Array.from(flow.nodes.values())
+                    .filter(o => o.id !== flow.selectedNodeId)
+                    .map(o => calculateNodeWithRealPosition(o)!!)
+                    .filter(o => {
+                        return o.x < clientSize.w && o.y < clientSize.h && o.x + o.node.width > 0 && o.y + o.node.height > 0;
+                    })
+                    .concat(selectedNode || []) // Move selected Node to topmost
+                    .map(o =>
+                        <Node
+                            key={o.node.id}
+                            {...o.node}
+                            selected={flow.selectedNodeId === o.node.id}
+                            onMouseDown={onNodeMouseDown}
+                            x={o.x}
+                            y={o.y}
+                        />
+                    )}
+
+                {selectedNode &&
+                    <HandleBox
+                        x={selectedNode.x}
+                        y={selectedNode.y}
+                        width={selectedNode.node.width}
+                        height={selectedNode.node.height}
+                        onHandleMouseDown={onHandleMouseDown}
                     />
-                )}
-
-            {selectedNode &&
-                <HandleBox
-                    x={selectedNode.x}
-                    y={selectedNode.y}
-                    width={selectedNode.node.width}
-                    height={selectedNode.node.height}
-                    onHandleMouseDown={onHandleMouseDown}
-                />
-            }
-        </svg>
+                }
+            </svg>
+        </FlowContext.Provider>
     );
 }

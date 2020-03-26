@@ -1,3 +1,5 @@
+export type valueof<T> = T[keyof T];
+
 export const toMap = function <T, K, V>(array: T[], keySelector: (item: T, index: string) => K, valueSelector: (item: T, index: string) => V) {
     let res = new Map<K, V>();
     for (let i in array) {

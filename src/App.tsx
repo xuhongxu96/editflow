@@ -1,7 +1,7 @@
 import React from 'react';
 import { Canvas } from 'components/Canvas';
-import { Flow } from 'flow/Flow';
-import { toState } from 'components/states';
+import { Flow } from 'models/Flow';
+import { toState } from 'states/FlowState';
 
 const W = 120;
 const H = 40;
