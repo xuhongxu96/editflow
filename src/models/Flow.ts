@@ -1,3 +1,5 @@
+import { Point, Size } from "./BasicTypes";
+
 export interface Port {
     name: string;
     type: string;
@@ -8,8 +10,8 @@ export interface Node {
 
     x: number;
     y: number;
-    width: number;
-    height: number;
+    w: number;
+    h: number;
 
     title: string;
 

@@ -1,7 +1,7 @@
 import { FlowState } from "states/FlowState";
 import * as Basic from "models/BasicTypes";
 import { valueof } from "utils";
-import { Reducer } from "react";
+import { Reducer, Dispatch } from "react";
 
 export const clone = (flow: FlowState) => {
     return Object.assign({}, flow);
@@ -25,8 +25,8 @@ const reducers = {
         if (node) {
             node.x = layout.x || node.x;
             node.y = layout.y || node.y;
-            node.width = layout.w || node.width;
-            node.height = layout.h || node.height;
+            node.w = layout.w || node.w;
+            node.h = layout.h || node.h;
         }
         return state;
     },
@@ -39,14 +39,15 @@ const reducers = {
         if (node) {
             node.x += offset.x || 0;
             node.y += offset.y || 0;
-            node.width += offset.w || 0;
-            node.height += offset.h || 0;
+            node.w += offset.w || 0;
+            node.h += offset.h || 0;
         }
         return state;
     }
 };
 
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: Parameters<typeof reducers[K]>[1] }>;
+export type FlowDispatch = Dispatch<FlowAction>;
 
 export const FlowReducer: Reducer<FlowState, FlowAction> = (state: FlowState, action: FlowAction) => {
     return reducers[action.type](clone(state), action as any);

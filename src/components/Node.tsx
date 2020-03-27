@@ -9,7 +9,7 @@ export interface NodeProps extends NodeState {
     onMouseDown: (e: React.MouseEvent, node: NodeState) => void;
 }
 
-export const Node = React.memo<NodeProps>((props) => {
+export const Node = React.memo((props: NodeProps) => {
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -17,8 +17,8 @@ export const Node = React.memo<NodeProps>((props) => {
             className={Style.node + (props.selected ? " selected" : "")}
             x={props.x}
             y={props.y}
-            width={props.width}
-            height={props.height}
+            width={props.w}
+            height={props.h}
             onMouseDown={e => {
                 props.onMouseDown(e, props);
                 e.stopPropagation();

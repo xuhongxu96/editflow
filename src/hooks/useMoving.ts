@@ -1,28 +1,19 @@
 import { useState, useCallback } from 'react';
+import { Offset, Point } from 'models/BasicTypes';
 
-export interface Position {
-    x: number,
-    y: number,
-}
-
-export interface Offset {
-    x: number,
-    y: number,
-}
-
-export interface Rect {
+export interface RectLimit {
     x1?: number;
     y1?: number;
     x2?: number;
     y2?: number;
 }
 
-export function useMoving(callback: (offset: Offset) => void): [(initPos: Position, limit?: Rect) => void, () => void, (e: React.MouseEvent) => void] {
-    const [initPos, setInitPos] = useState<Position>();
-    const [lastPos, setLastPos] = useState<Position>();
-    const [limit, setLimit] = useState<Rect>();
+export function useMoving(callback: (offset: Offset) => void): [(initPos: Point, limit?: RectLimit) => void, () => void, (e: React.MouseEvent) => void] {
+    const [initPos, setInitPos] = useState<Point>();
+    const [lastPos, setLastPos] = useState<Point>();
+    const [limit, setLimit] = useState<RectLimit>();
 
-    const startMoving = useCallback((initPos: Position, limit?: Rect) => {
+    const startMoving = useCallback((initPos: Point, limit?: RectLimit) => {
         setInitPos(initPos);
         setLastPos(initPos);
         setLimit(limit);

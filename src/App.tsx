@@ -16,13 +16,13 @@ const generatePorts = (namePrefix: string, n: number) => {
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(10000).keys()).map(i => (
+  nodes: Array.from(Array(100000).keys()).map(i => (
     {
       id: i.toString(),
       x: Space + (W + Space) * Math.floor(i / ColSize),
       y: Space + (H + Space) * (i % ColSize),
-      width: W,
-      height: H,
+      w: W,
+      h: H,
       title: `Component ${i}`,
       input: generatePorts("In", 10),
       output: generatePorts("Out", 3),

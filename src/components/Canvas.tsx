@@ -1,12 +1,13 @@
 import React, { useState, useCallback, useReducer } from 'react';
 import { Node } from './Node';
 import { FlowState, NodeState } from '../states/FlowState';
-import { useEventListener, useMoving, Offset } from '../hooks';
+import { useEventListener, useMoving, RectLimit } from '../hooks';
 import { FlowReducer } from '../reducers/FlowReducer';
 import { HandleBox, HandleDirection } from './HandleBox';
 import { useClientSize } from 'hooks/useClientSize';
 import { FlowContext } from 'contexts/FlowContext';
-import { Rect } from 'models/BasicTypes';
+import { Rect, Offset } from 'models/BasicTypes';
+import { isIntersected } from 'utils';
 
 const MinNodeWidth = 100;
 const MinNodeHeight = 40;
@@ -24,16 +25,11 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const calculateNodeWithRealPosition = (node?: NodeState) => {
         if (node === undefined) return undefined;
-        return { node: node, x: node.x + flow.offset.x, y: node.y + flow.offset.y };
+        return { raw: node, x: node.x + flow.offset.x, y: node.y + flow.offset.y };
     };
     const selectedNode = calculateNodeWithRealPosition(flow.nodes.get(flow.selectedNodeId || ""));
 
-    const cancelSelectedNode = useCallback(() => {
-        dispatch({
-            type: 'setSelectedNodeId',
-            nodeId: undefined,
-        });
-    }, []);
+    const cancelSelectedNode = useCallback(() => dispatch({ type: 'setSelectedNodeId', nodeId: undefined }), []);
     useEventListener('mousedown', cancelSelectedNode);
 
     const [movingHandleDirection, setMovingHandleDirection] = useState<HandleDirection>();
@@ -51,7 +47,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const [startMovingNode, cancelMovingNode, onMovingNode] = useMoving(onMovingNodeOffsetUpdated);
 
     const onMovingHandleOffsetUpdated = useCallback((offset: Offset) => {
-        if (selectedNode && movingHandleDirection) {
+        if (flow.selectedNodeId && movingHandleDirection) {
             const getLayoutOffset = (): Partial<Rect> => {
                 switch (movingHandleDirection) {
                     case 'left-top':
@@ -70,15 +66,15 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             };
             dispatch({
                 type: 'updateNodeLayoutByOffset',
-                nodeId: selectedNode.node.id,
+                nodeId: flow.selectedNodeId,
                 offset: getLayoutOffset(),
             });
         }
-    }, [selectedNode, movingHandleDirection]);
+    }, [flow.selectedNodeId, movingHandleDirection]);
 
     const [startMovingHandle, cancelMovingHandle, onMovingHandle] = useMoving(onMovingHandleOffsetUpdated);
 
-    const onAllMoving = useCallback((e: React.MouseEvent) => {
+    const onAllMoving = useCallback((e) => {
         onMovingNode(e);
         onMovingHandle(e);
     }, [onMovingNode, onMovingHandle]);
@@ -87,10 +83,9 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         cancelMovingNode();
         cancelMovingHandle();
     }, [cancelMovingNode, cancelMovingHandle]);
-
     useEventListener('mouseup', cancelAllMoving);
 
-    const onNodeMouseDown = useCallback((e, node: NodeState) => {
+    const onNodeMouseDown = useCallback((e: React.MouseEvent<Element, MouseEvent>, node: NodeState) => {
         dispatch({
             type: 'setSelectedNodeId',
             nodeId: node.id,
@@ -98,31 +93,31 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         startMovingNode({ x: e.pageX, y: e.pageY });
     }, [startMovingNode]);
 
-    const onHandleMouseDown = useCallback((e, direction) => {
+    const onHandleMouseDown = useCallback((e: React.MouseEvent<Element, MouseEvent>, direction: HandleDirection) => {
         if (selectedNode === undefined) return;
 
         setMovingHandleDirection(direction);
 
-        const getLimit = () => {
+        const getLimit = (): RectLimit => {
             switch (direction) {
                 case 'left-top':
                     return {
-                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.node.height - MinNodeHeight,
+                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
+                        y2: selectedNode.y + selectedNode.raw.h - MinNodeHeight,
                     };
                 case 'left-middle':
                     return {
-                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
+                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
                     };
                 case 'left-bottom':
                     return {
-                        x2: selectedNode.x + selectedNode.node.width - MinNodeWidth,
+                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
                         y1: selectedNode.y + MinNodeHeight,
                     };
                 case 'right-top':
                     return {
                         x1: selectedNode.x + MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.node.height - MinNodeHeight,
+                        y2: selectedNode.y + selectedNode.raw.h - MinNodeHeight,
                     };
                 case 'right-middle':
                     return {
@@ -149,7 +144,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }, []);
 
     return (
-        <FlowContext.Provider value={flow}>
+        <FlowContext.Provider value={{ flow, dispatch }}>
             <svg
                 xmlns='http://www.w3.org/2000/svg'
                 ref={rootRef}
@@ -162,15 +157,16 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 {Array.from(flow.nodes.values())
                     .filter(o => o.id !== flow.selectedNodeId)
                     .map(o => calculateNodeWithRealPosition(o)!!)
-                    .filter(o => {
-                        return o.x < clientSize.w && o.y < clientSize.h && o.x + o.node.width > 0 && o.y + o.node.height > 0;
-                    })
+                    .filter(o => isIntersected(
+                        { x: o.x, y: o.y, w: o.raw.w, h: o.raw.h },
+                        { x: 0, y: 0, ...clientSize }
+                    ))
                     .concat(selectedNode || []) // Move selected Node to topmost
                     .map(o =>
                         <Node
-                            key={o.node.id}
-                            {...o.node}
-                            selected={flow.selectedNodeId === o.node.id}
+                            key={o.raw.id}
+                            {...o.raw}
+                            selected={flow.selectedNodeId === o.raw.id}
                             onMouseDown={onNodeMouseDown}
                             x={o.x}
                             y={o.y}
@@ -181,8 +177,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     <HandleBox
                         x={selectedNode.x}
                         y={selectedNode.y}
-                        width={selectedNode.node.width}
-                        height={selectedNode.node.height}
+                        width={selectedNode.raw.w}
+                        height={selectedNode.raw.h}
                         onHandleMouseDown={onHandleMouseDown}
                     />
                 }
