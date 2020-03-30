@@ -1,12 +1,11 @@
 import React from 'react';
 import Style from './Node.module.css';
-import { NodeState } from '../states/FlowState';
 import { PortBox } from './PortBox';
+import * as Flow from 'models/Flow';
 
-export interface NodeProps extends NodeState {
-    selected: boolean,
-
-    onMouseDown: (e: React.MouseEvent, node: NodeState) => void;
+export interface NodeProps extends Flow.Node {
+    selected: boolean;
+    onMouseDown?: (e: React.MouseEvent, node: NodeProps) => void;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -20,7 +19,7 @@ export const Node = React.memo((props: NodeProps) => {
             width={props.w}
             height={props.h}
             onMouseDown={e => {
-                props.onMouseDown(e, props);
+                props.onMouseDown && props.onMouseDown(e, props);
                 e.stopPropagation();
             }}
         >

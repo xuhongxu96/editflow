@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import Style from './PortBox.module.css';
-import { PortState } from '../states/FlowState';
+import * as Flow from 'models/Flow';
 
 export interface PortProps {
     className: string;
@@ -25,13 +25,13 @@ export const Port: React.FC<PortProps> = (props) => {
 }
 
 export interface PortBoxProps {
-    input: Map<string, PortState>;
-    output: Map<string, PortState>;
+    input: Flow.Port[];
+    output: Flow.Port[];
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {
-    const inputOffsetUnit = 100 / (props.input.size + 1);
-    const outputOffsetUnit = 100 / (props.output.size + 1);
+    const inputOffsetUnit = 100 / (props.input.length + 1);
+    const outputOffsetUnit = 100 / (props.output.length + 1);
 
     const onPortMouseDown = useCallback(e => {
         e.stopPropagation();

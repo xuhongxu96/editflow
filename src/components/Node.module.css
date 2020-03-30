@@ -1,5 +1,7 @@
 .node {
     overflow: visible;
+    animation-duration: 0.5s;
+    animation-name: fadeIn;
 }
 
 .nodeRect {
@@ -22,4 +24,14 @@
     text-anchor: middle;
     dominant-baseline: middle;
     user-select: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
