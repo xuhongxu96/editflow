@@ -18,28 +18,29 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const [flow, dispatch] = useImmerReducer(FlowReducer, props.flow);
 
     useEffect(() => {
-        let timer = setTimeout(() => dispatch({
-            type: 'initClippedNodes',
-        }), 50);
-        return () => clearTimeout(timer);
+        dispatch({ type: 'initQuadTree' });
     }, [dispatch]);
 
     useEffect(() => {
-        let timer = setTimeout(() => dispatch({
-            type: 'updateVisibleNodes',
+        dispatch({
+            type: 'updateClientSize',
             clientSize: clientSize,
-        }), 50);
+        });
+    }, [clientSize, dispatch]);
 
+    useEffect(() => {
+        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes' }), 20);
         return () => clearTimeout(timer);
-    }, [clientSize, flow.offset, flow.clippedNodes, dispatch]);
+    }, [flow.viewBound, dispatch]);
 
-    const onWheel = useCallback(e => {
-        const factor = 1;
+    const onWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
+        const factor = 0.3;
         const delta = { x: factor * e.deltaX, y: factor * e.deltaY };
         dispatch({
             type: 'updateOffsetByDelta',
             delta: delta,
         });
+        e.stopPropagation();
     }, [dispatch]);
 
     return (
@@ -52,7 +53,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
                 onWheel={onWheel}
             >
-                <g transform={`translate(${-flow.offset.x},${-flow.offset.y})`}>
+                <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
 
                     {useMemo(() => flow.visibleNodes.map(i => flow.raw.nodes[i])
                         .map(node =>
