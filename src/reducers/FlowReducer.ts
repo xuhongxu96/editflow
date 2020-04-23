@@ -16,7 +16,7 @@ const reducers = {
         draft.viewBound.h = action.clientSize.h;
     },
     updateVisibleNodes: (draft: Draft<FlowState>, action: {}) => {
-        const view = expandRect(draft.viewBound, 300);
+        const view = expandRect(draft.viewBound, 200);
         draft.visibleNodes = draft.quadtree.getCoveredData(view).sort();
     },
     updateOffsetByDelta: (draft: Draft<FlowState>, action: { delta: Basic.Offset }) => {

@@ -6,7 +6,7 @@ import { toState } from 'states/FlowState';
 const W = 120;
 const H = 40;
 const Space = 10;
-const ColSize = 500;
+const ColSize = 100;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((i) => ({
@@ -24,8 +24,8 @@ const flow: Flow = {
       w: W,
       h: H,
       title: `Component ${i}`,
-      input: generatePorts("In", 10),
-      output: generatePorts("Out", 3),
+      input: generatePorts("In", Math.round(Math.random() * 8) + 2),
+      output: generatePorts("Out", Math.round(Math.random() * 8) + 2),
     })),
   edges: [],
 };

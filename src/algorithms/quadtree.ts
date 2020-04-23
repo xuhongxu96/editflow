@@ -29,16 +29,16 @@ function subRect<T>(node: Node<T>, leftOrRight: LeftOrRight, topOrBottom: TopOrB
     };
 }
 
-function calculateExpandTimes(unit: number, delta: number) {
-    let times = 1; for (; unit * 2 < delta; ++times, unit *= 2);
+function calculateExpandTimes(unit: number, need: number) {
+    let times = 1; for (; unit * 2 < need; ++times, unit *= 2);
     return times;
 }
 
-function insert<T>(root: Node<T>, rect: Basic.Rect, data: T) {
+function insert<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number) {
     if (!isIntersected(root.bound, rect)) return;
     root.data.push(data);
 
-    if (root.bound.w <= 60 && root.bound.h <= 60) return;
+    if (root.bound.w <= resolution && root.bound.h <= resolution) return;
 
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
         for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
@@ -54,27 +54,24 @@ function insert<T>(root: Node<T>, rect: Basic.Rect, data: T) {
                 };
                 root[leftOrRight][topOrBottom] = currentNode;
             }
-            insert(currentNode, rect, data);
+            insert(currentNode, rect, data, resolution);
         }
     }
 }
 
-function isLeaf<T>(node: Node<T>) {
-    return !node.left.top && !node.left.bottom && !node.right.top && !node.right.bottom;
-}
-
-function getCoveredData<T>(node: Node<T>, cover: Basic.Rect): Set<T> {
+function getCoveredData<T>(node: Node<T>, cover: Basic.Rect, resolution: number): Set<T> {
     const { bound } = node;
 
     if (!isIntersected(bound, cover)) return new Set<T>();
-    if (isContained(cover, node.bound)) return new Set<T>(node.data);
+    if (isContained(cover, node.bound)
+        || (bound.w <= resolution && bound.h <= resolution)) return new Set<T>(node.data);
 
     const res = new Set<T>();
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
         for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
             const currentNode = node[leftOrRight][topOrBottom];
             if (currentNode) {
-                getCoveredData(currentNode, cover).forEach(o => res.add(o));
+                getCoveredData(currentNode, cover, resolution).forEach(o => res.add(o));
             }
         }
     }
@@ -85,13 +82,15 @@ function getCoveredData<T>(node: Node<T>, cover: Basic.Rect): Set<T> {
 export class QuadTree<T> {
     init: boolean = false;
     root: Node<T>;
+    resolution: number;
 
-    constructor(w: number, h: number) {
+    constructor(w: number, h: number, resolution: number = 60) {
         this.root = {
             data: [],
             bound: { x: 0, y: 0, w: w, h: h },
             left: {}, right: {},
         };
+        this.resolution = resolution;
     }
 
     expand(leftOrRight: LeftOrRight, upOrDown: UpOrDown) {
@@ -126,29 +125,29 @@ export class QuadTree<T> {
         let leftOrRight: 'left' | 'right' = 'right';
         if (rect.x < bound.x) {
             leftOrRight = 'left';
-            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.w, bound.x - rect.x));
+            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.w, bound.x - rect.x + bound.w));
         } else if (rect.x + rect.w > bound.x + bound.w) {
             leftOrRight = 'right';
-            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.w, rect.x + rect.w - bound.x - bound.w));
+            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.w, rect.x + rect.w - bound.x));
         }
 
         let upOrDown: 'up' | 'down' = 'down';
         if (rect.y < bound.y) {
             upOrDown = 'up';
-            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.h, bound.y - rect.y));
+            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.h, bound.y - rect.y + bound.h));
         } else if (rect.y + rect.h > bound.y + bound.h) {
             upOrDown = 'down'
-            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.h, rect.y + rect.h - bound.y - bound.h));
+            maxFactor = Math.max(maxFactor, calculateExpandTimes(bound.h, rect.y + rect.h - bound.y));
         }
 
         if (maxFactor > 0) {
             this.expandTimes(leftOrRight, upOrDown, maxFactor);
         }
 
-        insert(this.root, rect, data);
+        insert(this.root, rect, data, this.resolution);
     }
 
     getCoveredData(cover: Basic.Rect) {
-        return Array.from(getCoveredData(this.root, cover));
+        return Array.from(getCoveredData(this.root, cover, this.resolution));
     }
 }

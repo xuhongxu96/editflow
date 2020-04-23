@@ -17,7 +17,7 @@ export const expandRect = (r: Rect, margin: number): Rect => {
     return {
         x: r.x - margin,
         y: r.y - margin,
-        w: r.w + margin * 2,
-        h: r.h + margin * 2,
+        w: Math.max(0, r.w + margin * 2),
+        h: Math.max(0, r.h + margin * 2),
     };
 }

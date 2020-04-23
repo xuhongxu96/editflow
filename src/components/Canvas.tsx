@@ -14,8 +14,12 @@ export interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
-    const [clientSize, rootRef] = useClientSize();
+    const [clientSize, rootRef, setSizeChanged] = useClientSize([props.width, props.height]);
     const [flow, dispatch] = useImmerReducer(FlowReducer, props.flow);
+
+    useEffect(() => {
+        setSizeChanged();
+    }, [props.width, props.height, setSizeChanged]);
 
     useEffect(() => {
         dispatch({ type: 'initQuadTree' });
@@ -29,7 +33,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }, [clientSize, dispatch]);
 
     useEffect(() => {
-        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes' }), 20);
+        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes' }), 5);
         return () => clearTimeout(timer);
     }, [flow.viewBound, dispatch]);
 
