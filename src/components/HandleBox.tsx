@@ -20,10 +20,10 @@ const handleMetas: HandleMeta[] = [
 ];
 
 export interface HandleBoxProps {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    x: number | string;
+    y: number | string;
+    width: number | string;
+    height: number | string;
     visible?: boolean;
 
     onHandleMouseDown: (e: React.MouseEvent, direction: HandleDirection) => void;

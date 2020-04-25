@@ -1,13 +1,12 @@
 import { Point, Size } from "./BasicTypes";
 
 export interface Port {
-    name: string;
     type: string;
 }
 
-export interface Node {
-    id: string;
+export type PortMap = { [name: string]: Port };
 
+export interface Node {
     x: number;
     y: number;
     w: number;
@@ -15,8 +14,8 @@ export interface Node {
 
     title: string;
 
-    input: Port[];
-    output: Port[];
+    input: PortMap;
+    output: PortMap;
 }
 
 export interface NodePort {
@@ -29,7 +28,10 @@ export interface Edge {
     end: NodePort;
 }
 
+export type NodeMap = { [nodeId: string]: Node };
+export type EdgeMap = { [edgeId: string]: Edge };
+
 export interface Flow {
-    nodes: Node[];
-    edges: Edge[];
+    nodes: NodeMap;
+    edges: EdgeMap;
 }

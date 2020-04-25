@@ -17,6 +17,9 @@
     "typescript": "~3.7.2",
     "use-immer": "^0.3.5"
   },
+  "resolutions": {
+    "react-dev-utils": "10.1.0"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Size } from "models/BasicTypes";
 
-export function useClientSize(deps: React.DependencyList): [Size, (el: Element | null) => void, () => void] {
+export function useClientSize(): [Size, (el: Element | null) => void, () => void] {
     const [sizeChanged, _setSizeChanged] = useState<number>(0);
-    const setSizeChanged = () => _setSizeChanged(i => i + 1)
+    const setSizeChanged = useCallback(() => _setSizeChanged(i => i + 1), []);
 
     const [realSize, setRealSize] = useState<Size>({ w: 0, h: 0 });
     const ref = useRef<Element>();
@@ -15,9 +15,10 @@ export function useClientSize(deps: React.DependencyList): [Size, (el: Element |
     }, []);
 
     useEffect(() => {
-        if (ref.current != null)
+        if (ref.current != null
+            && (realSize.w !== ref.current.clientWidth || realSize.h !== ref.current.clientHeight))
             setRealSize({ w: ref.current.clientWidth, h: ref.current.clientHeight });
-    }, [ref, sizeChanged]);
+    }, [sizeChanged, realSize.w, realSize.h]);
 
     useEffect(() => {
         const listener = () => {
@@ -25,7 +26,7 @@ export function useClientSize(deps: React.DependencyList): [Size, (el: Element |
         };
         window.addEventListener('resize', listener);
         return () => window.removeEventListener('resize', listener);
-    }, []);
+    }, [setSizeChanged]);
 
     return [realSize, refCallback, setSizeChanged];
 }
