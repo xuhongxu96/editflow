@@ -3,12 +3,14 @@ import { QuadTree } from 'algorithms/quadtree';
 import { Rect } from 'models/BasicTypes';
 
 export interface FlowState {
-    raw: Flow
-    quadtree: QuadTree<string>;
+    raw: Flow;
+    draftNodeLayout: Map<string, Rect>;
+    nodeIdQuadTree: QuadTree<string>;
     cachedViewBound: Rect;
     viewBound: Rect;
-    visibleNodes: string[],
-    selectedNodes: Set<string>,
+    newlyVisibleNodeIds: string[];
+    visibleNodeIds: Set<string>;
+    selectedNodeIds: Set<string>;
 }
 
 export const EmptyFlowState: FlowState = {
@@ -16,11 +18,13 @@ export const EmptyFlowState: FlowState = {
         nodes: {},
         edges: {},
     },
-    quadtree: new QuadTree(1024, 768),
+    draftNodeLayout: new Map<string, Rect>(),
+    nodeIdQuadTree: new QuadTree(1024, 768),
     cachedViewBound: { x: 0, y: 0, w: 0, h: 0 },
     viewBound: { x: 0, y: 0, w: 0, h: 0 },
-    visibleNodes: [],
-    selectedNodes: new Set<string>(),
+    newlyVisibleNodeIds: [],
+    visibleNodeIds: new Set<string>(),
+    selectedNodeIds: new Set<string>(),
 }
 
 export const toState = (flow: Flow) => {

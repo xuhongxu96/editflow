@@ -1,70 +1,48 @@
 import { useState, useCallback } from 'react';
 import { Offset, Point } from 'models/BasicTypes';
 
-export interface RectLimit {
-    x1?: number;
-    y1?: number;
-    x2?: number;
-    y2?: number;
+export interface LimitRect {
+    left?: number;
+    top?: number;
+    right?: number;
+    bottom?: number;
 }
 
-export function useMoving(callback: (offset: Offset) => void): [(initPos: Point, limit?: RectLimit) => void, () => void, (e: React.MouseEvent) => void] {
+export type MovingCallback = (offset: Offset) => void;
+export type StartMovingFunction = (e: React.MouseEvent, limit?: LimitRect) => void;
+export type StopMovingFunction = (cancel: boolean) => void;
+export type MovingEventListener = (e: React.MouseEvent) => void;
+
+export function useMoving(callback: MovingCallback): [StartMovingFunction, StopMovingFunction, MovingEventListener] {
     const [initPos, setInitPos] = useState<Point>();
-    const [lastPos, setLastPos] = useState<Point>();
-    const [limit, setLimit] = useState<RectLimit>();
+    const [limit, setLimit] = useState<LimitRect>();
 
-    const startMoving = useCallback((initPos: Point, limit?: RectLimit) => {
+    const startMoving = useCallback<StartMovingFunction>((e: React.MouseEvent, limit?: LimitRect) => {
+        const initPos = { x: e.pageX, y: e.pageY };
         setInitPos(initPos);
-        setLastPos(initPos);
         setLimit(limit);
-    }, [setInitPos, setLastPos, setLimit]);
+    }, []);
 
-    const cancelMoving = useCallback(() => {
-        setLastPos(undefined);
-    }, [setLastPos]);
+    const stopMoving = useCallback<StopMovingFunction>(cancel => {
+        if (cancel)
+            callback({ x: 0, y: 0 });
+        setInitPos(undefined);
+    }, [callback]);
 
     const onMoving = useCallback((e: React.MouseEvent) => {
-        if (initPos && lastPos) {
-            const offset = {
-                x: e.pageX - lastPos.x,
-                y: e.pageY - lastPos.y,
-            };
-
-            const newPos = {
-                x: lastPos.x + offset.x,
-                y: lastPos.y + offset.y,
-            };
+        if (initPos) {
+            let offset = { x: e.pageX - initPos.x, y: e.pageY - initPos.y };
 
             if (limit) {
-                if (limit.x1 !== undefined && newPos.x < limit.x1) {
-                    const delta = limit.x1 - newPos.x;
-                    offset.x += delta;
-                    newPos.x += delta;
-                }
-
-                if (limit.y1 !== undefined && newPos.y < limit.y1) {
-                    const delta = limit.y1 - newPos.y;
-                    offset.y += delta;
-                    newPos.y += delta;
-                }
-
-                if (limit.x2 !== undefined && newPos.x > limit.x2) {
-                    const delta = newPos.x - limit.x2;
-                    offset.x -= delta;
-                    newPos.x -= delta;
-                }
-
-                if (limit.y2 !== undefined && newPos.y > limit.y2) {
-                    const delta = newPos.y - limit.y2;
-                    offset.y -= delta;
-                    newPos.y -= delta;
-                }
+                if (limit.left !== undefined && offset.x < limit.left) offset.x = limit.left;
+                if (limit.top !== undefined && offset.y < limit.top) offset.y = limit.top;
+                if (limit.right !== undefined && offset.x > limit.right) offset.x = limit.right;
+                if (limit.bottom !== undefined && offset.y > limit.bottom) offset.y = limit.bottom;
             }
 
             callback(offset);
-            setLastPos(newPos);
         }
-    }, [initPos, lastPos, limit, setLastPos, callback]);
+    }, [initPos, limit, callback]);
 
-    return [startMoving, cancelMoving, onMoving];
+    return [startMoving, stopMoving, onMoving];
 }

@@ -1,6 +1,9 @@
 .node {
     overflow: visible;
-    animation-duration: 0.5s;
+}
+
+.node:global(.animated) {
+    animation-duration: 0.4s;
     animation-name: fadeIn;
 }
 
@@ -10,7 +13,10 @@
     stroke-width: 0.5px;
     transition: fill 0.2s;
     transform-origin: center;
-    animation-duration: 0.5s;
+}
+
+.node:global(.animated) .nodeRect {
+    animation-duration: 0.3s;
     animation-name: scaleIn;
 }
 

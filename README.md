@@ -2,9 +2,14 @@
 
 DAG workflow editor.
 
-## Demo
+## Features
 
-![demo.gif](demo.gif)
+### Lazy Loading
+
+We can support many nodes thanks to lazy loading.  
+In the demo below, there are 10K nodes.
+
+![Lazy Loading 10K Nodes](demo/lazy-loading.gif)
 
 ---
 
