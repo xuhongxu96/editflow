@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import Style from './HandleBox.module.css';
 
 export type HandleDirection = 'left-top' | 'left-middle' | 'left-bottom' | 'right-top' | 'right-middle' | 'right-bottom';
@@ -33,6 +33,8 @@ export const HandleBox = React.memo<HandleBoxProps>((props) => {
     const visible = props.visible === undefined ? true : props.visible;
     const r = 6;
 
+    const { onHandleMouseDown } = props;
+
     return (
         <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -43,7 +45,7 @@ export const HandleBox = React.memo<HandleBoxProps>((props) => {
             width={props.width}
             height={props.height}
         >
-            {handleMetas.map(p =>
+            {useMemo(() => handleMetas.map(p =>
                 <svg
                     xmlns='http://www.w3.org/2000/svg'
                     className={Style.handleWrapper}
@@ -52,7 +54,7 @@ export const HandleBox = React.memo<HandleBoxProps>((props) => {
                     x={p.x}
                     y={p.y}
                     onMouseDown={e => {
-                        props.onHandleMouseDown(e, p.direction);
+                        onHandleMouseDown(e, p.direction);
                         e.stopPropagation();
                     }}>
                     <rect
@@ -62,8 +64,7 @@ export const HandleBox = React.memo<HandleBoxProps>((props) => {
                         width={r}
                         height={r} />
                 </svg>
-            )
-            }
+            ), [onHandleMouseDown])}
 
         </svg >
     );

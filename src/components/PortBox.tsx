@@ -11,7 +11,7 @@ export interface PortProps {
     onMouseDown: (e: React.MouseEvent) => void;
 }
 
-export const Port: React.FC<PortProps> = (props) => {
+export const Port = React.memo((props: PortProps) => {
     return (
         <circle
             className={props.className}
@@ -22,7 +22,7 @@ export const Port: React.FC<PortProps> = (props) => {
             onMouseDown={props.onMouseDown}
         />
     );
-}
+});
 
 export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
 }

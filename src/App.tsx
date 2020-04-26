@@ -21,7 +21,7 @@ const generatePorts = (namePrefix: string, n: number) => {
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(1000).keys()).reduce((o, i) => {
+  nodes: Array.from(Array(10000).keys()).reduce((o, i) => {
     o[i] = {
       x: Space + (W + Space) * Math.floor(i / ColSize),
       y: Space + (H + Space) * (i % ColSize),

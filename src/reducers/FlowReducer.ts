@@ -1,6 +1,6 @@
 import { FlowState } from "states/FlowState";
 import * as Basic from "models/BasicTypes";
-import { valueof, expandRect } from "utils";
+import { valueof, expandRect, isContained } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
 import { Dispatch } from "react";
@@ -17,9 +17,12 @@ const reducers = {
         draft.viewBound.w = action.clientSize.w;
         draft.viewBound.h = action.clientSize.h;
     },
-    updateVisibleNodes: (draft: DraftFlow, action: {}) => {
-        const view = expandRect(draft.viewBound, 200);
-        draft.visibleNodes = draft.quadtree.getCoveredData(view).sort();
+    updateVisibleNodes: (draft: DraftFlow, action: { force: boolean, cacheExpandSize: number }) => {
+        if (action.force || !isContained(draft.cachedViewBound, draft.viewBound)) {
+            const viewBoundToCache = expandRect(draft.viewBound, action.cacheExpandSize);
+            draft.visibleNodes = draft.quadtree.getCoveredData(viewBoundToCache).sort();
+            draft.cachedViewBound = viewBoundToCache;
+        }
     },
     updateOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
         draft.viewBound.x += action.delta.x;

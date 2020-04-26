@@ -28,7 +28,11 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }, [rootSize, dispatch]);
 
     useEffect(() => {
-        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes' }), 5);
+        dispatch({ type: 'updateVisibleNodes', force: false, cacheExpandSize: 100 });
+    }, [flow.viewBound, dispatch]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', force: true, cacheExpandSize: 500 }), 500);
         return () => clearTimeout(timer);
     }, [flow.viewBound, dispatch]);
 
@@ -52,11 +56,9 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             ref={rootRef}
             width={props.width}
             height={props.height}
-
             onWheel={onWheel}
         >
             <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
-
                 {useMemo(() => flow.visibleNodes.map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
                     .map(([id, node]) =>
                         <Node
@@ -66,9 +68,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                             selected={flow.selectedNodes.has(id)}
                         />
                     ), [flow.visibleNodes, flow.raw.nodes, flow.selectedNodes])}
-
             </g>
-
         </svg>
     );
 }
