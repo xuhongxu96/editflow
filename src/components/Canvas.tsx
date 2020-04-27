@@ -39,14 +39,21 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
 
-    const movingNodeCallback = useCallback((offset: Offset) => {
+    const [startMovingNode, stopMovingNode, onMovingNode] = useMoving(useCallback((offset: Offset) => {
         dispatch({ type: 'moveSelectedNodes', offset: offset });
-    }, [dispatch]);
-    const [startMovingNode, stopMovingNode, onMovingNode] = useMoving(movingNodeCallback);
-    useEventListener('mouseup', () => {
+    }, [dispatch]));
+
+    useEventListener('mouseup', useCallback(() => {
         stopMovingNode(false);
         dispatch({ type: 'stopMoving', cancel: false });
-    });
+    }, [stopMovingNode, dispatch]));
+
+    useEventListener('keydown', useCallback((e) => {
+        if (e.key === 'Escape') {
+            stopMovingNode(true);
+            dispatch({ type: 'stopMoving', cancel: true });
+        }
+    }, [stopMovingNode, dispatch]))
 
     const onWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
         const factor = 0.3;
