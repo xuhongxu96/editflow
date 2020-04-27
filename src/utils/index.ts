@@ -21,3 +21,15 @@ export const expandRect = (r: Rect, margin: number): Rect => {
         h: Math.max(0, r.h + margin * 2),
     };
 }
+
+export const limitRect = (r: Rect, limit: Rect) => {
+    if (r.x + r.w > limit.x + limit.w)
+        r.x = limit.x + limit.w - r.w;
+    if (r.x + r.h > limit.x + limit.h)
+        r.x = limit.x + limit.h - r.h;
+
+    if (r.x < limit.x) r.x = limit.x;
+    if (r.y < limit.y) r.y = limit.y;
+
+    return r;
+}

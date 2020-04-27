@@ -1,6 +1,6 @@
 import { FlowState } from "states/FlowState";
 import * as Basic from "models/BasicTypes";
-import { valueof, expandRect, isContained } from "utils";
+import { valueof, expandRect, isContained, limitRect } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
 import { Dispatch } from "react";
@@ -12,6 +12,19 @@ const reducers = {
         Object.entries(draft.raw.nodes).forEach(([id, node]) => {
             draft.nodeIdQuadTree.insert(node.layout, id);
         });
+    },
+    setScale: (draft: DraftFlow, action: { scale: number }) => {
+        draft.scale = action.scale;
+    },
+    setOffset: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
+        draft.viewBound.x = action.offset.x;
+        draft.viewBound.y = action.offset.y;
+        draft.viewBound = limitRect(draft.viewBound, draft.nodeIdQuadTree.getBound());
+    },
+    updateOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
+        draft.viewBound.x += action.delta.x;
+        draft.viewBound.y += action.delta.y;
+        draft.viewBound = limitRect(draft.viewBound, draft.nodeIdQuadTree.getBound());
     },
     updateClientSize: (draft: DraftFlow, action: { clientSize: Basic.Size }) => {
         draft.viewBound.w = action.clientSize.w;
@@ -31,10 +44,6 @@ const reducers = {
         draft.newlyVisibleNodeIds = [];
         draft.visibleNodeIds = new Set<string>(draft.nodeIdQuadTree.getCoveredData(viewBoundToCache));
         draft.cachedViewBound = viewBoundToCache;
-    },
-    updateOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
-        draft.viewBound.x += action.delta.x;
-        draft.viewBound.y += action.delta.y;
     },
     setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         draft.selectedNodeIds.clear();

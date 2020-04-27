@@ -47,7 +47,21 @@ const App: React.FC = () => {
     <div className='App'>
       <FlowContext.Provider value={flow}>
         <FlowDispatchContext.Provider value={dispatch}>
+
+          <div id="toolbar" style={{ margin: '8px 16px' }}>
+            <button onClick={() => dispatch({ type: 'setOffset', offset: { x: 0, y: 0 } })}>
+              Back to origin
+            </button>
+            <button onClick={() => dispatch({ type: 'setScale', scale: 1 })}>
+              x1
+            </button>
+            <button onClick={() => dispatch({ type: 'setScale', scale: 2 })}>
+              x2
+            </button>
+          </div>
+
           <Canvas width='100%' height='600' />
+
         </FlowDispatchContext.Provider>
       </FlowContext.Provider>
     </div >

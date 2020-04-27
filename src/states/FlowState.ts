@@ -8,6 +8,7 @@ export interface FlowState {
     nodeIdQuadTree: QuadTree<string>;
     cachedViewBound: Rect;
     viewBound: Rect;
+    scale: number;
     newlyVisibleNodeIds: string[];
     visibleNodeIds: Set<string>;
     selectedNodeIds: Set<string>;
@@ -22,6 +23,7 @@ export const EmptyFlowState: FlowState = {
     nodeIdQuadTree: new QuadTree(1024, 768),
     cachedViewBound: { x: 0, y: 0, w: 0, h: 0 },
     viewBound: { x: 0, y: 0, w: 0, h: 0 },
+    scale: 1,
     newlyVisibleNodeIds: [],
     visibleNodeIds: new Set<string>(),
     selectedNodeIds: new Set<string>(),

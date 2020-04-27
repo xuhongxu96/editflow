@@ -168,4 +168,8 @@ export class QuadTree<T> {
     getCoveredData(cover: Basic.Rect) {
         return Array.from(getCoveredData(this.root, cover, this.resolution));
     }
+
+    getBound() {
+        return this.root.bound;
+    }
 }

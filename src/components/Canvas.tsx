@@ -18,20 +18,11 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const [rootSize, rootRef, setRootSizeChanged] = useClientSize();
 
+    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootSize }), [rootSize, dispatch]);
     useEffect(() => { setRootSizeChanged(); }, [props.width, props.height, setRootSizeChanged]);
 
-    useEffect(() => {
-        dispatch({ type: 'initQuadTree' });
-    }, [dispatch]);
-
-    useEffect(() => {
-        dispatch({ type: 'updateClientSize', clientSize: rootSize });
-    }, [rootSize, dispatch]);
-
-    useEffect(() => {
-        dispatch({ type: 'updateNewlyVisibleNodes' });
-    }, [flow.viewBound, dispatch]);
-
+    useEffect(() => dispatch({ type: 'initQuadTree' }), [dispatch]);
+    useEffect(() => dispatch({ type: 'updateNewlyVisibleNodes' }), [flow.viewBound, dispatch]);
     useEffect(() => {
         const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 500);
         return () => clearTimeout(timer);
@@ -40,8 +31,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
 
     const [startMovingNode, stopMovingNode, onMovingNode] = useMoving(useCallback((offset: Offset) => {
-        dispatch({ type: 'moveSelectedNodes', offset: offset });
-    }, [dispatch]));
+        dispatch({ type: 'moveSelectedNodes', offset: { x: offset.x / flow.scale, y: offset.y / flow.scale } });
+    }, [dispatch, flow.scale]));
 
     useEventListener('mouseup', useCallback(() => {
         stopMovingNode(false);
@@ -74,48 +65,50 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             onWheel={onWheel}
             onMouseMove={e => { onMovingNode(e); }}
         >
-            <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
-                {useMemo(() => flow.newlyVisibleNodeIds
-                    .filter(i => !flow.selectedNodeIds.has(i))
-                    .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                    .map(([id, node]) => {
-                        return (<Node
-                            key={id}
-                            id={id}
-                            {...node}
-                            animated={true}
-                            selected={flow.selectedNodeIds.has(id)}
-                            onMouseDown={e => { startMovingNode(e); }}
-                        />);
-                    }
-                    ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
+            <g transform={`scale(${flow.scale})`}>
+                <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
+                    {useMemo(() => flow.newlyVisibleNodeIds
+                        .filter(i => !flow.selectedNodeIds.has(i))
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) => {
+                            return (<Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                animated={true}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                            />);
+                        }
+                        ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
 
-                {useMemo(() => Array.from(flow.visibleNodeIds.keys())
-                    .filter(i => !flow.selectedNodeIds.has(i))
-                    .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                    .map(([id, node]) => {
-                        return (<Node
-                            key={id}
-                            id={id}
-                            {...node}
-                            animated={false}
-                            selected={flow.selectedNodeIds.has(id)}
-                            onMouseDown={e => { startMovingNode(e); }}
-                        />);
-                    }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
+                    {useMemo(() => Array.from(flow.visibleNodeIds.keys())
+                        .filter(i => !flow.selectedNodeIds.has(i))
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) => {
+                            return (<Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                animated={false}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                            />);
+                        }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
 
-                {useMemo(() => Array.from(flow.selectedNodeIds.keys())
-                    .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                    .map(([id, node]) =>
-                        <Node
-                            key={id}
-                            id={id}
-                            {...node}
-                            draftLayout={flow.draftNodeLayout.get(id)}
-                            selected={flow.selectedNodeIds.has(id)}
-                            onMouseDown={e => { startMovingNode(e); }}
-                        />
-                    ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode])}
+                    {useMemo(() => Array.from(flow.selectedNodeIds.keys())
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) =>
+                            <Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                draftLayout={flow.draftNodeLayout.get(id)}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                            />
+                        ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode])}
+                </g>
             </g>
         </svg>
     );
