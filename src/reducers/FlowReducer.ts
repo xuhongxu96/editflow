@@ -70,7 +70,7 @@ const reducers = {
             })
         });
     },
-    stopMoving: (draft: DraftFlow, action: { cancel: boolean }) => {
+    stopMovingNodes: (draft: DraftFlow, action: { cancel: boolean }) => {
         if (!action.cancel) {
             draft.draftNodeLayout.forEach((layout, id) => {
                 draft.nodeIdQuadTree.remove(draft.raw.nodes[id].layout, id);

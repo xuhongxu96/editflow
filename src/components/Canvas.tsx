@@ -45,13 +45,13 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     useEventListener('mouseup', useCallback(() => {
         stopMovingNode(false);
-        dispatch({ type: 'stopMoving', cancel: false });
+        dispatch({ type: 'stopMovingNodes', cancel: false });
     }, [stopMovingNode, dispatch]));
 
     useEventListener('keydown', useCallback((e) => {
         if (e.key === 'Escape') {
             stopMovingNode(true);
-            dispatch({ type: 'stopMoving', cancel: true });
+            dispatch({ type: 'stopMovingNodes', cancel: true });
         }
     }, [stopMovingNode, dispatch]))
 
