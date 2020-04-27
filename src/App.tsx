@@ -9,7 +9,7 @@ import { FlowReducer } from 'reducers/FlowReducer';
 const W = 120;
 const H = 40;
 const Space = 10;
-const ColSize = 10;
+const RowSize = 10;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).reduce((o, i) => {
@@ -24,8 +24,8 @@ const flow: Flow = {
   nodes: Array.from(Array(1000).keys()).reduce((o, i) => {
     o[i] = {
       layout: {
-        x: Space + (W + Space) * Math.floor(i / ColSize),
-        y: Space + (H + Space) * (i % ColSize),
+        x: Space + (W + Space) * (i % RowSize),
+        y: Space + (H + Space) * Math.floor(i / RowSize),
         w: W,
         h: H,
       },
