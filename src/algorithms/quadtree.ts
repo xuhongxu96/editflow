@@ -42,19 +42,33 @@ function insert<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number)
 
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
         for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
-            const subBound = subRect(root, leftOrRight, topOrBottom);
-
             let currentNode = root[leftOrRight][topOrBottom];
             if (currentNode === undefined) {
                 currentNode = {
                     data: [],
-                    bound: subBound,
+                    bound: subRect(root, leftOrRight, topOrBottom),
                     left: {},
                     right: {},
                 };
                 root[leftOrRight][topOrBottom] = currentNode;
             }
             insert(currentNode, rect, data, resolution);
+        }
+    }
+}
+
+function remove<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number) {
+    if (!isIntersected(root.bound, rect)) return;
+    root.data.splice(root.data.indexOf(data), 1);
+
+    if (root.bound.w <= resolution && root.bound.h <= resolution) return;
+
+    for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
+        for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
+            let currentNode = root[leftOrRight][topOrBottom];
+            if (currentNode) {
+                remove(currentNode, rect, data, resolution);
+            }
         }
     }
 }
@@ -145,6 +159,10 @@ export class QuadTree<T> {
         }
 
         insert(this.root, rect, data, this.resolution);
+    }
+
+    remove(rect: Basic.Rect, data: T) {
+        remove(this.root, rect, data, this.resolution);
     }
 
     getCoveredData(cover: Basic.Rect) {

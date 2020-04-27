@@ -23,10 +23,12 @@ const generatePorts = (namePrefix: string, n: number) => {
 const flow: Flow = {
   nodes: Array.from(Array(1000).keys()).reduce((o, i) => {
     o[i] = {
-      x: Space + (W + Space) * Math.floor(i / ColSize),
-      y: Space + (H + Space) * (i % ColSize),
-      w: W,
-      h: H,
+      layout: {
+        x: Space + (W + Space) * Math.floor(i / ColSize),
+        y: Space + (H + Space) * (i % ColSize),
+        w: W,
+        h: H,
+      },
       title: `Component ${i}`,
       input: generatePorts("In", Math.round(Math.random() * 8) + 2),
       output: generatePorts("Out", Math.round(Math.random() * 8) + 2),

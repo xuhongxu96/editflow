@@ -27,8 +27,8 @@ export const Node = React.memo((props: NodeProps) => {
         output
     } = props;
 
-    const { x, y } = props.draftLayout || props;
-    const { w, h } = props.draftLayout || props;
+    const { x, y } = props.draftLayout || props.layout;
+    const { w, h } = props.draftLayout || props.layout;
 
     const myOnMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
         if (!selected) {

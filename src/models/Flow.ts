@@ -1,4 +1,4 @@
-import { Point, Size } from "./BasicTypes";
+import { Point, Size, Rect } from "./BasicTypes";
 
 export interface Port {
     type: string;
@@ -7,10 +7,7 @@ export interface Port {
 export type PortMap = { [name: string]: Port };
 
 export interface Node {
-    x: number;
-    y: number;
-    w: number;
-    h: number;
+    layout: Rect;
 
     title: string;
 

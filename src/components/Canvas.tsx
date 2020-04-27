@@ -95,8 +95,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                             selected={flow.selectedNodeIds.has(id)}
                             onMouseDown={e => { startMovingNode(e); }}
                         />);
-                    }
-                    ), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
+                    }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
 
                 {useMemo(() => Array.from(flow.selectedNodeIds.keys())
                     .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])

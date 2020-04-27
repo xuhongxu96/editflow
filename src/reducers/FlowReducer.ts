@@ -10,7 +10,7 @@ type DraftFlow = Draft<FlowState>;
 const reducers = {
     initQuadTree: (draft: DraftFlow, action: {}) => {
         Object.entries(draft.raw.nodes).forEach(([id, node]) => {
-            draft.nodeIdQuadTree.insert({ x: node.x, y: node.y, w: node.w, h: node.h }, id);
+            draft.nodeIdQuadTree.insert(node.layout, id);
         });
     },
     updateClientSize: (draft: DraftFlow, action: { clientSize: Basic.Size }) => {
@@ -35,8 +35,6 @@ const reducers = {
     updateOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
         draft.viewBound.x += action.delta.x;
         draft.viewBound.y += action.delta.y;
-        if (draft.viewBound.x < 0) draft.viewBound.x = 0;
-        if (draft.viewBound.y < 0) draft.viewBound.y = 0;
     },
     setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         draft.selectedNodeIds.clear();
@@ -65,20 +63,19 @@ const reducers = {
         draft.selectedNodeIds.forEach(id => {
             const node = draft.raw.nodes[id];
             draft.draftNodeLayout.set(id, {
-                x: node.x + action.offset.x,
-                y: node.y + action.offset.y,
-                w: node.w,
-                h: node.h
+                x: node.layout.x + action.offset.x,
+                y: node.layout.y + action.offset.y,
+                w: node.layout.w,
+                h: node.layout.h,
             })
         });
     },
     stopMoving: (draft: DraftFlow, action: { cancel: boolean }) => {
         if (!action.cancel) {
             draft.draftNodeLayout.forEach((layout, id) => {
-                draft.raw.nodes[id].x = layout.x;
-                draft.raw.nodes[id].y = layout.y;
-                draft.raw.nodes[id].w = layout.w;
-                draft.raw.nodes[id].h = layout.h;
+                draft.nodeIdQuadTree.remove(draft.raw.nodes[id].layout, id);
+                draft.raw.nodes[id].layout = layout;
+                draft.nodeIdQuadTree.insert(layout, id);
             });
         }
         draft.draftNodeLayout.clear();
