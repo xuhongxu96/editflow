@@ -2,9 +2,8 @@ import React from 'react';
 import { Canvas } from 'components/Canvas';
 import { Flow, NodeMap, PortMap } from 'models/Flow';
 import { toState } from 'states/FlowState';
-import { FlowContext, FlowDispatchContext } from 'contexts/FlowContext';
-import { useImmerReducer } from 'use-immer';
-import { FlowReducer } from 'reducers/FlowReducer';
+import { FlowProvider } from 'contexts/FlowContext';
+import { Toolbar } from 'components/Toolbar';
 
 const W = 120;
 const H = 40;
@@ -41,29 +40,12 @@ const flow: Flow = {
 const flowState = toState(flow);
 
 const App: React.FC = () => {
-  const [flow, dispatch] = useImmerReducer(FlowReducer, flowState);
-
   return (
     <div className='App'>
-      <FlowContext.Provider value={flow}>
-        <FlowDispatchContext.Provider value={dispatch}>
-
-          <div id="toolbar" style={{ margin: '8px 16px' }}>
-            <button onClick={() => dispatch({ type: 'setOffset', offset: { x: 0, y: 0 } })}>
-              Back to origin
-            </button>
-            <button onClick={() => dispatch({ type: 'setScale', scale: 1 })}>
-              x1
-            </button>
-            <button onClick={() => dispatch({ type: 'setScale', scale: 2 })}>
-              x2
-            </button>
-          </div>
-
-          <Canvas width='100%' height='600' />
-
-        </FlowDispatchContext.Provider>
-      </FlowContext.Provider>
+      <FlowProvider initialState={flowState}>
+        <Toolbar />
+        <Canvas width='100%' height='600' />
+      </FlowProvider>
     </div >
   );
 }

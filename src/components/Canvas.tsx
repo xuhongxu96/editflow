@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useContext } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Node } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
-import { FlowContext, FlowDispatchContext } from 'contexts/FlowContext';
+import { useFlowDispatch, useFlow, useMovingNode, useUpdatingVisibleNodes, useUpdatingViewOffsetByWheel as useUpdatingViewBoundByWheel } from 'contexts/FlowContext';
 import * as Flow from 'models/Flow';
-import { useEventListener, useMoving } from 'hooks';
-import { Offset } from 'models/BasicTypes';
+import { useEventListener } from 'hooks';
 
 export interface CanvasProps {
     width: string | number;
@@ -13,48 +12,17 @@ export interface CanvasProps {
 }
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
-    const flow = useContext(FlowContext);
-    const dispatch = useContext(FlowDispatchContext);
+    const flow = useFlow();
+    const dispatch = useFlowDispatch();
 
-    const [rootSize, rootRef, setRootSizeChanged] = useClientSize();
+    const rootRef = useRef<SVGSVGElement>(null);
+    const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
+    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientSize }), [rootClientSize, dispatch]);
 
-    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootSize }), [rootSize, dispatch]);
-    useEffect(() => { setRootSizeChanged(); }, [props.width, props.height, setRootSizeChanged]);
-
-    useEffect(() => dispatch({ type: 'initQuadTree' }), [dispatch]);
-    useEffect(() => dispatch({ type: 'updateNewlyVisibleNodes' }), [flow.viewBound, dispatch]);
-    useEffect(() => {
-        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 500);
-        return () => clearTimeout(timer);
-    }, [flow.viewBound, dispatch]);
-
+    useUpdatingVisibleNodes(flow.viewBound);
     useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
-
-    const [startMovingNode, stopMovingNode, onMovingNode] = useMoving(useCallback((offset: Offset) => {
-        dispatch({ type: 'moveSelectedNodes', offset: { x: offset.x / flow.scale, y: offset.y / flow.scale } });
-    }, [dispatch, flow.scale]));
-
-    useEventListener('mouseup', useCallback(() => {
-        stopMovingNode(false);
-        dispatch({ type: 'stopMovingNodes', cancel: false });
-    }, [stopMovingNode, dispatch]));
-
-    useEventListener('keydown', useCallback((e) => {
-        if (e.key === 'Escape') {
-            stopMovingNode(true);
-            dispatch({ type: 'stopMovingNodes', cancel: true });
-        }
-    }, [stopMovingNode, dispatch]))
-
-    const onWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
-        const factor = 0.3;
-        const delta = { x: factor * e.deltaX, y: factor * e.deltaY };
-        dispatch({
-            type: 'updateOffsetByDelta',
-            delta: delta,
-        });
-        e.stopPropagation();
-    }, [dispatch]);
+    const { startMovingNode, onMovingNode } = useMovingNode(flow.scale);
+    const updateViewBoundByWheel = useUpdatingViewBoundByWheel();
 
     return (
         <svg
@@ -62,7 +30,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             ref={rootRef}
             width={props.width}
             height={props.height}
-            onWheel={onWheel}
+            onWheel={e => updateViewBoundByWheel(e)}
             onMouseMove={e => { onMovingNode(e); }}
         >
             <g transform={`scale(${flow.scale})`}>

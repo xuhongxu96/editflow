@@ -1,9 +1,9 @@
-import React, { useContext, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import Style from './Node.module.css';
 import { PortBox } from './PortBox';
 import * as Flow from 'models/Flow';
 import { HandleBox } from './HandleBox';
-import { FlowDispatchContext } from 'contexts/FlowContext';
+import { useFlowDispatch } from 'contexts/FlowContext';
 import { Rect } from 'models/BasicTypes';
 
 export interface NodeProps extends Flow.Node {
@@ -15,7 +15,7 @@ export interface NodeProps extends Flow.Node {
 }
 
 export const Node = React.memo((props: NodeProps) => {
-    const dispatch = useContext(FlowDispatchContext)
+    const dispatch = useFlowDispatch();
 
     const {
         id,

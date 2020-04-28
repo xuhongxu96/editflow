@@ -66,9 +66,7 @@ function remove<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number)
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
         for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
             let currentNode = root[leftOrRight][topOrBottom];
-            if (currentNode) {
-                remove(currentNode, rect, data, resolution);
-            }
+            if (currentNode) remove(currentNode, rect, data, resolution);
         }
     }
 }
@@ -77,16 +75,14 @@ function getCoveredData<T>(node: Node<T>, cover: Basic.Rect, resolution: number)
     const { bound } = node;
 
     if (!isIntersected(bound, cover)) return new Set<T>();
-    if (isContained(cover, node.bound)
-        || (bound.w <= resolution && bound.h <= resolution)) return new Set<T>(node.data);
+    if (isContained(cover, node.bound) || (bound.w <= resolution && bound.h <= resolution))
+        return new Set<T>(node.data);
 
     const res = new Set<T>();
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
         for (const topOrBottom of ['top', 'bottom'] as TopOrBottom[]) {
             const currentNode = node[leftOrRight][topOrBottom];
-            if (currentNode) {
-                getCoveredData(currentNode, cover, resolution).forEach(o => res.add(o));
-            }
+            if (currentNode) getCoveredData(currentNode, cover, resolution).forEach(o => res.add(o));
         }
     }
 
@@ -169,7 +165,7 @@ export class QuadTree<T> {
         return Array.from(getCoveredData(this.root, cover, this.resolution));
     }
 
-    getBound() {
+    getRootBound() {
         return this.root.bound;
     }
 }

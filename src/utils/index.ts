@@ -22,14 +22,24 @@ export const expandRect = (r: Rect, margin: number): Rect => {
     };
 }
 
-export const limitRect = (r: Rect, limit: Rect) => {
-    if (r.x + r.w > limit.x + limit.w)
-        r.x = limit.x + limit.w - r.w;
-    if (r.x + r.h > limit.x + limit.h)
-        r.x = limit.x + limit.h - r.h;
+export const expandRectToContain = (r: Rect, toBeContained: Rect): Rect => {
+    if (r.x > toBeContained.x) r.x = toBeContained.x;
+    if (r.y > toBeContained.y) r.y = toBeContained.y;
+    if (r.x + r.w < toBeContained.x + toBeContained.w) r.w = toBeContained.x + toBeContained.w - r.x;
+    if (r.y + r.h < toBeContained.y + toBeContained.h) r.h = toBeContained.y + toBeContained.h - r.y;
+    return r;
+}
 
-    if (r.x < limit.x) r.x = limit.x;
-    if (r.y < limit.y) r.y = limit.y;
+export const limitRect = (r: Rect, limit: Rect) => {
+    if (r.x + r.w > limit.x + limit.w) {
+        if (limit.w < r.w) r.x = Math.max(0, limit.x);
+        else r.x = limit.x + limit.w - r.w;
+    } else if (r.x < limit.x) r.x = limit.x;
+
+    if (r.y + r.h > limit.y + limit.h) {
+        if (limit.h < r.h) r.y = Math.max(0, limit.y);
+        else r.y = limit.y + limit.h - r.h;
+    } else if (r.y < limit.y) r.y = limit.y;
 
     return r;
 }

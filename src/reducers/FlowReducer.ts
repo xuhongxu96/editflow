@@ -1,6 +1,6 @@
 import { FlowState } from "states/FlowState";
 import * as Basic from "models/BasicTypes";
-import { valueof, expandRect, isContained, limitRect } from "utils";
+import { valueof, expandRect, isContained, limitRect, expandRectToContain } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
 import { Dispatch } from "react";
@@ -8,23 +8,24 @@ import { Dispatch } from "react";
 type DraftFlow = Draft<FlowState>;
 
 const reducers = {
-    initQuadTree: (draft: DraftFlow, action: {}) => {
+    init: (draft: DraftFlow, action: {}) => {
         Object.entries(draft.raw.nodes).forEach(([id, node]) => {
             draft.nodeIdQuadTree.insert(node.layout, id);
+            draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
         });
     },
     setScale: (draft: DraftFlow, action: { scale: number }) => {
         draft.scale = action.scale;
     },
-    setOffset: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
+    setViewOffset: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
         draft.viewBound.x = action.offset.x;
         draft.viewBound.y = action.offset.y;
-        draft.viewBound = limitRect(draft.viewBound, draft.nodeIdQuadTree.getBound());
+        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, 24));
     },
-    updateOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
+    updateViewOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
         draft.viewBound.x += action.delta.x;
         draft.viewBound.y += action.delta.y;
-        draft.viewBound = limitRect(draft.viewBound, draft.nodeIdQuadTree.getBound());
+        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, 24));
     },
     updateClientSize: (draft: DraftFlow, action: { clientSize: Basic.Size }) => {
         draft.viewBound.w = action.clientSize.w;
@@ -56,8 +57,7 @@ const reducers = {
         action.ids.forEach(id => draft.selectedNodeIds.delete(id));
     },
     unselectAllNodes: (draft: DraftFlow, action: {}) => {
-        if (draft.selectedNodeIds.size > 0)
-            draft.selectedNodeIds.clear();
+        draft.selectedNodeIds.clear();
     },
     toggleNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => {
@@ -85,6 +85,7 @@ const reducers = {
                 draft.nodeIdQuadTree.remove(draft.raw.nodes[id].layout, id);
                 draft.raw.nodes[id].layout = layout;
                 draft.nodeIdQuadTree.insert(layout, id);
+                draft.nodeBound = expandRectToContain(draft.nodeBound, layout);
             });
         }
         draft.draftNodeLayout.clear();
