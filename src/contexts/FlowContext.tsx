@@ -4,7 +4,7 @@ import { FlowDispatch } from "reducers/FlowReducer";
 import { useImmerReducer } from 'use-immer';
 import { FlowReducer } from 'reducers/FlowReducer';
 import { useMoving, useEventListener } from "hooks";
-import { Offset, Rect } from "models/BasicTypes";
+import { Offset } from "models/BasicTypes";
 
 const FlowContext = React.createContext<FlowState>(EmptyFlowState);
 const FlowDispatchContext = React.createContext<FlowDispatch>(() => { })
@@ -25,7 +25,8 @@ export const FlowProvider: React.FC<React.PropsWithChildren<{ initialState: Flow
 export const useFlow = () => { return useContext(FlowContext); }
 export const useFlowDispatch = () => { return useContext(FlowDispatchContext); }
 
-export const useMovingNode = (scale: number) => {
+export const useMovingNode = () => {
+    const { scale } = useFlow();
     const dispatch = useFlowDispatch();
 
     // Correct the offset by current scale factor
@@ -50,27 +51,28 @@ export const useMovingNode = (scale: number) => {
     return { startMovingNode, stopMovingNode, onMovingNode }
 }
 
-export const useUpdatingVisibleNodes = (viewBound: Rect) => {
+export const useUpdateVisibleNodes = () => {
+    const { viewBound } = useFlow();
     const dispatch = useFlowDispatch();
 
     useEffect(() => dispatch({ type: 'updateNewlyVisibleNodes' }), [viewBound, dispatch]);
+
+    // After 500ms, newly visible nodes will be added as visible nodes, which will disable the entering animation.
     useEffect(() => {
         const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 500);
         return () => clearTimeout(timer);
     }, [viewBound, dispatch]);
 }
 
-export const useUpdatingViewOffsetByWheel = () => {
+export const useUpdateViewOffsetByDelta = () => {
     const dispatch = useFlowDispatch();
 
-    const onWheel = useCallback((e: React.WheelEvent<SVGSVGElement>) => {
+    return useCallback((e: { deltaX: number, deltaY: number }) => {
         const factor = 0.3;
         const delta = { x: factor * e.deltaX, y: factor * e.deltaY };
         dispatch({
             type: 'updateViewOffsetByDelta',
             delta: delta,
         });
-        e.stopPropagation();
     }, [dispatch]);
-    return onWheel;
 }

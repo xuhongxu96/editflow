@@ -43,6 +43,8 @@ export const Node = React.memo((props: NodeProps) => {
     }, [id, onMouseDown, selected, dispatch]);
 
     const myOnClick = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+        // No need to check if it is selected here, because when node is selected,
+        // it will be moved from visibleNodes to selectedNodes, and the click event won't be triggered.
         if (e.ctrlKey) {
             dispatch({ type: 'unselectNodes', ids: [id] });
         }

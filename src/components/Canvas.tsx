@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Node } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
-import { useFlowDispatch, useFlow, useMovingNode, useUpdatingVisibleNodes, useUpdatingViewOffsetByWheel as useUpdatingViewBoundByWheel } from 'contexts/FlowContext';
+import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpdateViewOffsetByDelta } from 'contexts/FlowContext';
 import * as Flow from 'models/Flow';
 import { useEventListener } from 'hooks';
 
@@ -19,10 +19,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
     useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientSize }), [rootClientSize, dispatch]);
 
-    useUpdatingVisibleNodes(flow.viewBound);
+    useUpdateVisibleNodes();
     useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
-    const { startMovingNode, onMovingNode } = useMovingNode(flow.scale);
-    const updateViewBoundByWheel = useUpdatingViewBoundByWheel();
+    const { startMovingNode, onMovingNode } = useMovingNode();
+    const updateViewOffsetByDelta = useUpdateViewOffsetByDelta();
 
     return (
         <svg
@@ -30,7 +30,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             ref={rootRef}
             width={props.width}
             height={props.height}
-            onWheel={e => updateViewBoundByWheel(e)}
+            onWheel={e => updateViewOffsetByDelta(e)}
             onMouseMove={e => { onMovingNode(e); }}
         >
             <g transform={`scale(${flow.scale})`}>
