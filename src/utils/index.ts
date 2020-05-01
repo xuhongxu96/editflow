@@ -31,15 +31,19 @@ export const expandRectToContain = (r: Rect, toBeContained: Rect): Rect => {
 }
 
 export const limitRect = (r: Rect, limit: Rect) => {
-    if (r.x + r.w > limit.x + limit.w) {
-        if (limit.w < r.w) r.x = Math.max(0, limit.x);
-        else r.x = limit.x + limit.w - r.w;
-    } else if (r.x < limit.x) r.x = limit.x;
+    // Because limit rect has a padding, when limit right < view width,
+    // it will force the view origin change to (-paddingW, -paddingH).
+    // The following 2 lines make (0, 0) possible to be view origin. 
+    if (r.w > limit.x + limit.w) limit.w = r.w - limit.x;
+    if (r.h > limit.y + limit.h) limit.h = r.h - limit.y;
 
-    if (r.y + r.h > limit.y + limit.h) {
-        if (limit.h < r.h) r.y = Math.max(0, limit.y);
-        else r.y = limit.y + limit.h - r.h;
-    } else if (r.y < limit.y) r.y = limit.y;
+    if (r.x + r.w > limit.x + limit.w)
+        r.x = limit.x + limit.w - r.w;
+    else if (r.x < limit.x) r.x = limit.x;
+
+    if (r.y + r.h > limit.y + limit.h)
+        r.y = limit.y + limit.h - r.h;
+    else if (r.y < limit.y) r.y = limit.y;
 
     return r;
 }
