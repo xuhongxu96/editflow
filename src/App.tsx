@@ -45,12 +45,12 @@ const flowState = toState(flow);
 const App: React.FC = () => {
   return (
     <div className='App'>
-      <FlowProvider initialState={flowState}>
-        <CanvasStyleProvider>
+      <CanvasStyleProvider>
+        <FlowProvider initialState={flowState}>
           <Canvas width='100%' height='600' />
           <Toolbar />
-        </CanvasStyleProvider>
-      </FlowProvider>
+        </FlowProvider>
+      </CanvasStyleProvider>
     </div >
   );
 }

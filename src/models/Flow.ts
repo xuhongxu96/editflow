@@ -1,4 +1,4 @@
-import { Point, Size, Rect } from "./BasicTypes";
+import { Rect } from "./BasicTypes";
 
 export interface Port {
     type: string;

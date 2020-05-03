@@ -3,18 +3,12 @@ import * as Basic from "models/BasicTypes";
 import { valueof, expandRect, isContained, limitRect, expandRectToContain } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
-import { Dispatch, useContext } from "react";
-import { CanvasStyleContext, CanvasStyle } from "contexts/CanvasStyleContext";
+import { Dispatch } from "react";
+import { CanvasStyle } from "contexts/CanvasStyleContext";
 
 type DraftFlow = Draft<FlowState>;
 
 const reducers = {
-    init: (draft: DraftFlow, action: {}) => {
-        Object.entries(draft.raw.nodes).forEach(([id, node]) => {
-            draft.nodeIdQuadTree.insert(node.layout, id);
-            draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
-        });
-    },
     setScale: (draft: DraftFlow, action: { scale: number }) => {
         draft.scale = action.scale;
     },
@@ -110,7 +104,8 @@ const reducers = {
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: { type: K } & Parameters<typeof reducers[K]>[1] }>;
 export type FlowDispatch = Dispatch<FlowAction>;
 
-export const FlowReducer: Reducer<FlowState, FlowAction> = (draft: Draft<FlowState>, action: FlowAction) => {
-    const style = useContext(CanvasStyleContext);
-    return reducers[action.type](draft, action as any, style);
+export const makeFlowReducer = (style: CanvasStyle) => {
+    return ((draft: Draft<FlowState>, action: FlowAction) => {
+        return reducers[action.type](draft, action as any, style);
+    }) as Reducer<FlowState, FlowAction>;
 }

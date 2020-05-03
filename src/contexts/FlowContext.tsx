@@ -2,16 +2,17 @@ import React, { useContext, useEffect, useCallback } from "react";
 import { EmptyFlowState, FlowState } from "states/FlowState";
 import { FlowDispatch } from "reducers/FlowReducer";
 import { useImmerReducer } from 'use-immer';
-import { FlowReducer } from 'reducers/FlowReducer';
+import { makeFlowReducer } from 'reducers/FlowReducer';
 import { useMoving, useEventListener } from "hooks";
 import { Offset } from "models/BasicTypes";
+import { CanvasStyleContext } from "./CanvasStyleContext";
 
 const FlowContext = React.createContext<FlowState>(EmptyFlowState);
 const FlowDispatchContext = React.createContext<FlowDispatch>(() => { })
 
 export const FlowProvider: React.FC<React.PropsWithChildren<{ initialState: FlowState }>> = (props) => {
-    const [flow, dispatch] = useImmerReducer(FlowReducer, props.initialState);
-    useEffect(() => dispatch({ type: 'init' }), [dispatch]);
+    const canvasStyle = useContext(CanvasStyleContext);
+    const [flow, dispatch] = useImmerReducer(makeFlowReducer(canvasStyle), props.initialState);
 
     return (
         <FlowDispatchContext.Provider value={dispatch}>

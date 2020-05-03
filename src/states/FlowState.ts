@@ -1,6 +1,7 @@
 import { Flow } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, EmptyRect } from 'models/BasicTypes';
+import { expandRectToContain } from 'utils';
 
 export interface FlowState {
     raw: Flow;
@@ -42,6 +43,11 @@ export const toState = (flow: Flow) => {
         ...EmptyFlowState,
         raw: flow,
     };
+
+    Object.entries(flow.nodes).forEach(([id, node]) => {
+        res.nodeIdQuadTree.insert(node.layout, id);
+        res.nodeBound = expandRectToContain(res.nodeBound, node.layout);
+    });
 
     return res;
 }
