@@ -1,11 +1,12 @@
 import React from 'react';
 import { useFlowDispatch } from 'contexts/FlowContext';
+import Style from './Toolbar.module.css';
 
 export const Toolbar: React.FC = () => {
     const dispatch = useFlowDispatch();
 
     return (
-        <div id="toolbar" style={{ margin: '8px 16px' }}>
+        <div className={Style.toolbar} id="toolbar">
             <button onClick={() => dispatch({ type: 'setViewOffset', offset: { x: 0, y: 0 } })}>
                 Back to origin
             </button>
@@ -15,6 +16,6 @@ export const Toolbar: React.FC = () => {
             <button onClick={() => dispatch({ type: 'setScale', scale: 2 })}>
                 x2
             </button>
-        </div>
+        </div >
     );
 }

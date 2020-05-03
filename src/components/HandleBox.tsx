@@ -26,7 +26,7 @@ export interface HandleBoxProps {
     height: number | string;
     visible?: boolean;
 
-    onHandleMouseDown: (e: React.MouseEvent, direction: HandleDirection) => void;
+    onHandleMouseDown?: (e: React.MouseEvent, direction: HandleDirection) => void;
 }
 
 export const HandleBox = React.memo<HandleBoxProps>((props) => {
@@ -54,7 +54,7 @@ export const HandleBox = React.memo<HandleBoxProps>((props) => {
                     x={p.x}
                     y={p.y}
                     onMouseDown={e => {
-                        onHandleMouseDown(e, p.direction);
+                        onHandleMouseDown && onHandleMouseDown(e, p.direction);
                         e.stopPropagation();
                     }}>
                     <rect

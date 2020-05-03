@@ -51,6 +51,32 @@ export const useMovingNode = () => {
     return { startMovingNode, stopMovingNode, onMovingNode }
 }
 
+export const useResizingNode = () => {
+    const { scale } = useFlow();
+    const dispatch = useFlowDispatch();
+
+    // Correct the offset by current scale factor
+    const [startResizingNode, stopResizingNode, onResizingNode] = useMoving(useCallback((offset: Offset) => {
+        dispatch({ type: 'resizeSelectedNodes', offset: { x: offset.x / scale, y: offset.y / scale } });
+    }, [dispatch, scale]));
+
+    // Mouse up will stop and confirm resizing to update the draft layout to real layout
+    useEventListener('mouseup', useCallback(() => {
+        stopResizingNode(false);
+        dispatch({ type: 'stopResizingNodes', cancel: false });
+    }, [stopResizingNode, dispatch]));
+
+    useEventListener('keydown', useCallback((e) => {
+        // Escape will cancel the current moving and restore the previous position
+        if (e.key === 'Escape') {
+            stopResizingNode(true);
+            dispatch({ type: 'stopResizingNodes', cancel: true });
+        }
+    }, [stopResizingNode, dispatch]))
+
+    return { startResizingNode, stopResizingNode, onResizingNode }
+}
+
 export const useUpdateVisibleNodes = () => {
     const { viewBound } = useFlow();
     const dispatch = useFlowDispatch();

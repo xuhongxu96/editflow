@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { Node } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
-import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpdateViewOffsetByDelta } from 'contexts/FlowContext';
+import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpdateViewOffsetByDelta, useResizingNode } from 'contexts/FlowContext';
 import * as Flow from 'models/Flow';
 import { useEventListener } from 'hooks';
 
@@ -22,6 +22,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     useUpdateVisibleNodes();
     useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
     const { startMovingNode, onMovingNode } = useMovingNode();
+    const { startResizingNode, onResizingNode } = useResizingNode();
     const updateViewOffsetByDelta = useUpdateViewOffsetByDelta();
 
     return (
@@ -31,8 +32,14 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             width={props.width}
             height={props.height}
             onWheel={e => updateViewOffsetByDelta(e)}
-            onMouseMove={e => { onMovingNode(e); }}
+            onMouseMove={e => { onMovingNode(e); onResizingNode(e); }}
         >
+            <defs>
+                <filter id="blur0" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                </filter>
+            </defs>
+
             <g transform={`scale(${flow.scale})`}>
                 <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
                     {useMemo(() => flow.newlyVisibleNodeIds
@@ -46,9 +53,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 animated={true}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
                             />);
                         }
-                        ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
+                        ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
 
                     {useMemo(() => Array.from(flow.visibleNodeIds.keys())
                         .filter(i => !flow.selectedNodeIds.has(i))
@@ -61,8 +69,9 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 animated={false}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
                             />);
-                        }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode])}
+                        }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
 
                     {useMemo(() => Array.from(flow.selectedNodeIds.keys())
                         .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
@@ -74,8 +83,9 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 draftLayout={flow.draftNodeLayout.get(id)}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
                             />
-                        ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode])}
+                        ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode, startResizingNode])}
                 </g>
             </g>
         </svg>

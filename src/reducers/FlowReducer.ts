@@ -3,7 +3,8 @@ import * as Basic from "models/BasicTypes";
 import { valueof, expandRect, isContained, limitRect, expandRectToContain } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
-import { Dispatch } from "react";
+import { Dispatch, useContext } from "react";
+import { CanvasStyleContext, CanvasStyle } from "contexts/CanvasStyleContext";
 
 type DraftFlow = Draft<FlowState>;
 
@@ -17,15 +18,15 @@ const reducers = {
     setScale: (draft: DraftFlow, action: { scale: number }) => {
         draft.scale = action.scale;
     },
-    setViewOffset: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
+    setViewOffset: (draft: DraftFlow, action: { offset: Basic.Offset }, style: CanvasStyle) => {
         draft.viewBound.x = action.offset.x;
         draft.viewBound.y = action.offset.y;
-        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, 24));
+        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, style.margin));
     },
-    updateViewOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }) => {
+    updateViewOffsetByDelta: (draft: DraftFlow, action: { delta: Basic.Offset }, style: CanvasStyle) => {
         draft.viewBound.x += action.delta.x;
         draft.viewBound.y += action.delta.y;
-        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, 24));
+        draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, style.margin));
     },
     updateClientSize: (draft: DraftFlow, action: { clientSize: Basic.Size }) => {
         draft.viewBound.w = action.clientSize.w;
@@ -90,11 +91,26 @@ const reducers = {
         }
         draft.draftNodeLayout.clear();
     },
+    resizeSelectedNodes: (draft: DraftFlow, action: { offset: Basic.Offset }, style: CanvasStyle) => {
+        draft.selectedNodeIds.forEach(id => {
+            const node = draft.raw.nodes[id];
+            draft.draftNodeLayout.set(id, {
+                x: node.layout.x,
+                y: node.layout.y,
+                w: Math.max(style.minNodeSize.w, node.layout.w + action.offset.x),
+                h: Math.max(style.minNodeSize.h, node.layout.h + action.offset.y),
+            })
+        });
+    },
+    stopResizingNodes: (draft: DraftFlow, action: { cancel: boolean }) => {
+        reducers.stopMovingNodes(draft, action);
+    },
 };
 
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: { type: K } & Parameters<typeof reducers[K]>[1] }>;
 export type FlowDispatch = Dispatch<FlowAction>;
 
 export const FlowReducer: Reducer<FlowState, FlowAction> = (draft: Draft<FlowState>, action: FlowAction) => {
-    return reducers[action.type](draft, action as any);
+    const style = useContext(CanvasStyleContext);
+    return reducers[action.type](draft, action as any, style);
 }

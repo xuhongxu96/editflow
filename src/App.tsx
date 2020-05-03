@@ -4,11 +4,14 @@ import { Flow, NodeMap, PortMap } from 'models/Flow';
 import { toState } from 'states/FlowState';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
+import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
 
 const W = 120;
 const H = 40;
 const Space = 10;
 const RowSize = 10;
+const OffsetX = 0;
+const OffsetY = 48;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).reduce((o, i) => {
@@ -23,8 +26,8 @@ const flow: Flow = {
   nodes: Array.from(Array(1000).keys()).reduce((o, i) => {
     o[i] = {
       layout: {
-        x: Space + (W + Space) * (i % RowSize),
-        y: Space + (H + Space) * Math.floor(i / RowSize),
+        x: OffsetX + Space + (W + Space) * (i % RowSize),
+        y: OffsetY + Space + (H + Space) * Math.floor(i / RowSize),
         w: W,
         h: H,
       },
@@ -43,8 +46,10 @@ const App: React.FC = () => {
   return (
     <div className='App'>
       <FlowProvider initialState={flowState}>
-        <Toolbar />
-        <Canvas width='100%' height='600' />
+        <CanvasStyleProvider>
+          <Canvas width='100%' height='600' />
+          <Toolbar />
+        </CanvasStyleProvider>
       </FlowProvider>
     </div >
   );

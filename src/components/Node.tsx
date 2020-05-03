@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import Style from './Node.module.css';
 import { PortBox } from './PortBox';
 import * as Flow from 'models/Flow';
-import { HandleBox } from './HandleBox';
+import { HandleBox, HandleDirection } from './HandleBox';
 import { useFlowDispatch } from 'contexts/FlowContext';
 import { Rect } from 'models/BasicTypes';
 
@@ -12,6 +12,7 @@ export interface NodeProps extends Flow.Node {
     selected: boolean;
     animated?: boolean;
     onMouseDown?: (e: React.MouseEvent<SVGSVGElement>) => void;
+    onHandleMouseDown?: (e: React.MouseEvent, direction: HandleDirection) => void;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -20,15 +21,15 @@ export const Node = React.memo((props: NodeProps) => {
     const {
         id,
         onMouseDown,
+        onHandleMouseDown,
         animated,
         selected,
         title,
         input,
-        output
+        output,
     } = props;
 
-    const { x, y } = props.draftLayout || props.layout;
-    const { w, h } = props.draftLayout || props.layout;
+    const { x, y, w, h } = props.draftLayout || props.layout;
 
     const myOnMouseDown = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
         if (!selected) {
@@ -78,7 +79,7 @@ export const Node = React.memo((props: NodeProps) => {
                 y="0"
                 width="100%"
                 height="100%"
-                onHandleMouseDown={() => { }}
+                onHandleMouseDown={onHandleMouseDown}
             />}
         </svg >
     );

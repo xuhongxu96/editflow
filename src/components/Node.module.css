@@ -28,6 +28,12 @@
     fill: #6699CC;
 }
 
+.node:global(.draft) .nodeRect {
+    fill: #0006;
+    animation-duration: 0.4s;
+    animation-name: fadeIn;
+}
+
 .nodeText {
     cursor: default;
     text-anchor: middle;
