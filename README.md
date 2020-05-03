@@ -4,6 +4,15 @@ DAG workflow editor.
 
 ## Features
 
+### Easy Control
+
+- Move and scale freely
+  - Programmatically or in UI
+- Multiple selection by holding `Ctrl`
+  - Move and resize together
+
+![Easy control](demo/easy-control.gif)
+
 ### Lazy Loading
 
 We can support many nodes thanks to lazy loading.  
