@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import Style from './PortBox.module.css';
-import { PortState } from '../states/FlowState';
+import * as Flow from 'models/Flow';
 
 export interface PortProps {
     className: string;
@@ -11,7 +11,7 @@ export interface PortProps {
     onMouseDown: (e: React.MouseEvent) => void;
 }
 
-export const Port: React.FC<PortProps> = (props) => {
+export const Port = React.memo((props: PortProps) => {
     return (
         <circle
             className={props.className}
@@ -22,16 +22,14 @@ export const Port: React.FC<PortProps> = (props) => {
             onMouseDown={props.onMouseDown}
         />
     );
-}
+});
 
-export interface PortBoxProps {
-    input: Map<string, PortState>;
-    output: Map<string, PortState>;
+export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {
-    const inputOffsetUnit = 100 / (props.input.size + 1);
-    const outputOffsetUnit = 100 / (props.output.size + 1);
+    const inputOffsetUnit = 100 / (Object.keys(props.input).length + 1);
+    const outputOffsetUnit = 100 / (Object.keys(props.output).length + 1);
 
     const onPortMouseDown = useCallback(e => {
         e.stopPropagation();
@@ -43,7 +41,7 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
             className={Style.portBox}
         >
 
-            {Array.from(props.input.keys()).map((k, i) => (
+            {Object.keys(props.input).map((k, i) => (
                 <Port
                     className={Style.inputPort}
                     key={k}
@@ -55,7 +53,7 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                 />
             ))}
 
-            {Array.from(props.output.keys()).map((k, i) => (
+            {Object.keys(props.output).map((k, i) => (
                 <Port
                     className={Style.outputPort}
                     key={k}

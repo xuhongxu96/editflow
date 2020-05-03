@@ -1,188 +1,93 @@
-import React, { useState, useCallback, useReducer } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Node } from './Node';
-import { FlowState, NodeState } from '../states/FlowState';
-import { useEventListener, useMoving, RectLimit } from '../hooks';
-import { FlowReducer } from '../reducers/FlowReducer';
-import { HandleBox, HandleDirection } from './HandleBox';
 import { useClientSize } from 'hooks/useClientSize';
-import { FlowContext } from 'contexts/FlowContext';
-import { Rect, Offset } from 'models/BasicTypes';
-import { isIntersected } from 'utils';
-
-const MinNodeWidth = 100;
-const MinNodeHeight = 40;
+import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpdateViewOffsetByDelta, useResizingNode } from 'contexts/FlowContext';
+import * as Flow from 'models/Flow';
+import { useEventListener } from 'hooks';
 
 export interface CanvasProps {
     width: string | number;
     height: string | number;
     readonly?: boolean;
-    flow: FlowState;
 }
 
 export const Canvas: React.FC<CanvasProps> = (props) => {
-    const [clientSize, rootRef] = useClientSize();
-    const [flow, dispatch] = useReducer(FlowReducer, props.flow);
+    const flow = useFlow();
+    const dispatch = useFlowDispatch();
 
-    const calculateNodeWithRealPosition = (node?: NodeState) => {
-        if (node === undefined) return undefined;
-        return { raw: node, x: node.x + flow.offset.x, y: node.y + flow.offset.y };
-    };
-    const selectedNode = calculateNodeWithRealPosition(flow.nodes.get(flow.selectedNodeId || ""));
+    const rootRef = useRef<SVGSVGElement>(null);
+    const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
+    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientSize }), [rootClientSize, dispatch]);
 
-    const cancelSelectedNode = useCallback(() => dispatch({ type: 'setSelectedNodeId', nodeId: undefined }), []);
-    useEventListener('mousedown', cancelSelectedNode);
-
-    const [movingHandleDirection, setMovingHandleDirection] = useState<HandleDirection>();
-
-    const onMovingNodeOffsetUpdated = useCallback((offset: Offset) => {
-        if (flow.selectedNodeId) {
-            dispatch({
-                type: 'updateNodeLayoutByOffset',
-                nodeId: flow.selectedNodeId,
-                offset: offset,
-            });
-        }
-    }, [flow.selectedNodeId]);
-
-    const [startMovingNode, cancelMovingNode, onMovingNode] = useMoving(onMovingNodeOffsetUpdated);
-
-    const onMovingHandleOffsetUpdated = useCallback((offset: Offset) => {
-        if (flow.selectedNodeId && movingHandleDirection) {
-            const getLayoutOffset = (): Partial<Rect> => {
-                switch (movingHandleDirection) {
-                    case 'left-top':
-                        return { x: offset.x, y: offset.y, w: -offset.x, h: -offset.y };
-                    case 'left-middle':
-                        return { x: offset.x, w: -offset.x };
-                    case 'left-bottom':
-                        return { x: offset.x, w: -offset.x, h: offset.y };
-                    case 'right-top':
-                        return { y: offset.y, w: offset.x, h: -offset.y };
-                    case 'right-middle':
-                        return { w: offset.x };
-                    case 'right-bottom':
-                        return { w: offset.x, h: offset.y };
-                }
-            };
-            dispatch({
-                type: 'updateNodeLayoutByOffset',
-                nodeId: flow.selectedNodeId,
-                offset: getLayoutOffset(),
-            });
-        }
-    }, [flow.selectedNodeId, movingHandleDirection]);
-
-    const [startMovingHandle, cancelMovingHandle, onMovingHandle] = useMoving(onMovingHandleOffsetUpdated);
-
-    const onAllMoving = useCallback((e) => {
-        onMovingNode(e);
-        onMovingHandle(e);
-    }, [onMovingNode, onMovingHandle]);
-
-    const cancelAllMoving = useCallback(() => {
-        cancelMovingNode();
-        cancelMovingHandle();
-    }, [cancelMovingNode, cancelMovingHandle]);
-    useEventListener('mouseup', cancelAllMoving);
-
-    const onNodeMouseDown = useCallback((e: React.MouseEvent<Element, MouseEvent>, node: NodeState) => {
-        dispatch({
-            type: 'setSelectedNodeId',
-            nodeId: node.id,
-        });
-        startMovingNode({ x: e.pageX, y: e.pageY });
-    }, [startMovingNode]);
-
-    const onHandleMouseDown = useCallback((e: React.MouseEvent<Element, MouseEvent>, direction: HandleDirection) => {
-        if (selectedNode === undefined) return;
-
-        setMovingHandleDirection(direction);
-
-        const getLimit = (): RectLimit => {
-            switch (direction) {
-                case 'left-top':
-                    return {
-                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.raw.h - MinNodeHeight,
-                    };
-                case 'left-middle':
-                    return {
-                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
-                    };
-                case 'left-bottom':
-                    return {
-                        x2: selectedNode.x + selectedNode.raw.w - MinNodeWidth,
-                        y1: selectedNode.y + MinNodeHeight,
-                    };
-                case 'right-top':
-                    return {
-                        x1: selectedNode.x + MinNodeWidth,
-                        y2: selectedNode.y + selectedNode.raw.h - MinNodeHeight,
-                    };
-                case 'right-middle':
-                    return {
-                        x1: selectedNode.x + MinNodeWidth,
-                    };
-                case 'right-bottom':
-                    return {
-                        x1: selectedNode.x + MinNodeWidth,
-                        y1: selectedNode.y + MinNodeHeight,
-                    };
-            }
-        };
-
-        startMovingHandle({ x: e.pageX, y: e.pageY, }, getLimit());
-    }, [selectedNode, startMovingHandle, setMovingHandleDirection]);
-
-    const onWheel = useCallback(e => {
-        const factor = 1;
-        const delta = { x: -factor * e.deltaX, y: -factor * e.deltaY };
-        dispatch({
-            type: 'updateOffsetByDelta',
-            delta: delta,
-        });
-    }, []);
+    useUpdateVisibleNodes();
+    useEventListener('mousedown', () => { dispatch({ type: 'unselectAllNodes' }) });
+    const { startMovingNode, onMovingNode } = useMovingNode();
+    const { startResizingNode, onResizingNode } = useResizingNode();
+    const updateViewOffsetByDelta = useUpdateViewOffsetByDelta();
 
     return (
-        <FlowContext.Provider value={{ flow, dispatch }}>
-            <svg
-                xmlns='http://www.w3.org/2000/svg'
-                ref={rootRef}
-                width={props.width}
-                height={props.height}
-                onMouseMove={onAllMoving}
-                onWheel={onWheel}
-            >
+        <svg
+            xmlns='http://www.w3.org/2000/svg'
+            ref={rootRef}
+            width={props.width}
+            height={props.height}
+            onWheel={e => updateViewOffsetByDelta(e)}
+            onMouseMove={e => { onMovingNode(e); onResizingNode(e); }}
+        >
+            <defs>
+                <filter id="blur0" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
+                </filter>
+            </defs>
 
-                {Array.from(flow.nodes.values())
-                    .filter(o => o.id !== flow.selectedNodeId)
-                    .map(o => calculateNodeWithRealPosition(o)!!)
-                    .filter(o => isIntersected(
-                        { x: o.x, y: o.y, w: o.raw.w, h: o.raw.h },
-                        { x: 0, y: 0, ...clientSize }
-                    ))
-                    .concat(selectedNode || []) // Move selected Node to topmost
-                    .map(o =>
-                        <Node
-                            key={o.raw.id}
-                            {...o.raw}
-                            selected={flow.selectedNodeId === o.raw.id}
-                            onMouseDown={onNodeMouseDown}
-                            x={o.x}
-                            y={o.y}
-                        />
-                    )}
+            <g transform={`scale(${flow.scale})`}>
+                <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
+                    {useMemo(() => flow.newlyVisibleNodeIds
+                        .filter(i => !flow.selectedNodeIds.has(i))
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) => {
+                            return (<Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                animated={true}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
+                            />);
+                        }
+                        ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
 
-                {selectedNode &&
-                    <HandleBox
-                        x={selectedNode.x}
-                        y={selectedNode.y}
-                        width={selectedNode.raw.w}
-                        height={selectedNode.raw.h}
-                        onHandleMouseDown={onHandleMouseDown}
-                    />
-                }
-            </svg>
-        </FlowContext.Provider>
+                    {useMemo(() => Array.from(flow.visibleNodeIds.keys())
+                        .filter(i => !flow.selectedNodeIds.has(i))
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) => {
+                            return (<Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                animated={false}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
+                            />);
+                        }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
+
+                    {useMemo(() => Array.from(flow.selectedNodeIds.keys())
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) =>
+                            <Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                draftLayout={flow.draftNodeLayout.get(id)}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
+                            />
+                        ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode, startResizingNode])}
+                </g>
+            </g>
+        </svg>
     );
 }

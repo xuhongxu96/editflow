@@ -2,11 +2,22 @@
     overflow: visible;
 }
 
+.node:global(.animated) {
+    animation-duration: 0.4s;
+    animation-name: fadeIn;
+}
+
 .nodeRect {
     fill: #77AAFFFF;
     stroke: black;
     stroke-width: 0.5px;
     transition: fill 0.2s;
+    transform-origin: center;
+}
+
+.node:global(.animated) .nodeRect {
+    animation-duration: 0.3s;
+    animation-name: scaleIn;
 }
 
 .node:hover .nodeRect {
@@ -17,9 +28,35 @@
     fill: #6699CC;
 }
 
+.node:global(.draft) .nodeRect {
+    fill: #0006;
+    animation-duration: 0.4s;
+    animation-name: fadeIn;
+}
+
 .nodeText {
     cursor: default;
     text-anchor: middle;
     dominant-baseline: middle;
     user-select: none;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.5);
+    }
+
+    to {
+        transform: scale(1);
+    }
 }
