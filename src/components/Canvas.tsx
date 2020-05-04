@@ -4,6 +4,8 @@ import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpdateViewOffsetByDelta, useResizingNode } from 'contexts/FlowContext';
 import * as Flow from 'models/Flow';
 import { useEventListener } from 'hooks';
+import { Edge } from './Edge';
+import { EdgeState } from 'states/FlowState';
 
 export interface CanvasProps {
     width: string | number;
@@ -72,6 +74,16 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 onHandleMouseDown={e => { startResizingNode(e); }}
                             />);
                         }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
+
+                    {useMemo(() => Array.from(Array.from(flow.visibleNodeIds.keys())
+                        .reduce((p, nodeId) => { flow.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>()).keys())
+                        .map(edgeId => [edgeId, flow.edgeStateMap.get(edgeId)!] as [string, EdgeState])
+                        .map(([id, edge]) => (
+                            <Edge
+                                key={id}
+                                {...edge}
+                            />)
+                        ), [flow.visibleNodeIds, flow.nodeEdgeMap, flow.edgeStateMap])}
 
                     {useMemo(() => Array.from(flow.selectedNodeIds.keys())
                         .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])

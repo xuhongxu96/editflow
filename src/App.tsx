@@ -1,6 +1,6 @@
 import React from 'react';
 import { Canvas } from 'components/Canvas';
-import { Flow, NodeMap, PortMap } from 'models/Flow';
+import { Flow, NodeMap, EdgeMap } from 'models/Flow';
 import { toState } from 'states/FlowState';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
@@ -12,32 +12,44 @@ const Space = 10;
 const RowSize = 10;
 const OffsetX = 0;
 const OffsetY = 48;
+const NodeCount = 500;
+const EdgeCount = 100;
 
 const generatePorts = (namePrefix: string, n: number) => {
-  return Array.from(Array(n).keys()).reduce((o, i) => {
-    o[`${namePrefix} ${i}`] = {
-      type: 'null',
-    };
-    return o;
-  }, {} as PortMap);
+  return Array.from(Array(n).keys()).map((_, i) => ({
+    name: `${namePrefix} ${i}`,
+    type: 'null',
+  }));
 }
 
 const flow: Flow = {
-  nodes: Array.from(Array(1000).keys()).reduce((o, i) => {
-    o[i] = {
+  nodes: Array.from(Array(NodeCount).keys()).reduce((o, i) => {
+    o[`node-${i}`] = {
       layout: {
         x: OffsetX + Space + (W + Space) * (i % RowSize),
-        y: OffsetY + Space + (H + Space) * Math.floor(i / RowSize),
+        y: OffsetY + Space + (H + Space) * Math.trunc(i / RowSize),
         w: W,
         h: H,
       },
       title: `Component ${i}`,
-      input: generatePorts("In", Math.round(Math.random() * 8) + 2),
-      output: generatePorts("Out", Math.round(Math.random() * 8) + 2),
+      input: generatePorts("In", Math.trunc(Math.random() * 8) + 2),
+      output: generatePorts("Out", Math.trunc(Math.random() * 8) + 2),
     };
     return o;
   }, {} as NodeMap),
-  edges: {},
+  edges: Array.from(Array(EdgeCount).keys()).reduce((o, i) => {
+    o[`edge-${i}`] = {
+      start: {
+        nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
+        portName: `Out ${Math.trunc(Math.random() * 2)}`,
+      },
+      end: {
+        nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
+        portName: `In ${Math.trunc(Math.random() * 2)}`,
+      },
+    };
+    return o;
+  }, {} as EdgeMap),
 };
 
 const flowState = toState(flow);

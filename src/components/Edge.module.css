@@ -1,0 +1,11 @@
+.edge {
+    stroke: #0005;
+    stroke-width: 2px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.edge:hover {
+    stroke: #0008;
+    stroke-width: 3px;
+}

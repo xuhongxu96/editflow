@@ -28,7 +28,7 @@ export const Port = React.memo((props: PortProps) => {
 });
 
 export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
-    onPortMouseDown?: (e: React.MouseEvent, type: 'input' | 'output', key: string, index: number) => void;
+    onPortMouseDown?: (e: React.MouseEvent, type: 'input' | 'output', key: Flow.Port, index: number) => void;
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {
@@ -41,33 +41,33 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
             className={Style.portBox}
         >
 
-            {Object.keys(props.input).map((k, i) => (
+            {props.input.map((port, i) => (
                 <Port
                     className={Style.inputPort}
-                    key={k}
-                    title={k}
+                    key={port.name}
+                    title={port.name}
                     x={`${inputOffsetUnit * (i + 1)}%`}
                     y="0"
                     r={3}
                     cursor="pointer"
                     onMouseDown={e => {
-                        props.onPortMouseDown && props.onPortMouseDown(e, 'input', k, i);
+                        props.onPortMouseDown && props.onPortMouseDown(e, 'input', port, i);
                         e.stopPropagation();
                     }}
                 />
             ))}
 
-            {Object.keys(props.output).map((k, i) => (
+            {props.output.map((port, i) => (
                 <Port
                     className={Style.outputPort}
-                    key={k}
-                    title={k}
+                    key={port.name}
+                    title={port.name}
                     x={`${outputOffsetUnit * (i + 1)}%`}
                     y="100%"
                     r={3}
                     cursor="pointer"
                     onMouseDown={e => {
-                        props.onPortMouseDown && props.onPortMouseDown(e, 'output', k, i);
+                        props.onPortMouseDown && props.onPortMouseDown(e, 'output', port, i);
                         e.stopPropagation();
                     }}
                 />

@@ -1,18 +1,17 @@
 import { Rect } from "./BasicTypes";
 
 export interface Port {
+    name: string;
     type: string;
 }
-
-export type PortMap = { [name: string]: Port };
 
 export interface Node {
     layout: Rect;
 
     title: string;
 
-    input: PortMap;
-    output: PortMap;
+    input: Port[];
+    output: Port[];
 }
 
 export interface NodePort {
