@@ -1,11 +1,17 @@
 .edge {
     stroke: #0005;
-    stroke-width: 2px;
+    stroke-width: 3px;
     transition: all 0.2s;
     cursor: pointer;
 }
 
 .edge:hover {
-    stroke: #0008;
+    stroke: #000a;
+    stroke-width: 3px;
+    filter: url(#blur0);
+}
+
+.edge:global(.selected) {
+    stroke: #0009;
     stroke-width: 3px;
 }

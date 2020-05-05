@@ -20,6 +20,12 @@ In the demo below, there are 10K nodes.
 
 ![Lazy Loading 10K Nodes](demo/lazy-loading.gif)
 
+### Focus on Selected
+
+It will blur the unselected nodes and let you focus on the selected ones.
+
+![Blur unselected](demo/blur-unselected.gif)
+
 ---
 
 ## Readme from CRA

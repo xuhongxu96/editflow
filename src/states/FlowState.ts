@@ -38,6 +38,9 @@ export interface FlowState {
 
     nodeEdgeMap: Map<NodeId, Set<EdgeId>>;
     edgeStateMap: Map<EdgeId, EdgeState>;
+
+    visibleEdgeIds: Set<EdgeId>;
+    selectedEdgeIds: Set<EdgeId>;
 }
 
 export const EmptyFlowState: FlowState = {
@@ -52,12 +55,14 @@ export const EmptyFlowState: FlowState = {
     nodeBound: EmptyRect,
     scale: 1,
     newlyVisibleNodeIds: [],
-    visibleNodeIds: new Set<string>(),
-    selectedNodeIds: new Set<string>(),
+    visibleNodeIds: new Set<NodeId>(),
+    selectedNodeIds: new Set<NodeId>(),
     inputPortMap: new Map<NodeId, PortIndexMap>(),
     outputPortMap: new Map<NodeId, PortIndexMap>(),
     nodeEdgeMap: new Map<NodeId, Set<EdgeId>>(),
     edgeStateMap: new Map<EdgeId, EdgeState>(),
+    visibleEdgeIds: new Set<EdgeId>(),
+    selectedEdgeIds: new Set<EdgeId>(),
 }
 
 export const toState = (flow: Flow) => {

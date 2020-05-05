@@ -41,6 +41,20 @@ const reducers = {
         draft.visibleNodeIds = new Set<string>(draft.nodeIdQuadTree.getCoveredData(viewBoundToCache));
         draft.cachedViewBound = viewBoundToCache;
     },
+    updateVisibleEdges: (draft: DraftFlow, action: {}) => {
+        draft.visibleEdgeIds = Array.from(draft.visibleNodeIds.keys())
+            .reduce((p, nodeId) => { draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>());
+    },
+    setSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
+        draft.selectedEdgeIds.clear();
+        action.ids.forEach(id => draft.selectedEdgeIds.add(id));
+    },
+    addSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
+        action.ids.forEach(id => draft.selectedEdgeIds.add(id));
+    },
+    unselectAllEdges: (draft: DraftFlow, action: {}) => {
+        draft.selectedEdgeIds.clear();
+    },
     setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         draft.selectedNodeIds.clear();
         reducers.addSelectNodes(draft, action);
