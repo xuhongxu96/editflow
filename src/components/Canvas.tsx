@@ -58,74 +58,72 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 </filter>
             </defs>
 
-            <g transform={`scale(${flow.scale})`}>
-                <g transform={`translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
-                    <g filter={flow.selectedNodeIds.size > 0 ? 'url(#blur0)' : ''}>
-                        {useMemo(() => flow.newlyVisibleNodeIds
-                            .filter(i => !flow.selectedNodeIds.has(i))
-                            .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                            .map(([id, node]) => {
-                                return (<Node
-                                    key={id}
-                                    id={id}
-                                    {...node}
-                                    animated={true}
-                                    selected={flow.selectedNodeIds.has(id)}
-                                    onMouseDown={e => { startMovingNode(e); }}
-                                    onHandleMouseDown={e => { startResizingNode(e); }}
-                                />);
-                            }
-                            ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
-
-                        {useMemo(() => Array.from(flow.visibleNodeIds.keys())
-                            .filter(i => !flow.selectedNodeIds.has(i))
-                            .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                            .map(([id, node]) => {
-                                return (<Node
-                                    key={id}
-                                    id={id}
-                                    {...node}
-                                    selected={flow.selectedNodeIds.has(id)}
-                                    onMouseDown={e => { startMovingNode(e); }}
-                                    onHandleMouseDown={e => { startResizingNode(e); }}
-                                />);
-                            }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
-
-                        {useMemo(() => Array.from(flow.visibleEdgeIds.keys())
-                            .filter(edgeId => !flow.selectedEdgeIds.has(edgeId))
-                            .map(edgeId => [edgeId, flow.edgeStateMap.get(edgeId)!] as [string, EdgeState])
-                            .map(([id, edge]) => (
-                                <Edge
-                                    key={id}
-                                    {...edge}
-                                />)
-                            ), [flow.visibleEdgeIds, flow.selectedEdgeIds, flow.edgeStateMap])}
-                    </g>
-
-                    {useMemo(() => Array.from(flow.selectedNodeIds.keys())
+            <g transform={`scale(${flow.scale}) translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
+                <g filter={flow.selectedNodeIds.size > 0 ? 'url(#blur0)' : ''}>
+                    {useMemo(() => flow.newlyVisibleNodeIds
+                        .filter(i => !flow.selectedNodeIds.has(i))
                         .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
-                        .map(([id, node]) =>
-                            <Node
+                        .map(([id, node]) => {
+                            return (<Node
                                 key={id}
                                 id={id}
                                 {...node}
-                                draftLayout={flow.draftNodeLayout.get(id)}
+                                animated={true}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
                                 onHandleMouseDown={e => { startResizingNode(e); }}
-                            />
-                        ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode, startResizingNode])}
+                            />);
+                        }
+                        ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
 
-                    {useMemo(() => Array.from(flow.selectedEdgeIds.keys())
+                    {useMemo(() => Array.from(flow.visibleNodeIds.keys())
+                        .filter(i => !flow.selectedNodeIds.has(i))
+                        .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                        .map(([id, node]) => {
+                            return (<Node
+                                key={id}
+                                id={id}
+                                {...node}
+                                selected={flow.selectedNodeIds.has(id)}
+                                onMouseDown={e => { startMovingNode(e); }}
+                                onHandleMouseDown={e => { startResizingNode(e); }}
+                            />);
+                        }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
+
+                    {useMemo(() => Array.from(flow.visibleEdgeIds.keys())
+                        .filter(edgeId => !flow.selectedEdgeIds.has(edgeId))
                         .map(edgeId => [edgeId, flow.edgeStateMap.get(edgeId)!] as [string, EdgeState])
                         .map(([id, edge]) => (
                             <Edge
                                 key={id}
-                                selected={true}
                                 {...edge}
                             />)
-                        ), [flow.selectedEdgeIds, flow.edgeStateMap])}
+                        ), [flow.visibleEdgeIds, flow.selectedEdgeIds, flow.edgeStateMap])}
                 </g>
+
+                {useMemo(() => Array.from(flow.selectedNodeIds.keys())
+                    .map(i => [i, flow.raw.nodes[i]] as [string, Flow.Node])
+                    .map(([id, node]) =>
+                        <Node
+                            key={id}
+                            id={id}
+                            {...node}
+                            draftLayout={flow.draftNodeLayout.get(id)}
+                            selected={flow.selectedNodeIds.has(id)}
+                            onMouseDown={e => { startMovingNode(e); }}
+                            onHandleMouseDown={e => { startResizingNode(e); }}
+                        />
+                    ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode, startResizingNode])}
+
+                {useMemo(() => Array.from(flow.selectedEdgeIds.keys())
+                    .map(edgeId => [edgeId, flow.edgeStateMap.get(edgeId)!] as [string, EdgeState])
+                    .map(([id, edge]) => (
+                        <Edge
+                            key={id}
+                            selected={true}
+                            {...edge}
+                        />)
+                    ), [flow.selectedEdgeIds, flow.edgeStateMap])}
             </g>
         </svg>
     );
