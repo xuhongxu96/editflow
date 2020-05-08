@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Style from './Edge.module.css';
-import { EdgeState } from 'states/FlowState';
+import { EdgeState } from 'models/FlowState';
 
 export interface EdgeProps extends EdgeState {
     selected?: boolean;

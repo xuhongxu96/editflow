@@ -1,29 +1,37 @@
-import React, { useContext, useEffect, useCallback } from "react";
-import { EmptyFlowState, FlowState } from "states/FlowState";
+import React, { useContext, useEffect, useCallback, useMemo, useState } from "react";
 import { FlowDispatch } from "reducers/FlowReducer";
 import { useImmerReducer } from 'use-immer';
 import { makeFlowReducer } from 'reducers/FlowReducer';
 import { useMoving, useEventListener } from "hooks";
 import { Offset } from "models/BasicTypes";
 import { CanvasStyleContext } from "./CanvasStyleContext";
+import { Flow } from "models/Flow";
+import { EmptyFlowState, FlowState } from "models/FlowState";
+import { HandleDirection } from "components/HandleBox";
 
-const FlowContext = React.createContext<FlowState>(EmptyFlowState);
+const FlowStateContext = React.createContext<FlowState>(EmptyFlowState);
 const FlowDispatchContext = React.createContext<FlowDispatch>(() => { })
 
-export const FlowProvider: React.FC<React.PropsWithChildren<{ initialState: FlowState }>> = (props) => {
+export const FlowProvider: React.FC<React.PropsWithChildren<{ flow: Flow, onFlowChanged?: (flow: Flow) => void }>> = (props) => {
     const canvasStyle = useContext(CanvasStyleContext);
-    const [flow, dispatch] = useImmerReducer(makeFlowReducer(canvasStyle), props.initialState);
+    const reducer = useMemo(() => makeFlowReducer(canvasStyle), [canvasStyle]);
+    const [flowState, dispatch] = useImmerReducer(reducer, EmptyFlowState);
+
+    const { flow, onFlowChanged, children } = props;
+
+    useEffect(() => dispatch({ type: 'init', flow: flow }), [flow, dispatch]);
+    useEffect(() => onFlowChanged && onFlowChanged(flowState.raw), [onFlowChanged, flowState.raw])
 
     return (
         <FlowDispatchContext.Provider value={dispatch}>
-            <FlowContext.Provider value={flow} >
-                {props.children}
-            </FlowContext.Provider>
+            <FlowStateContext.Provider value={flowState} >
+                {children}
+            </FlowStateContext.Provider>
         </FlowDispatchContext.Provider>
     );
 }
 
-export const useFlow = () => { return useContext(FlowContext); }
+export const useFlow = () => { return useContext(FlowStateContext); }
 export const useFlowDispatch = () => { return useContext(FlowDispatchContext); }
 
 export const useMovingNode = () => {
@@ -55,11 +63,18 @@ export const useMovingNode = () => {
 export const useResizingNode = () => {
     const { scale } = useFlow();
     const dispatch = useFlowDispatch();
+    const [resizeHandleDirection, setResizeHandleDirection] = useState<HandleDirection>();
 
     // Correct the offset by current scale factor
-    const [startResizingNode, stopResizingNode, onResizingNode] = useMoving(useCallback((offset: Offset) => {
-        dispatch({ type: 'resizeSelectedNodes', offset: { x: offset.x / scale, y: offset.y / scale } });
-    }, [dispatch, scale]));
+    const [_startResizingNode, stopResizingNode, onResizingNode] = useMoving(useCallback((offset: Offset) => {
+        if (resizeHandleDirection) {
+            dispatch({
+                type: 'resizeSelectedNodes',
+                direction: resizeHandleDirection,
+                offset: { x: offset.x / scale, y: offset.y / scale }
+            });
+        }
+    }, [dispatch, resizeHandleDirection, scale]));
 
     // Mouse up will stop and confirm resizing to update the draft layout to real layout
     useEventListener('mouseup', useCallback(() => {
@@ -75,6 +90,11 @@ export const useResizingNode = () => {
         }
     }, [stopResizingNode, dispatch]))
 
+    const startResizingNode = useCallback((e: React.MouseEvent, direction: HandleDirection) => {
+        setResizeHandleDirection(direction);
+        _startResizingNode(e);
+    }, [_startResizingNode]);
+
     return { startResizingNode, stopResizingNode, onResizingNode }
 }
 
@@ -86,7 +106,7 @@ export const useUpdateVisibleNodes = () => {
 
     // After 500ms, newly visible nodes will be added as visible nodes, which will disable the entering animation.
     useEffect(() => {
-        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 500);
+        const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 300);
         return () => clearTimeout(timer);
     }, [viewBound, dispatch]);
 }

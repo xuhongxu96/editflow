@@ -1,5 +1,6 @@
 import { Rect, Point } from "models/BasicTypes";
 import { Node } from "models/Flow";
+import { HandleDirection } from "components/HandleBox";
 
 export type valueof<T> = T[keyof T];
 
@@ -24,11 +25,12 @@ export const expandRect = (r: Rect, margin: number, scale: number = 1): Rect => 
 };
 
 export const expandRectToContain = (r: Rect, toBeContained: Rect): Rect => {
-    if (r.x > toBeContained.x) r.x = toBeContained.x;
-    if (r.y > toBeContained.y) r.y = toBeContained.y;
-    if (r.x + r.w < toBeContained.x + toBeContained.w) r.w = toBeContained.x + toBeContained.w - r.x;
-    if (r.y + r.h < toBeContained.y + toBeContained.h) r.h = toBeContained.y + toBeContained.h - r.y;
-    return r;
+    return {
+        x: r.x > toBeContained.x ? toBeContained.x : r.x,
+        y: r.y > toBeContained.y ? toBeContained.y : r.y,
+        w: r.x + r.w < toBeContained.x + toBeContained.w ? toBeContained.x + toBeContained.w - r.x : r.w,
+        h: r.y + r.h < toBeContained.y + toBeContained.h ? toBeContained.y + toBeContained.h - r.y : r.h,
+    }
 };
 
 export const limitRect = (r: Rect, limit: Rect) => {
@@ -62,3 +64,9 @@ export const getPortDraftPosition = (node: Node, draftLayout: Rect, type: 'input
         y: type === 'input' ? draftLayout.y : draftLayout.y + draftLayout.h,
     };
 };
+
+export const DecomposeHandleDirection = (d: HandleDirection): ['left' | 'right', 'top' | 'middle' | 'bottom'] => {
+    const h = d === 'left-bottom' || d === 'left-middle' || d === 'left-top' ? 'left' : 'right';
+    const v = d === 'left-bottom' || d === 'right-bottom' ? 'bottom' : (d === 'left-middle' || d === 'right-middle') ? 'middle' : 'top';
+    return [h, v];
+}

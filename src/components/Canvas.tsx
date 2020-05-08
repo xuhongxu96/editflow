@@ -5,7 +5,7 @@ import { useFlowDispatch, useFlow, useMovingNode, useUpdateVisibleNodes, useUpda
 import * as Flow from 'models/Flow';
 import { useEventListener } from 'hooks';
 import { Edge } from './Edge';
-import { EdgeState } from 'states/FlowState';
+import { EdgeState } from 'models/FlowState';
 
 export interface CanvasProps {
     width: string | number;
@@ -41,7 +41,11 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { startResizingNode, onResizingNode } = useResizingNode();
     const updateViewOffsetByDelta = useUpdateViewOffsetByDelta();
 
-    useEffect(() => dispatch({ type: 'updateVisibleEdges' }), [flow.visibleNodeIds, dispatch]);
+    useEffect(() => dispatch({ type: 'updateNewlyVisibleEdges', nodeIds: flow.newlyVisibleNodeIds }),
+        [flow.newlyVisibleNodeIds, dispatch]);
+
+    useEffect(() => dispatch({ type: 'updateVisibleEdges', nodeIds: Array.from(flow.visibleNodeIds.keys()) }),
+        [flow.visibleNodeIds, dispatch]);
 
     return (
         <svg
@@ -71,7 +75,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 animated={true}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
-                                onHandleMouseDown={e => { startResizingNode(e); }}
+                                onHandleMouseDown={(e, direction) => { startResizingNode(e, direction); }}
                             />);
                         }
                         ), [flow.newlyVisibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
@@ -86,7 +90,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 {...node}
                                 selected={flow.selectedNodeIds.has(id)}
                                 onMouseDown={e => { startMovingNode(e); }}
-                                onHandleMouseDown={e => { startResizingNode(e); }}
+                                onHandleMouseDown={(e, direction) => { startResizingNode(e, direction); }}
                             />);
                         }), [flow.visibleNodeIds, flow.raw.nodes, flow.selectedNodeIds, startMovingNode, startResizingNode])}
 
@@ -99,6 +103,16 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                                 {...edge}
                             />)
                         ), [flow.visibleEdgeIds, flow.selectedEdgeIds, flow.edgeStateMap])}
+
+                    {useMemo(() => Array.from(flow.newlyVisibleEdgeIds.keys())
+                        .filter(edgeId => !flow.selectedEdgeIds.has(edgeId))
+                        .map(edgeId => [edgeId, flow.edgeStateMap.get(edgeId)!] as [string, EdgeState])
+                        .map(([id, edge]) => (
+                            <Edge
+                                key={id}
+                                {...edge}
+                            />)
+                        ), [flow.newlyVisibleEdgeIds, flow.selectedEdgeIds, flow.edgeStateMap])}
                 </g>
 
                 {useMemo(() => Array.from(flow.selectedNodeIds.keys())
@@ -111,7 +125,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                             draftLayout={flow.draftNodeLayout.get(id)}
                             selected={flow.selectedNodeIds.has(id)}
                             onMouseDown={e => { startMovingNode(e); }}
-                            onHandleMouseDown={e => { startResizingNode(e); }}
+                            onHandleMouseDown={(e, direction) => { startResizingNode(e, direction); }}
                         />
                     ), [flow.raw.nodes, flow.selectedNodeIds, flow.draftNodeLayout, startMovingNode, startResizingNode])}
 

@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Canvas } from 'components/Canvas';
 import { Flow, NodeMap, EdgeMap } from 'models/Flow';
-import { toState } from 'states/FlowState';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
@@ -12,7 +11,7 @@ const Space = 10;
 const RowSize = 10;
 const OffsetX = 0;
 const OffsetY = 48;
-const NodeCount = 500;
+const NodeCount = 1000;
 const EdgeCount = 100;
 
 const generatePorts = (namePrefix: string, n: number) => {
@@ -22,47 +21,50 @@ const generatePorts = (namePrefix: string, n: number) => {
   }));
 }
 
-const flow: Flow = {
-  nodes: Array.from(Array(NodeCount).keys()).reduce((o, i) => {
-    o[`node-${i}`] = {
-      layout: {
-        x: OffsetX + Space + (W + Space) * (i % RowSize),
-        y: OffsetY + Space + (H + Space) * Math.trunc(i / RowSize),
-        w: W,
-        h: H,
-      },
-      title: `Component ${i}`,
-      input: generatePorts("In", Math.trunc(Math.random() * 8) + 2),
-      output: generatePorts("Out", Math.trunc(Math.random() * 8) + 2),
-    };
-    return o;
-  }, {} as NodeMap),
-  edges: Array.from(Array(EdgeCount).keys()).reduce((o, i) => {
-    o[`edge-${i}`] = {
-      start: {
-        nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
-        portName: `Out ${Math.trunc(Math.random() * 2)}`,
-      },
-      end: {
-        nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
-        portName: `In ${Math.trunc(Math.random() * 2)}`,
-      },
-    };
-    return o;
-  }, {} as EdgeMap),
-};
-
-const flowState = toState(flow);
+const genFlow = (): Flow => {
+  return {
+    nodes: Array.from(Array(NodeCount).keys()).reduce((o, i) => {
+      o[`node-${i}`] = {
+        layout: {
+          x: OffsetX + Space + (W + Space) * (i % RowSize),
+          y: OffsetY + Space + (H + Space) * Math.trunc(i / RowSize),
+          w: W,
+          h: H,
+        },
+        title: `Component ${i}`,
+        input: generatePorts("In", Math.trunc(Math.random() * 8) + 2),
+        output: generatePorts("Out", Math.trunc(Math.random() * 8) + 2),
+      };
+      return o;
+    }, {} as NodeMap),
+    edges: Array.from(Array(EdgeCount).keys()).reduce((o, i) => {
+      o[`edge-${i}`] = {
+        start: {
+          nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
+          portName: `Out ${Math.trunc(Math.random() * 2)}`,
+        },
+        end: {
+          nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
+          portName: `In ${Math.trunc(Math.random() * 2)}`,
+        },
+      };
+      return o;
+    }, {} as EdgeMap),
+  };
+}
 
 const App: React.FC = () => {
+  const [flow, setFlow] = useState(genFlow());
+
   return (
     <div className='App'>
       <CanvasStyleProvider>
-        <FlowProvider initialState={flowState}>
+        <FlowProvider flow={flow} onFlowChanged={o => console.log(JSON.stringify(o.nodes['node-0']?.layout))}>
           <Canvas width='100%' height='600' />
           <Toolbar />
         </FlowProvider>
       </CanvasStyleProvider>
+      <button onClick={() => { setFlow(genFlow()) }}>change</button>
     </div >
   );
 }

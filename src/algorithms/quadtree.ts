@@ -90,7 +90,6 @@ function getCoveredData<T>(node: Node<T>, cover: Basic.Rect, resolution: number)
 }
 
 export class QuadTree<T> {
-    init: boolean = false;
     root: Node<T>;
     resolution: number;
 
@@ -101,6 +100,12 @@ export class QuadTree<T> {
             left: {}, right: {},
         };
         this.resolution = resolution;
+    }
+
+    clear() {
+        this.root.data = [];
+        this.root.left = {};
+        this.root.right = {};
     }
 
     expand(leftOrRight: LeftOrRight, upOrDown: UpOrDown) {

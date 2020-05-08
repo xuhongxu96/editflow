@@ -1,14 +1,68 @@
-import { FlowState } from "states/FlowState";
+import { FlowState } from "models/FlowState";
 import * as Basic from "models/BasicTypes";
-import { valueof, expandRect, isContained, limitRect, expandRectToContain, getPortPosition, getPortDraftPosition } from "utils";
+import { valueof, expandRect, isContained, limitRect, expandRectToContain, getPortPosition, getPortDraftPosition, DecomposeHandleDirection } from "utils";
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
 import { Dispatch } from "react";
 import { CanvasStyle } from "contexts/CanvasStyleContext";
+import { Flow } from "models/Flow";
+import { HandleDirection } from "components/HandleBox";
 
 type DraftFlow = Draft<FlowState>;
 
 const reducers = {
+    init: (draft: DraftFlow, action: { flow: Flow }) => {
+        const { flow } = action;
+
+        draft.raw = flow;
+        draft.draftNodeLayout.clear();
+        draft.nodeIdQuadTree.clear();
+        draft.cachedViewBound = draft.nodeBound = Basic.EmptyRect;
+        draft.newlyVisibleNodeIds = [];
+        draft.visibleNodeIds.clear();
+        draft.selectedNodeIds.clear();
+        draft.inputPortMap.clear();
+        draft.outputPortMap.clear();
+        draft.nodeEdgeMap.clear();
+        draft.edgeStateMap.clear();
+        draft.newlyVisibleEdgeIds.clear();
+        draft.visibleEdgeIds.clear();
+        draft.selectedEdgeIds.clear();
+
+        Object.entries(flow.nodes).forEach(([id, node]) => {
+            draft.nodeIdQuadTree.insert(node.layout, id);
+            draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
+            {
+                const inputPortMap = new Map<string, number>();
+                node.input.forEach((port, i) => inputPortMap.set(port.name, i));
+                draft.inputPortMap.set(id, inputPortMap);
+            }
+            {
+                const outputPortMap = new Map<string, number>();
+                node.output.forEach((port, i) => outputPortMap.set(port.name, i));
+                draft.outputPortMap.set(id, outputPortMap);
+            }
+            draft.nodeEdgeMap.set(id, new Set<string>());
+        });
+
+        Object.entries(flow.edges).forEach(([id, edge]) => {
+            const startNode = flow.nodes[edge.start.nodeId];
+            const endNode = flow.nodes[edge.end.nodeId];
+
+            const startPortIndex = draft.outputPortMap.get(edge.start.nodeId)?.get(edge.start.portName);
+            const endPortIndex = draft.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName);
+
+            draft.nodeEdgeMap.get(edge.start.nodeId)?.add(id);
+            draft.nodeEdgeMap.get(edge.end.nodeId)?.add(id);
+
+            draft.edgeStateMap.set(id, {
+                start: getPortPosition(startNode, 'output', startPortIndex!),
+                end: getPortPosition(endNode, 'input', endPortIndex!),
+            });
+        });
+
+        reducers.updateVisibleNodes(draft, { cacheExpandSize: 500 });
+    },
     setScale: (draft: DraftFlow, action: { scale: number }) => {
         draft.scale = action.scale;
     },
@@ -41,8 +95,14 @@ const reducers = {
         draft.visibleNodeIds = new Set<string>(draft.nodeIdQuadTree.getCoveredData(viewBoundToCache));
         draft.cachedViewBound = viewBoundToCache;
     },
-    updateVisibleEdges: (draft: DraftFlow, action: {}) => {
-        draft.visibleEdgeIds = Array.from(draft.visibleNodeIds.keys())
+    updateNewlyVisibleEdges: (draft: DraftFlow, action: { nodeIds: string[] }) => {
+        draft.newlyVisibleEdgeIds = action.nodeIds
+            .reduce((p, nodeId) => { draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>());
+        draft.visibleEdgeIds.forEach(id => draft.newlyVisibleEdgeIds.delete(id));
+    },
+    updateVisibleEdges: (draft: DraftFlow, action: { nodeIds: string[] }) => {
+        draft.newlyVisibleEdgeIds.clear();
+        draft.visibleEdgeIds = action.nodeIds
             .reduce((p, nodeId) => { draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>());
     },
     setSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
@@ -102,14 +162,24 @@ const reducers = {
         }
         draft.draftNodeLayout.clear();
     },
-    resizeSelectedNodes: (draft: DraftFlow, action: { offset: Basic.Offset }, style: CanvasStyle) => {
+    resizeSelectedNodes: (draft: DraftFlow, action: { direction: HandleDirection, offset: Basic.Offset }, style: CanvasStyle) => {
+        const [hDirection, vDirection] = DecomposeHandleDirection(action.direction);
+
         draft.selectedNodeIds.forEach(id => {
             const node = draft.raw.nodes[id];
             const draftLayout = {
-                x: node.layout.x,
-                y: node.layout.y,
-                w: Math.max(style.minNodeSize.w, node.layout.w + action.offset.x),
-                h: Math.max(style.minNodeSize.h, node.layout.h + action.offset.y),
+                x: hDirection === 'left' ? node.layout.x + action.offset.x : node.layout.x,
+                y: vDirection === 'top' ? node.layout.y + action.offset.y : node.layout.y,
+
+                w: hDirection === 'left'
+                    ? Math.max(style.minNodeSize.w, node.layout.w - action.offset.x)
+                    : Math.max(style.minNodeSize.w, node.layout.w + action.offset.x),
+
+                h: vDirection === 'middle'
+                    ? node.layout.h
+                    : (vDirection === 'top'
+                        ? Math.max(style.minNodeSize.h, node.layout.h - action.offset.y)
+                        : Math.max(style.minNodeSize.h, node.layout.h + action.offset.y)),
             };
             draft.draftNodeLayout.set(id, draftLayout);
             reducers.updateEdgeStates(draft, { nodeId: id, draft: true });
@@ -143,9 +213,10 @@ const reducers = {
 
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: { type: K } & Parameters<typeof reducers[K]>[1] }>;
 export type FlowDispatch = Dispatch<FlowAction>;
+export type FlowReducer = Reducer<FlowState, FlowAction>;
 
-export const makeFlowReducer = (style: CanvasStyle) => {
+export const makeFlowReducer = (style: CanvasStyle): FlowReducer => {
     return ((draft: Draft<FlowState>, action: FlowAction) => {
         return reducers[action.type](draft, action as any, style);
-    }) as Reducer<FlowState, FlowAction>;
+    });
 }
