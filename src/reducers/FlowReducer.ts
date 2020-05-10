@@ -126,7 +126,7 @@ const reducers = {
         action.ids.forEach(id => draft.selectedNodeIds.delete(id));
     },
     unselectAllNodes: (draft: DraftFlow, action: {}) => {
-        draft.selectedNodeIds.clear();
+        if (draft.selectedNodeIds.size > 0) draft.selectedNodeIds.clear();
     },
     toggleNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => {

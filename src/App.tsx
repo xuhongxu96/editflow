@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Canvas } from 'components/Canvas';
 import { Flow, NodeMap, EdgeMap } from 'models/Flow';
-import { FlowProvider } from 'contexts/FlowContext';
+import { FlowProvider, useFlowState } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
 
@@ -12,7 +12,7 @@ const RowSize = 10;
 const OffsetX = 0;
 const OffsetY = 48;
 const NodeCount = 1000;
-const EdgeCount = 100;
+const EdgeCount = 50;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
@@ -55,16 +55,22 @@ const genFlow = (): Flow => {
 
 const App: React.FC = () => {
   const [flow, setFlow] = useState(genFlow());
+  const [flowState, dispatch] = useFlowState(flow);
 
   return (
-    <div className='App'>
+    <div className='App' style={{ display: 'flex' }}>
       <CanvasStyleProvider>
-        <FlowProvider flow={flow} onFlowChanged={o => console.log(JSON.stringify(o.nodes['node-0']?.layout))}>
-          <Canvas width='100%' height='600' />
-          <Toolbar />
+        <FlowProvider flowState={flowState} dispatch={dispatch}>
+          <Canvas width='80%' height='600' />
+          <Toolbar>
+            <button onClick={() => { setFlow(genFlow()) }}>change</button>
+          </Toolbar>
         </FlowProvider>
       </CanvasStyleProvider>
-      <button onClick={() => { setFlow(genFlow()) }}>change</button>
+
+      <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
+        ''
+      } />
     </div >
   );
 }

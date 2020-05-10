@@ -10,17 +10,18 @@ import { EmptyFlowState, FlowState } from "models/FlowState";
 import { HandleDirection } from "components/HandleBox";
 
 const FlowStateContext = React.createContext<FlowState>(EmptyFlowState);
-const FlowDispatchContext = React.createContext<FlowDispatch>(() => { })
+const FlowDispatchContext = React.createContext<FlowDispatch>(() => { });
 
-export const FlowProvider: React.FC<React.PropsWithChildren<{ flow: Flow, onFlowChanged?: (flow: Flow) => void }>> = (props) => {
+export const useFlowState = (flow: Flow): [FlowState, FlowDispatch] => {
     const canvasStyle = useContext(CanvasStyleContext);
     const reducer = useMemo(() => makeFlowReducer(canvasStyle), [canvasStyle]);
     const [flowState, dispatch] = useImmerReducer(reducer, EmptyFlowState);
-
-    const { flow, onFlowChanged, children } = props;
-
     useEffect(() => dispatch({ type: 'init', flow: flow }), [flow, dispatch]);
-    useEffect(() => onFlowChanged && onFlowChanged(flowState.raw), [onFlowChanged, flowState.raw])
+    return [flowState, dispatch];
+}
+
+export const FlowProvider: React.FC<React.PropsWithChildren<{ flowState: FlowState, dispatch: FlowDispatch }>> = (props) => {
+    const { flowState, dispatch, children } = props;
 
     return (
         <FlowDispatchContext.Provider value={dispatch}>
@@ -29,12 +30,12 @@ export const FlowProvider: React.FC<React.PropsWithChildren<{ flow: Flow, onFlow
             </FlowStateContext.Provider>
         </FlowDispatchContext.Provider>
     );
-}
+};
 
-export const useFlow = () => { return useContext(FlowStateContext); }
-export const useFlowDispatch = () => { return useContext(FlowDispatchContext); }
+export const useFlow = () => { return useContext(FlowStateContext); };
+export const useFlowDispatch = () => { return useContext(FlowDispatchContext); };
 
-export const useMovingNode = () => {
+export const useMovingAndResizingNode = () => {
     const { scale } = useFlow();
     const dispatch = useFlowDispatch();
 
@@ -43,26 +44,6 @@ export const useMovingNode = () => {
         dispatch({ type: 'moveSelectedNodes', offset: { x: offset.x / scale, y: offset.y / scale } });
     }, [dispatch, scale]));
 
-    // Mouse up will stop and confirm moving to update the draft position to real position
-    useEventListener('mouseup', useCallback(() => {
-        stopMovingNode(false);
-        dispatch({ type: 'stopMovingNodes', cancel: false });
-    }, [stopMovingNode, dispatch]));
-
-    useEventListener('keydown', useCallback((e) => {
-        // Escape will cancel the current moving and restore the previous position
-        if (e.key === 'Escape') {
-            stopMovingNode(true);
-            dispatch({ type: 'stopMovingNodes', cancel: true });
-        }
-    }, [stopMovingNode, dispatch]))
-
-    return { startMovingNode, stopMovingNode, onMovingNode }
-}
-
-export const useResizingNode = () => {
-    const { scale } = useFlow();
-    const dispatch = useFlowDispatch();
     const [resizeHandleDirection, setResizeHandleDirection] = useState<HandleDirection>();
 
     // Correct the offset by current scale factor
@@ -76,40 +57,51 @@ export const useResizingNode = () => {
         }
     }, [dispatch, resizeHandleDirection, scale]));
 
-    // Mouse up will stop and confirm resizing to update the draft layout to real layout
+    // Mouse up will stop and confirm moving or resizing to update the draft layout to real layout
     useEventListener('mouseup', useCallback(() => {
+        stopMovingNode(false);
         stopResizingNode(false);
+        dispatch({ type: 'stopMovingNodes', cancel: false });
         dispatch({ type: 'stopResizingNodes', cancel: false });
-    }, [stopResizingNode, dispatch]));
+    }, [stopMovingNode, stopResizingNode, dispatch]));
 
     useEventListener('keydown', useCallback((e) => {
-        // Escape will cancel the current moving and restore the previous position
+        // Escape will cancel the current moving or resizing and restore the previous layout
         if (e.key === 'Escape') {
+            stopMovingNode(true);
             stopResizingNode(true);
+            dispatch({ type: 'stopMovingNodes', cancel: true });
             dispatch({ type: 'stopResizingNodes', cancel: true });
         }
-    }, [stopResizingNode, dispatch]))
+    }, [stopMovingNode, stopResizingNode, dispatch]))
 
+    // Set handle direction to know which direction to resize the node 
     const startResizingNode = useCallback((e: React.MouseEvent, direction: HandleDirection) => {
         setResizeHandleDirection(direction);
         _startResizingNode(e);
     }, [_startResizingNode]);
 
-    return { startResizingNode, stopResizingNode, onResizingNode }
-}
+    return {
+        startMovingNode, stopMovingNode, onMovingNode,
+        startResizingNode, stopResizingNode, onResizingNode
+    };
+};
 
 export const useUpdateVisibleNodes = () => {
     const { viewBound } = useFlow();
     const dispatch = useFlowDispatch();
 
+    // Update newly visible nodes once view bound is changed without timeout
     useEffect(() => dispatch({ type: 'updateNewlyVisibleNodes' }), [viewBound, dispatch]);
 
-    // After 500ms, newly visible nodes will be added as visible nodes, which will disable the entering animation.
+    // After 500ms without view bound changes, 
+    // newly visible nodes will be transformed to confirmed visible nodes,
+    // which will disable the entering animation and also has a larger cached view.
     useEffect(() => {
         const timer = setTimeout(() => dispatch({ type: 'updateVisibleNodes', cacheExpandSize: 500 }), 300);
         return () => clearTimeout(timer);
     }, [viewBound, dispatch]);
-}
+};
 
 export const useUpdateViewOffsetByDelta = () => {
     const dispatch = useFlowDispatch();
@@ -122,4 +114,25 @@ export const useUpdateViewOffsetByDelta = () => {
             delta: delta,
         });
     }, [dispatch]);
-}
+};
+
+export const useSelectableNodeAndEdge = () => {
+    const { selectedNodeIds, nodeEdgeMap } = useFlow();
+    const dispatch = useFlowDispatch();
+
+    useEventListener('mousedown', () => {
+        dispatch({ type: 'unselectAllNodes' });
+        dispatch({ type: 'unselectAllEdges' });
+    });
+
+    useEffect(() => {
+        dispatch({
+            type: 'setSelectEdges',
+            ids: Array.from(Array.from(selectedNodeIds.keys())
+                .reduce((p, nodeId) => {
+                    nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
+                    return p;
+                }, new Set<string>()).keys())
+        });
+    }, [nodeEdgeMap, selectedNodeIds, dispatch])
+};
