@@ -1,9 +1,9 @@
 import React from 'react';
-import { useFlowDispatch } from 'contexts/FlowContext';
+import { useFlowDispatchContext } from 'contexts/FlowContext';
 import Style from './Toolbar.module.css';
 
 export const Toolbar: React.FC<React.PropsWithChildren<{}>> = (props) => {
-    const dispatch = useFlowDispatch();
+    const dispatch = useFlowDispatchContext();
 
     return (
         <div className={Style.toolbar} id="toolbar">

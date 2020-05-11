@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Canvas } from 'components/Canvas';
 import { Flow, NodeMap, EdgeMap } from 'models/Flow';
-import { FlowProvider, useFlowState } from 'contexts/FlowContext';
+import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
+import { useFlowState } from 'hooks/flow';
 
 const W = 120;
 const H = 40;
@@ -69,7 +70,8 @@ const App: React.FC = () => {
       </CanvasStyleProvider>
 
       <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
-        ''
+        'First 10 Nodes:\n' +
+        JSON.stringify(Object.values(flowState.raw.nodes).slice(0, 10), null, ' ')
       } />
     </div >
   );
