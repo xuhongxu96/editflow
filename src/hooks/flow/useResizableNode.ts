@@ -39,10 +39,11 @@ export const useResizableNode = () => {
         // Set handle direction to know which direction to resize the node 
         setResizeHandleDirection(direction);
         _startResizingNode(e);
+        e.stopPropagation();
     }, [_startResizingNode]);
 
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-        onResizingNode(e);
+        return onResizingNode(e);
     }, [onResizingNode]);
 
     return { onNodeHandleMouseDown, onCanvasMouseMove };

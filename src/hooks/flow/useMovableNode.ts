@@ -32,7 +32,7 @@ export const useMovableNode = () => {
     }, [startMovingNode]);
 
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-        onMovingNode(e);
+        return onMovingNode(e);
     }, [onMovingNode]);
 
     return { onNodeMouseDown, onCanvasMouseMove };

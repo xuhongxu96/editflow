@@ -168,8 +168,13 @@ const reducers = {
         draft.selectedNodeIds.forEach(id => {
             const node = draft.raw.nodes[id];
             const draftLayout = {
-                x: hDirection === 'left' ? node.layout.x + action.offset.x : node.layout.x,
-                y: vDirection === 'top' ? node.layout.y + action.offset.y : node.layout.y,
+                x: hDirection === 'left'
+                    ? Math.min(node.layout.x + action.offset.x, node.layout.x + node.layout.w - style.minNodeSize.w)
+                    : node.layout.x,
+
+                y: vDirection === 'top'
+                    ? Math.min(node.layout.y + action.offset.y, node.layout.y + node.layout.h - style.minNodeSize.h)
+                    : node.layout.y,
 
                 w: hDirection === 'left'
                     ? Math.max(style.minNodeSize.w, node.layout.w - action.offset.x)

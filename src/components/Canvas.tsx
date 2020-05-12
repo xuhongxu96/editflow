@@ -40,8 +40,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     }), [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode, onNodeClick, onNodeHandleMouseDown]);
 
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-        onCanvasMouseMoveForMovableNode(e);
         onCanvasMouseMoveForResizableNode(e);
+        onCanvasMouseMoveForMovableNode(e);
     }, [onCanvasMouseMoveForMovableNode, onCanvasMouseMoveForResizableNode]);
 
     return (

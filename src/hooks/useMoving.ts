@@ -11,7 +11,7 @@ export interface LimitRect {
 export type MovingCallback = (offset: Offset) => void;
 export type StartMovingFunction = (e: React.MouseEvent, limit?: LimitRect) => void;
 export type StopMovingFunction = (cancel: boolean) => void;
-export type MovingEventListener = (e: React.MouseEvent) => void;
+export type MovingEventListener = (e: React.MouseEvent) => boolean;
 
 export function useMoving(callback: MovingCallback): [StartMovingFunction, StopMovingFunction, MovingEventListener] {
     const [initPos, setInitPos] = useState<Point>();
@@ -41,7 +41,9 @@ export function useMoving(callback: MovingCallback): [StartMovingFunction, StopM
             }
 
             callback(offset);
+            return true;
         }
+        return false;
     }, [initPos, limit, callback]);
 
     return [startMoving, stopMoving, onMoving];
