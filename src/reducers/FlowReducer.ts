@@ -105,6 +105,14 @@ const reducers = {
         draft.visibleEdgeIds = action.nodeIds
             .reduce((p, nodeId) => { draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>());
     },
+    updateSelectedEdgesBySelectedNodes: (draft: DraftFlow, action: {} = {}) => {
+        const ids = Array.from(Array.from(draft.selectedNodeIds.keys())
+            .reduce((p, nodeId) => {
+                draft.nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
+                return p;
+            }, new Set<string>()).keys());
+        reducers.setSelectEdges(draft, { ids });
+    },
     setSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
         draft.selectedEdgeIds.clear();
         action.ids.forEach(id => draft.selectedEdgeIds.add(id));
@@ -112,7 +120,7 @@ const reducers = {
     addSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedEdgeIds.add(id));
     },
-    unselectAllEdges: (draft: DraftFlow, action: {}) => {
+    unselectAllEdges: (draft: DraftFlow, action: {} = {}) => {
         draft.selectedEdgeIds.clear();
     },
     setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
@@ -121,12 +129,15 @@ const reducers = {
     },
     addSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedNodeIds.add(id));
+        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     unselectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedNodeIds.delete(id));
+        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
-    unselectAllNodes: (draft: DraftFlow, action: {}) => {
+    unselectAllNodes: (draft: DraftFlow, action: {} = {}) => {
         if (draft.selectedNodeIds.size > 0) draft.selectedNodeIds.clear();
+        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     toggleNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => {
@@ -136,6 +147,7 @@ const reducers = {
                 draft.selectedNodeIds.add(id);
             }
         })
+        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     moveSelectedNodes: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
         draft.selectedNodeIds.forEach(id => {

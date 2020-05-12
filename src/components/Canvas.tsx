@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { Node, NodeProps } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
-import { Edge } from './Edge';
+import { Edge, EdgeProps } from './Edge';
 import * as FlowHooks from 'hooks/flow';
 
 export interface CanvasProps {
@@ -28,16 +28,20 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForResizableNode, onNodeHandleMouseDown } = FlowHooks.useResizableNode();
 
-    FlowHooks.useSelectableEdge();
+    const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
     const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
-        onMouseDown: (e: React.MouseEvent, nodeId: string) => {
+        onMouseDown: (e, nodeId) => {
             onNodeMouseDownForSelectableNode(e, nodeId);
             onNodeMouseDownForMovableNode(e, nodeId);
         },
         onClick: onNodeClick,
         onHandleMouseDown: onNodeHandleMouseDown,
     }), [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode, onNodeClick, onNodeHandleMouseDown]);
+
+    const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
+        onMouseDown: onEdgeMouseDown,
+    }), [onEdgeMouseDown]);
 
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
         onCanvasMouseMoveForResizableNode(e);
@@ -57,6 +61,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 <filter id="blur0" x="-50%" y="-50%" width="200%" height="200%">
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
                 </filter>
+                <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+                    <feBlend in="SourceGraphic" in2="blur" mode="normal" />
+                </filter>
             </defs>
 
             <g transform={`scale(${flow.scale}) translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
@@ -72,12 +80,12 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     )), [visibleNodes, flow.selectedNodeIds, nodeHandlers])}
 
                     {useMemo(() => visibleEdges.map(([id, edge]) => (
-                        <Edge key={id} {...edge} />
-                    )), [visibleEdges])}
+                        <Edge key={id} id={id} {...edge} {...edgeHandlers} />
+                    )), [visibleEdges, edgeHandlers])}
 
                     {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (
-                        <Edge key={id} {...edge} />
-                    )), [newlyVisibleEdges])}
+                        <Edge key={id} id={id} {...edge} {...edgeHandlers} />
+                    )), [newlyVisibleEdges, edgeHandlers])}
                 </g>
 
                 {useMemo(() => selectedNodes.map(([id, node]) => (
@@ -86,8 +94,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 )), [selectedNodes, flow.draftNodeLayout, nodeHandlers])}
 
                 {useMemo(() => selectedEdges.map(([id, edge]) => (
-                    <Edge key={id} selected={true} {...edge} />
-                )), [selectedEdges])}
+                    <Edge key={id} id={id} selected={true} {...edge} {...edgeHandlers} />
+                )), [selectedEdges, edgeHandlers])}
             </g>
         </svg>
     );

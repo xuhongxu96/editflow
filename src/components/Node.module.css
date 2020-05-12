@@ -26,6 +26,7 @@
 
 .node:global(.selected) .nodeRect {
     fill: #6699CC;
+    filter: url(#shadow);
 }
 
 .node:global(.draft) .nodeRect {

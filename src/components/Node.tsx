@@ -10,8 +10,8 @@ export interface NodeProps extends Flow.Node {
     draftLayout?: Rect;
     selected?: boolean;
     animated?: boolean;
-    onMouseDown?: (e: React.MouseEvent<SVGSVGElement>, id: string) => void;
-    onClick?: (e: React.MouseEvent<SVGSVGElement>, id: string) => void;
+    onMouseDown?: (e: React.MouseEvent, id: string) => void;
+    onClick?: (e: React.MouseEvent, id: string) => void;
     onHandleMouseDown?: (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
 }
 

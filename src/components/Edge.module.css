@@ -12,6 +12,7 @@
 }
 
 .edge:global(.selected) {
-    stroke: #0009;
+    stroke: #000a;
     stroke-width: 3px;
+    filter: url(#shadow);
 }
