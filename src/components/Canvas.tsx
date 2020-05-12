@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
-import { Node } from './Node';
+import { Node, NodeProps } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge } from './Edge';
@@ -19,6 +19,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
     useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientSize }), [rootClientSize, dispatch]);
 
+    const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
+
     const { newlyVisibleNodes, visibleNodes, selectedNodes } = FlowHooks.useNodes();
     const { newlyVisibleEdges, visibleEdges, selectedEdges } = FlowHooks.useEdges();
 
@@ -28,17 +30,19 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     FlowHooks.useSelectableEdge();
 
+    const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
+        onMouseDown: (e: React.MouseEvent, nodeId: string) => {
+            onNodeMouseDownForSelectableNode(e, nodeId);
+            onNodeMouseDownForMovableNode(e, nodeId);
+        },
+        onClick: onNodeClick,
+        onHandleMouseDown: onNodeHandleMouseDown,
+    }), [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode, onNodeClick, onNodeHandleMouseDown]);
+
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
         onCanvasMouseMoveForMovableNode(e);
         onCanvasMouseMoveForResizableNode(e);
     }, [onCanvasMouseMoveForMovableNode, onCanvasMouseMoveForResizableNode]);
-
-    const onNodeMouseDown = useCallback((e: React.MouseEvent, nodeId: string) => {
-        onNodeMouseDownForSelectableNode(e, nodeId);
-        onNodeMouseDownForMovableNode(e, nodeId);
-    }, [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode]);
-
-    const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
 
     return (
         <svg
@@ -58,48 +62,32 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             <g transform={`scale(${flow.scale}) translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
                 <g filter={flow.selectedNodeIds.size > 0 ? 'url(#blur0)' : ''}>
                     {useMemo(() => newlyVisibleNodes.map(([id, node]) => (
-                        <Node
-                            key={id}
-                            id={id}
-                            {...node}
-                            animated={true}
-                            selected={flow.selectedNodeIds.has(id)}
-                            onMouseDown={onNodeMouseDown}
-                            onClick={onNodeClick}
-                            onHandleMouseDown={onNodeHandleMouseDown}
-                        />
-                    )), [newlyVisibleNodes, flow.selectedNodeIds, onNodeMouseDown, onNodeClick, onNodeHandleMouseDown])}
+                        <Node key={id} id={id} animated={true} selected={flow.selectedNodeIds.has(id)}
+                            {...node} {...nodeHandlers} />
+                    )), [newlyVisibleNodes, flow.selectedNodeIds, nodeHandlers])}
 
                     {useMemo(() => visibleNodes.map(([id, node]) => (
-                        <Node
-                            key={id}
-                            id={id}
-                            {...node}
-                            selected={flow.selectedNodeIds.has(id)}
-                            onMouseDown={onNodeMouseDown}
-                            onClick={onNodeClick}
-                            onHandleMouseDown={onNodeHandleMouseDown}
-                        />
-                    )), [visibleNodes, flow.selectedNodeIds, onNodeMouseDown, onNodeClick, onNodeHandleMouseDown])}
+                        <Node key={id} id={id} selected={flow.selectedNodeIds.has(id)}
+                            {...node} {...nodeHandlers} />
+                    )), [visibleNodes, flow.selectedNodeIds, nodeHandlers])}
 
-                    {useMemo(() => visibleEdges.map(([id, edge]) => (<Edge key={id} {...edge} />)), [visibleEdges])}
-                    {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (<Edge key={id} {...edge} />)), [newlyVisibleEdges])}
+                    {useMemo(() => visibleEdges.map(([id, edge]) => (
+                        <Edge key={id} {...edge} />
+                    )), [visibleEdges])}
+
+                    {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (
+                        <Edge key={id} {...edge} />
+                    )), [newlyVisibleEdges])}
                 </g>
 
                 {useMemo(() => selectedNodes.map(([id, node]) => (
-                    <Node
-                        key={id}
-                        id={id}
-                        {...node}
-                        draftLayout={flow.draftNodeLayout.get(id)}
-                        selected={true}
-                        onMouseDown={onNodeMouseDown}
-                        onClick={onNodeClick}
-                        onHandleMouseDown={onNodeHandleMouseDown}
-                    />
-                )), [selectedNodes, flow.draftNodeLayout, onNodeMouseDown, onNodeClick, onNodeHandleMouseDown])}
+                    <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} selected={true}
+                        {...node} {...nodeHandlers} />
+                )), [selectedNodes, flow.draftNodeLayout, nodeHandlers])}
 
-                {useMemo(() => selectedEdges.map(([id, edge]) => (<Edge key={id} selected={true} {...edge} />)), [selectedEdges])}
+                {useMemo(() => selectedEdges.map(([id, edge]) => (
+                    <Edge key={id} selected={true} {...edge} />
+                )), [selectedEdges])}
             </g>
         </svg>
     );
