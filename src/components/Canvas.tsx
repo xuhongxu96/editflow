@@ -21,8 +21,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
 
-    const { newlyVisibleNodes, visibleNodes, selectedNodes } = FlowHooks.useNodes();
-    const { newlyVisibleEdges, visibleEdges, selectedEdges } = FlowHooks.useEdges();
+    const { newlyVisibleNodes, visibleNodes, highlightedNodes, selectedNodes } = FlowHooks.useNodes();
+    const { newlyVisibleEdges, visibleEdges, highlightedEdges, selectedEdges } = FlowHooks.useEdges();
 
     const { onNodeClick, onNodeMouseDown: onNodeMouseDownForSelectableNode } = FlowHooks.useSelectableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
@@ -88,10 +88,19 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     )), [newlyVisibleEdges, edgeHandlers])}
                 </g>
 
+                {useMemo(() => highlightedNodes.map(([id, node]) => (
+                    <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} highlighted={true}
+                        {...node} {...nodeHandlers} />
+                )), [highlightedNodes, flow.draftNodeLayout, nodeHandlers])}
+
                 {useMemo(() => selectedNodes.map(([id, node]) => (
                     <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} selected={true}
                         {...node} {...nodeHandlers} />
                 )), [selectedNodes, flow.draftNodeLayout, nodeHandlers])}
+
+                {useMemo(() => highlightedEdges.map(([id, edge]) => (
+                    <Edge key={id} id={id} highlighted={true} {...edge} {...edgeHandlers} />
+                )), [highlightedEdges, edgeHandlers])}
 
                 {useMemo(() => selectedEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} selected={true} {...edge} {...edgeHandlers} />

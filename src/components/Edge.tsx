@@ -5,6 +5,7 @@ import { EdgeState } from 'models/FlowState';
 
 export interface EdgeProps extends EdgeState {
     id: string;
+    highlighted?: boolean;
     selected?: boolean;
     onMouseDown?: (e: React.MouseEvent, id: string) => void;
 }
@@ -12,7 +13,9 @@ export interface EdgeProps extends EdgeState {
 export const Edge = React.memo((props: EdgeProps) => {
     return (
         <line
-            className={Style.edge + (props.selected ? ' selected' : '')}
+            className={Style.edge
+                + (props.selected ? ' selected' : '')
+                + (props.highlighted ? ' highlighted' : '')}
             x1={props.start.x}
             y1={props.start.y}
             x2={props.end.x}

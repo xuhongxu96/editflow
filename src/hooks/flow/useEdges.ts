@@ -6,9 +6,12 @@ export const useEdges = () => {
     const {
         newlyVisibleNodeIds,
         visibleNodeIds,
+        selectedNodeIds,
         newlyVisibleEdgeIds,
         visibleEdgeIds,
+        highlightedEdgeIds,
         selectedEdgeIds,
+        nodeEdgeMap,
         edgeStateMap
     } = useFlowContext();
     const dispatch = useFlowDispatchContext();
@@ -19,20 +22,37 @@ export const useEdges = () => {
     useEffect(() => dispatch({ type: 'updateVisibleEdges', nodeIds: Array.from(visibleNodeIds.keys()) }),
         [visibleNodeIds, dispatch]);
 
+    useEffect(() => {
+        if (selectedNodeIds.size > 0) dispatch({ type: 'unselectAllEdges' });
+
+        dispatch({
+            type: 'setHighlightedEdges',
+            ids: Array.from(Array.from(selectedNodeIds.keys())
+                .reduce((p, nodeId) => {
+                    nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
+                    return p;
+                }, new Set<string>()).keys())
+        });
+    }, [selectedNodeIds, nodeEdgeMap, dispatch]);
+
     const visibleEdges = useMemo(() =>
         Array.from(visibleEdgeIds.keys())
-            .filter(edgeId => !selectedEdgeIds.has(edgeId))
+            .filter(edgeId => !selectedEdgeIds.has(edgeId) && !highlightedEdgeIds.has(edgeId))
             .map(edgeId => [edgeId, edgeStateMap.get(edgeId)!] as [string, EdgeState]),
-        [visibleEdgeIds, selectedEdgeIds, edgeStateMap]);
+        [visibleEdgeIds, highlightedEdgeIds, selectedEdgeIds, edgeStateMap]);
 
     const newlyVisibleEdges = useMemo(() => Array.from(newlyVisibleEdgeIds.keys())
-        .filter(edgeId => !selectedEdgeIds.has(edgeId))
+        .filter(edgeId => !selectedEdgeIds.has(edgeId) && !highlightedEdgeIds.has(edgeId))
         .map(edgeId => [edgeId, edgeStateMap.get(edgeId)!] as [string, EdgeState]),
-        [newlyVisibleEdgeIds, selectedEdgeIds, edgeStateMap]);
+        [newlyVisibleEdgeIds, highlightedEdgeIds, selectedEdgeIds, edgeStateMap]);
+
+    const highlightedEdges = useMemo(() => Array.from(highlightedEdgeIds.keys())
+        .map(edgeId => [edgeId, edgeStateMap.get(edgeId)] as [string, EdgeState]),
+        [highlightedEdgeIds, edgeStateMap]);
 
     const selectedEdges = useMemo(() => Array.from(selectedEdgeIds.keys())
         .map(edgeId => [edgeId, edgeStateMap.get(edgeId)!] as [string, EdgeState]),
-        [selectedEdgeIds, edgeStateMap])
+        [selectedEdgeIds, edgeStateMap]);
 
-    return { newlyVisibleEdges, visibleEdges, selectedEdges };
+    return { newlyVisibleEdges, visibleEdges, highlightedEdges, selectedEdges };
 };

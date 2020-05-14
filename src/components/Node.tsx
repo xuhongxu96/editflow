@@ -9,6 +9,7 @@ export interface NodeProps extends Flow.Node {
     id: string;
     draftLayout?: Rect;
     selected?: boolean;
+    highlighted?: boolean;
     animated?: boolean;
     onMouseDown?: (e: React.MouseEvent, id: string) => void;
     onClick?: (e: React.MouseEvent, id: string) => void;
@@ -22,6 +23,7 @@ export const Node = React.memo((props: NodeProps) => {
         onMouseDown,
         onHandleMouseDown,
         animated,
+        highlighted,
         selected,
         title,
         input,
@@ -34,7 +36,10 @@ export const Node = React.memo((props: NodeProps) => {
         <svg
             xmlns='http://www.w3.org/2000/svg'
             id={id}
-            className={Style.node + (animated ? " animated" : "") + (selected ? " selected" : "")}
+            className={Style.node
+                + (animated ? " animated" : "")
+                + (highlighted ? " highlighted" : "")
+                + (selected ? " selected" : "")}
             x={x}
             y={y}
             width={w}
@@ -52,13 +57,15 @@ export const Node = React.memo((props: NodeProps) => {
 
             <PortBox input={input} output={output} />
 
-            {selected && <HandleBox
-                x="0"
-                y="0"
-                width="100%"
-                height="100%"
-                onHandleMouseDown={(e, d) => onHandleMouseDown && onHandleMouseDown(e, id, d)}
-            />}
+            {
+                selected && <HandleBox
+                    x="0"
+                    y="0"
+                    width="100%"
+                    height="100%"
+                    onHandleMouseDown={(e, d) => onHandleMouseDown && onHandleMouseDown(e, id, d)}
+                />
+            }
         </svg >
     );
 });

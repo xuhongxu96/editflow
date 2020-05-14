@@ -105,17 +105,11 @@ const reducers = {
         draft.visibleEdgeIds = action.nodeIds
             .reduce((p, nodeId) => { draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i)); return p; }, new Set<string>());
     },
-    updateSelectedEdgesBySelectedNodes: (draft: DraftFlow, action: {} = {}) => {
-        const ids = Array.from(Array.from(draft.selectedNodeIds.keys())
-            .reduce((p, nodeId) => {
-                draft.nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
-                return p;
-            }, new Set<string>()).keys());
-        reducers.setSelectEdges(draft, { ids });
+    setHighlightedEdges: (draft: DraftFlow, action: { ids: string[] }) => {
+        draft.highlightedEdgeIds = new Set<string>(action.ids);
     },
     setSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
-        draft.selectedEdgeIds.clear();
-        action.ids.forEach(id => draft.selectedEdgeIds.add(id));
+        draft.selectedEdgeIds = new Set<string>(action.ids);
     },
     addSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedEdgeIds.add(id));
@@ -123,21 +117,20 @@ const reducers = {
     unselectAllEdges: (draft: DraftFlow, action: {} = {}) => {
         draft.selectedEdgeIds.clear();
     },
+    setHighlightedNodes: (draft: DraftFlow, action: { ids: string[] }) => {
+        draft.highlightedNodeIds = new Set<string>(action.ids);
+    },
     setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-        draft.selectedNodeIds.clear();
-        reducers.addSelectNodes(draft, action);
+        draft.selectedNodeIds = new Set<string>(action.ids);
     },
     addSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedNodeIds.add(id));
-        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     unselectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => draft.selectedNodeIds.delete(id));
-        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     unselectAllNodes: (draft: DraftFlow, action: {} = {}) => {
-        if (draft.selectedNodeIds.size > 0) draft.selectedNodeIds.clear();
-        reducers.updateSelectedEdgesBySelectedNodes(draft);
+        draft.selectedNodeIds.clear();
     },
     toggleNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         action.ids.forEach(id => {
@@ -147,7 +140,6 @@ const reducers = {
                 draft.selectedNodeIds.add(id);
             }
         })
-        reducers.updateSelectedEdgesBySelectedNodes(draft);
     },
     moveSelectedNodes: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
         draft.selectedNodeIds.forEach(id => {
