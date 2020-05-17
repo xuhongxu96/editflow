@@ -28,6 +28,52 @@ It will blur the unselected nodes and let you focus on the selected ones.
 
 ---
 
+## TODO
+
+- Node
+   - [ ] Creatable by dragging in
+   - [x] Selectable
+   - [x] Movable
+   - [x] Re-sizable
+   - [ ] Context Menu
+   - [ ] Customizable (Custom Decorations)
+- Port
+   - [ ] Dynamic Add/Remove/Edit
+   - [x] Tooltip
+   - [ ] Context Menu
+- Edge
+   - [ ] Creatable by dragging from an unconnected output port
+   - [ ] Re-connectable by dragging from a connected input port
+   - [ ] Label
+   - [ ] Context Menu
+   - [ ] Customizable (inlcuding `Line or Curve`)
+- Canvas
+   - [ ] Scalable? (Zoom In, Zoom Out)
+      - [ ] Fit width
+      - [ ] Fit to view
+      - [x] Scale by a factor
+   - [ ] Translatable
+      - [ ] Move to center
+      - [x] Restore to (0, 0)
+   - [ ] Alignment
+      - [ ] Reference lines
+   - [ ] Box Selection
+   - [ ] Context Menu
+   - [ ] Auto Layout
+
+## Open-Source Alternatives
+
+- [alibaba/GGEditor](https://github.com/alibaba/GGEditor)
+  ![GGEditor](https://camo.githubusercontent.com/8391d76bcc7a7abe8bbe17da3104045a2b109358/68747470733a2f2f696d672e616c6963646e2e636f6d2f7466732f544231636c304c79417a6f4b31526a535a466c58586169345658612d3830302d3430372e676966)
+- [murongqimiao/DAG-diagram](https://github.com/murongqimiao/DAG-diagram)
+  ![DAG-diagram](https://camo.githubusercontent.com/ca359d0e29db4be5a6aabd28ca4676c8dec86d2a/68747470733a2f2f757365722d676f6c642d63646e2e786974752e696f2f323031392f392f332f313663663632333733343131363237353f773d34383026683d32373226663d67696626733d31363339313835)
+- [TimZaman/dagstudio](https://github.com/TimZaman/dagstudio)
+  ![dagstudio](https://github.com/TimZaman/dagstudio/raw/master/misc/20160907_dagstudio_ex.gif)
+- [alibaba/butterfly](https://github.com/alibaba/butterfly)
+  ![butterfly](https://camo.githubusercontent.com/5dd03a6457f868b6f4ff5c5a0f8c3f7a838aa329/68747470733a2f2f696d672e616c6963646e2e636f6d2f7466732f5442316d77723067627231674b306a535a464458586239795658612d313030302d313030302e706e67)
+
+---
+
 ## Readme from CRA
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
