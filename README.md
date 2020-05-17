@@ -32,7 +32,7 @@ It will blur the unselected nodes and let you focus on the selected ones.
 
 - Node
    - [ ] Creatable by dragging in
-   - [x] Selectable
+   - [x] Selectable (multiple)
    - [x] Movable
    - [x] Re-sizable
    - [ ] Context Menu
@@ -60,6 +60,8 @@ It will blur the unselected nodes and let you focus on the selected ones.
    - [ ] Box Selection
    - [ ] Context Menu
    - [ ] Auto Layout
+   - [ ] Thumbnail
+   - [x] Lazy loading
 
 ## Open-Source Alternatives
 
