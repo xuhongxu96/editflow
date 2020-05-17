@@ -46,7 +46,8 @@ It will blur the unselected nodes and let you focus on the selected ones.
    - [ ] Re-connectable by dragging from a connected input port
    - [ ] Label
    - [ ] Context Menu
-   - [ ] Customizable (inlcuding `Line or Curve`)
+   - [ ] Customizable 
+     - [ ] Line / Curve
 - Canvas
    - [ ] Scalable? (Zoom In, Zoom Out)
       - [ ] Fit width
