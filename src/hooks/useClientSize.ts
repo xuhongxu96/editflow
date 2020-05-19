@@ -6,7 +6,11 @@ export function useClientSize<T extends Element>(ref: RefObject<T>, deps: Depend
     const [realSize, setRealSize] = useState<Size>({ w: 0, h: 0 });
 
     useEffect(() => {
-        if (ref.current != null) setRealSize({ w: ref.current.clientWidth, h: ref.current.clientHeight });
+        if (ref.current != null)
+            setRealSize({
+                w: ref.current.getBoundingClientRect().width,
+                h: ref.current.getBoundingClientRect().height,
+            });
     }, [ref, sizeChanged, /* eslint-disable */...deps/* eslint-enable */]);
 
     useEffect(() => {

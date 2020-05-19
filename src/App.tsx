@@ -55,7 +55,7 @@ const genFlow = (): Flow => {
 }
 
 const App: React.FC = () => {
-  const [flow, setFlow] = useState(genFlow());
+  const [flow, setFlow] = useState(() => genFlow());
   const [flowState, dispatch] = useFlowState(flow);
 
   return (
