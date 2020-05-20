@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Canvas } from 'components/Canvas';
 import { Flow, NodeMap, EdgeMap } from 'models/Flow';
 import { FlowProvider } from 'contexts/FlowContext';
@@ -12,7 +12,7 @@ const Space = 10;
 const RowSize = 10;
 const OffsetX = 0;
 const OffsetY = 48;
-const NodeCount = 1000;
+const NodeCount = 10000;
 const EdgeCount = 50;
 
 const generatePorts = (namePrefix: string, n: number) => {
@@ -71,7 +71,7 @@ const App: React.FC = () => {
 
       <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
         'First 10 Nodes:\n' +
-        JSON.stringify(Object.values(flowState.raw.nodes).slice(0, 10), null, ' ')
+        useMemo(() => JSON.stringify(Object.values(flowState.raw.nodes).slice(0, 10), null, ' '), [flowState.raw.nodes])
       } />
     </div >
   );
