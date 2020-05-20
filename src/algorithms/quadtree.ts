@@ -35,9 +35,11 @@ function calculateExpandTimes(unit: number, need: number) {
 }
 
 function insert<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number) {
+    // Not intersected means the node's children cannot contain it either
     if (!isIntersected(root.bound, rect)) return;
     root.data.push(data);
 
+    // If current node's bound size is smaller than resolution, skip children
     if (root.bound.w <= resolution && root.bound.h <= resolution) return;
 
     for (const leftOrRight of ['left', 'right'] as LeftOrRight[]) {
