@@ -17,7 +17,7 @@ export function useMoving(callback: MovingCallback): [StartMovingFunction, StopM
     const [initPos, setInitPos] = useState<Point>();
     const [limit, setLimit] = useState<LimitRect>();
 
-    const startMoving = useCallback<StartMovingFunction>((e: React.MouseEvent, limit?: LimitRect) => {
+    const startMoving = useCallback<StartMovingFunction>((e, limit) => {
         const initPos = { x: e.pageX, y: e.pageY };
         setInitPos(initPos);
         setLimit(limit);
@@ -29,7 +29,7 @@ export function useMoving(callback: MovingCallback): [StartMovingFunction, StopM
         setInitPos(undefined);
     }, [callback]);
 
-    const onMoving = useCallback((e: React.MouseEvent) => {
+    const onMoving = useCallback<MovingEventListener>((e) => {
         if (initPos) {
             let offset = { x: e.pageX - initPos.x, y: e.pageY - initPos.y };
 
