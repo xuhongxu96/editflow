@@ -3,6 +3,7 @@ import { HandleDirection } from "components/HandleBox";
 import { useState, useCallback } from "react";
 import { Offset } from "models/BasicTypes";
 import { useMoving, useEventListener } from "hooks";
+import { OnHandleMouseDownEventListener } from "components/Node";
 
 export const useResizableNode = () => {
     const { scale } = useFlowContext();
@@ -11,7 +12,7 @@ export const useResizableNode = () => {
     const [resizeHandleDirection, setResizeHandleDirection] = useState<HandleDirection>();
 
     // Correct the offset by current scale factor
-    const [_startResizingNode, stopResizingNode, onResizingNode] = useMoving(useCallback((offset: Offset) => {
+    const [_startResizingNode, stopResizingNode, onCanvasMouseMove] = useMoving(useCallback((offset: Offset) => {
         if (resizeHandleDirection) {
             dispatch({
                 type: 'resizeSelectedNodes',
@@ -35,16 +36,12 @@ export const useResizableNode = () => {
         }
     }, [stopResizingNode, dispatch]))
 
-    const onNodeHandleMouseDown = useCallback((e: React.MouseEvent, id: string, direction: HandleDirection) => {
+    const onNodeHandleMouseDown = useCallback<OnHandleMouseDownEventListener>((e, _, direction) => {
         // Set handle direction to know which direction to resize the node 
         setResizeHandleDirection(direction);
         _startResizingNode(e);
         e.stopPropagation();
     }, [_startResizingNode]);
-
-    const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-        return onResizingNode(e);
-    }, [onResizingNode]);
 
     return { onNodeHandleMouseDown, onCanvasMouseMove };
 };

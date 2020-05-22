@@ -5,15 +5,19 @@ import * as Flow from 'models/Flow';
 import { HandleBox, HandleDirection } from './HandleBox';
 import { Rect } from 'models/BasicTypes';
 
+export type OnHandleMouseDownEventListener = (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
+export type OnPortMouseDownEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, portType: 'input' | 'output', portIndex: number) => void;
+
 export interface NodeProps extends Flow.Node {
     id: string;
     draftLayout?: Rect;
     selected?: boolean;
     highlighted?: boolean;
     animated?: boolean;
-    onMouseDown?: (e: React.MouseEvent, id: string) => void;
+    onMouseDown?: (e: React.MouseEvent, id: string, props: NodeProps) => void;
     onClick?: (e: React.MouseEvent, id: string) => void;
-    onHandleMouseDown?: (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
+    onHandleMouseDown?: OnHandleMouseDownEventListener;
+    onPortMouseDown?: OnPortMouseDownEventListener;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -22,6 +26,7 @@ export const Node = React.memo((props: NodeProps) => {
         onClick,
         onMouseDown,
         onHandleMouseDown,
+        onPortMouseDown,
         animated,
         highlighted,
         selected,
@@ -44,7 +49,7 @@ export const Node = React.memo((props: NodeProps) => {
             y={y}
             width={w}
             height={h}
-            onMouseDown={e => onMouseDown && onMouseDown(e, id)}
+            onMouseDown={e => onMouseDown && onMouseDown(e, id, props)}
             onClick={e => onClick && onClick(e, id)}
         >
             <rect className={Style.nodeRect} width='100%' height='100%' rx={4} ry={4} />
@@ -55,7 +60,11 @@ export const Node = React.memo((props: NodeProps) => {
                 </text>
             </svg >
 
-            <PortBox input={input} output={output} />
+            <PortBox
+                input={input}
+                output={output}
+                onPortMouseDown={(e, port, type, index) => onPortMouseDown && onPortMouseDown(e, id, port, type, index)}
+            />
 
             {
                 selected && <HandleBox

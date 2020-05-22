@@ -12,7 +12,7 @@ const Space = 10;
 const RowSize = 10;
 const OffsetX = 0;
 const OffsetY = 48;
-const NodeCount = 10000;
+const NodeCount = 1000;
 const EdgeCount = 50;
 
 const generatePorts = (namePrefix: string, n: number) => {

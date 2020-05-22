@@ -217,6 +217,16 @@ const reducers = {
                 });
             }
         });
+    },
+    setSelectPort: (draft: DraftFlow, action: { nodeId: string, portType: 'input' | 'output', portIndex: number }) => {
+        draft.selectedPort = {
+            nodeId: action.nodeId,
+            type: action.portType,
+            index: action.portIndex,
+        };
+    },
+    unselectPort: (draft: DraftFlow, action: {} = {}) => {
+        draft.selectedPort = undefined;
     }
 };
 

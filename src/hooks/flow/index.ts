@@ -6,3 +6,4 @@ export * from './useMovableNode';
 export * from './useResizableNode';
 export * from './useEdges';
 export * from './useSelectableEdge';
+export * from './useEditableEdge';

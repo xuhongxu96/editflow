@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { Node, NodeProps } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
-import { Edge, EdgeProps } from './Edge';
+import { Edge, EdgeProps, DraftEdge } from './Edge';
 import * as FlowHooks from 'hooks/flow';
+import { useTraceUpdate } from 'hooks';
 
 export interface CanvasProps {
     width: string | number;
@@ -27,17 +28,23 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onNodeClick, onNodeMouseDown: onNodeMouseDownForSelectableNode } = FlowHooks.useSelectableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForResizableNode, onNodeHandleMouseDown } = FlowHooks.useResizableNode();
+    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, draftEdge } = FlowHooks.useEditableEdge();
 
     const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
+    const onNodeMouseDown = useCallback((e, nodeId) => {
+        onNodeMouseDownForSelectableNode(e, nodeId);
+        onNodeMouseDownForMovableNode(e, nodeId);
+    }, [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode]);
+
     const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
-        onMouseDown: (e, nodeId) => {
-            onNodeMouseDownForSelectableNode(e, nodeId);
-            onNodeMouseDownForMovableNode(e, nodeId);
-        },
+        onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
         onHandleMouseDown: onNodeHandleMouseDown,
-    }), [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode, onNodeClick, onNodeHandleMouseDown]);
+        onPortMouseDown: onPortMouseDown,
+    }), [onNodeMouseDown, onNodeClick, onNodeHandleMouseDown, onPortMouseDown]);
+
+    useTraceUpdate({ onNodeMouseDownForMovableNode, onNodeMouseDownForSelectableNode });
 
     const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
         onMouseDown: onEdgeMouseDown,
@@ -46,7 +53,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
         onCanvasMouseMoveForResizableNode(e);
         onCanvasMouseMoveForMovableNode(e);
-    }, [onCanvasMouseMoveForMovableNode, onCanvasMouseMoveForResizableNode]);
+        onCanvasMouseMoveForEditableEdge(e);
+    }, [onCanvasMouseMoveForMovableNode, onCanvasMouseMoveForResizableNode, onCanvasMouseMoveForEditableEdge]);
+
+    const blurCanvas = flow.selectedNodeIds.size > 0 && draftEdge === undefined;
 
     return (
         <svg
@@ -68,7 +78,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
             </defs>
 
             <g transform={`scale(${flow.scale}) translate(${-flow.viewBound.x},${-flow.viewBound.y})`}>
-                <g filter={flow.selectedNodeIds.size > 0 ? 'url(#blur0)' : ''}>
+                <g filter={blurCanvas ? 'url(#blur0)' : ''}>
                     {useMemo(() => newlyVisibleNodes.map(([id, node]) => (
                         <Node key={id} id={id} animated={true} selected={flow.selectedNodeIds.has(id)}
                             {...node} {...nodeHandlers} />
@@ -105,6 +115,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 {useMemo(() => selectedEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} selected={true} {...edge} {...edgeHandlers} />
                 )), [selectedEdges, edgeHandlers])}
+
+                <DraftEdge edge={draftEdge} />
             </g>
         </svg>
     );

@@ -28,7 +28,7 @@ export const Port = React.memo((props: PortProps) => {
 });
 
 export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
-    onPortMouseDown?: (e: React.MouseEvent, type: 'input' | 'output', key: Flow.Port, index: number) => void;
+    onPortMouseDown?: (e: React.MouseEvent, port: Flow.Port, type: 'input' | 'output', index: number) => void;
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {
@@ -51,7 +51,7 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                     r={3}
                     cursor="pointer"
                     onMouseDown={e => {
-                        props.onPortMouseDown && props.onPortMouseDown(e, 'input', port, i);
+                        props.onPortMouseDown && props.onPortMouseDown(e, port, 'input', i);
                         e.stopPropagation();
                     }}
                 />
@@ -67,7 +67,7 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                     r={3}
                     cursor="pointer"
                     onMouseDown={e => {
-                        props.onPortMouseDown && props.onPortMouseDown(e, 'output', port, i);
+                        props.onPortMouseDown && props.onPortMouseDown(e, port, 'output', i);
                         e.stopPropagation();
                     }}
                 />

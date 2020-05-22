@@ -42,6 +42,8 @@ export interface FlowState {
     visibleEdgeIds: Set<EdgeId>;
     highlightedEdgeIds: Set<EdgeId>;
     selectedEdgeIds: Set<EdgeId>;
+
+    selectedPort?: { nodeId: NodeId, type: 'input' | 'output', index: number };
 }
 
 export const EmptyFlowState: FlowState = {

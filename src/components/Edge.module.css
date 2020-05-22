@@ -22,3 +22,11 @@
     stroke-width: 3px;
     filter: url(#shadow);
 }
+
+.edge:global(.draft),
+.edge:global(.draft):hover {
+    stroke: #000;
+    stroke-width: 3px;
+    filter: url(#shadow);
+    cursor: pointer;
+}

@@ -8,12 +8,11 @@ export interface LimitRect {
     bottom?: number;
 }
 
-export type MovingCallback = (offset: Offset) => void;
 export type StartMovingFunction = (e: React.MouseEvent, limit?: LimitRect) => void;
 export type StopMovingFunction = (cancel: boolean) => void;
 export type MovingEventListener = (e: React.MouseEvent) => boolean;
 
-export function useMoving(callback: MovingCallback): [StartMovingFunction, StopMovingFunction, MovingEventListener] {
+export function useMoving(callback: (offset: Offset, e?: React.MouseEvent) => void): [StartMovingFunction, StopMovingFunction, MovingEventListener] {
     const [initPos, setInitPos] = useState<Point>();
     const [limit, setLimit] = useState<LimitRect>();
 
@@ -40,7 +39,7 @@ export function useMoving(callback: MovingCallback): [StartMovingFunction, StopM
                 if (limit.bottom !== undefined && offset.y > limit.bottom) offset.y = limit.bottom;
             }
 
-            callback(offset);
+            callback(offset, e);
             return true;
         }
         return false;

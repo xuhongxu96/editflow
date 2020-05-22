@@ -8,7 +8,7 @@ export const useMovableNode = () => {
     const dispatch = useFlowDispatchContext();
 
     // Correct the offset by current scale factor
-    const [startMovingNode, stopMovingNode, onMovingNode] = useMoving(useCallback((offset: Offset) => {
+    const [startMovingNode, stopMovingNode, onCanvasMouseMove] = useMoving(useCallback((offset: Offset) => {
         dispatch({ type: 'moveSelectedNodes', offset: { x: offset.x / scale, y: offset.y / scale } });
     }, [dispatch, scale]));
 
@@ -30,10 +30,6 @@ export const useMovableNode = () => {
         startMovingNode(e);
         e.stopPropagation();
     }, [startMovingNode]);
-
-    const onCanvasMouseMove = useCallback((e: React.MouseEvent) => {
-        return onMovingNode(e);
-    }, [onMovingNode]);
 
     return { onNodeMouseDown, onCanvasMouseMove };
 };
