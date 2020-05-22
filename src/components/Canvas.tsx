@@ -56,7 +56,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         onCanvasMouseMoveForEditableEdge(e);
     }, [onCanvasMouseMoveForMovableNode, onCanvasMouseMoveForResizableNode, onCanvasMouseMoveForEditableEdge]);
 
-    const blurCanvas = flow.selectedNodeIds.size > 0 && draftEdge === undefined;
+    const blurCanvas = (flow.selectedNodeIds.size > 0 || flow.selectedEdgeIds.size > 0) &&
+        draftEdge === undefined;
 
     return (
         <svg
