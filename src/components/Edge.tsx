@@ -27,6 +27,7 @@ export const Edge = React.memo((props: EdgeProps) => {
 
 export interface DraftEdgeProps {
     edge?: EdgeState;
+    connected?: boolean;
 }
 
 export const DraftEdge = (props: DraftEdgeProps) => {
@@ -55,10 +56,10 @@ export const DraftEdge = (props: DraftEdgeProps) => {
         repeatCount: 1,
         fill: 'freeze',
     };
-
+    const className = Style.edge + ' draft' + (props.connected ? ' connected' : '');
     if (props.edge) {
         return (<line
-            className={Style.edge + ' draft'}
+            className={className}
             x1={props.edge.start.x}
             y1={props.edge.start.y}
             x2={props.edge.end.x}
@@ -67,7 +68,7 @@ export const DraftEdge = (props: DraftEdgeProps) => {
     } else {
         return (
             <line
-                className={Style.edge + ' draft'}
+                className={className}
                 x1={start.x}
                 y1={start.y}
                 x2={end.x}

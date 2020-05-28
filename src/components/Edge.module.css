@@ -14,19 +14,26 @@
 .edge:global(.highlighted) {
     stroke: #0006;
     stroke-width: 3px;
-    filter: url(#shadow);
+    filter: url(#shadow-for-line);
 }
 
 .edge:global(.selected) {
     stroke: #000a;
     stroke-width: 3px;
-    filter: url(#shadow);
+    filter: url(#shadow-for-line);
 }
 
 .edge:global(.draft),
 .edge:global(.draft):hover {
+    stroke: #444;
+    stroke-width: 2px;
+    filter: url(#shadow-for-line);
+    cursor: pointer;
+    pointer-events: none;
+}
+
+.edge:global(.draft):global(.connected),
+.edge:global(.draft):global(.connected):hover {
     stroke: #000;
     stroke-width: 3px;
-    filter: url(#shadow);
-    cursor: pointer;
 }

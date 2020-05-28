@@ -6,7 +6,7 @@ import { HandleBox, HandleDirection } from './HandleBox';
 import { Rect } from 'models/BasicTypes';
 
 export type OnHandleMouseDownEventListener = (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
-export type OnPortMouseDownEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, portType: 'input' | 'output', portIndex: number) => void;
+export type OnPortMouseEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, io: 'input' | 'output', portIndex: number) => void;
 
 export interface NodeProps extends Flow.Node {
     id: string;
@@ -14,10 +14,13 @@ export interface NodeProps extends Flow.Node {
     selected?: boolean;
     highlighted?: boolean;
     animated?: boolean;
+    enabledPortType?: (io: 'input' | 'output', type: string) => boolean;
     onMouseDown?: (e: React.MouseEvent, id: string, props: NodeProps) => void;
     onClick?: (e: React.MouseEvent, id: string) => void;
     onHandleMouseDown?: OnHandleMouseDownEventListener;
-    onPortMouseDown?: OnPortMouseDownEventListener;
+    onPortMouseDown?: OnPortMouseEventListener;
+    onPortMouseEnter?: OnPortMouseEventListener;
+    onPortMouseLeave?: OnPortMouseEventListener;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -27,6 +30,9 @@ export const Node = React.memo((props: NodeProps) => {
         onMouseDown,
         onHandleMouseDown,
         onPortMouseDown,
+        onPortMouseEnter,
+        onPortMouseLeave,
+        enabledPortType,
         animated,
         highlighted,
         selected,
@@ -64,6 +70,9 @@ export const Node = React.memo((props: NodeProps) => {
                 input={input}
                 output={output}
                 onPortMouseDown={(e, port, type, index) => onPortMouseDown && onPortMouseDown(e, id, port, type, index)}
+                onPortMouseEnter={(e, port, type, index) => onPortMouseEnter && onPortMouseEnter(e, id, port, type, index)}
+                onPortMouseLeave={(e, port, type, index) => onPortMouseLeave && onPortMouseLeave(e, id, port, type, index)}
+                enabledType={enabledPortType}
             />
 
             {

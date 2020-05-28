@@ -28,7 +28,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onNodeClick, onNodeMouseDown: onNodeMouseDownForSelectableNode } = FlowHooks.useSelectableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForResizableNode, onNodeHandleMouseDown } = FlowHooks.useResizableNode();
-    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, draftEdge } = FlowHooks.useEditableEdge();
+    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, onPortMouseEnter, onPortMouseLeave, draftEdge } = FlowHooks.useEditableEdge();
 
     const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
@@ -37,14 +37,24 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         onNodeMouseDownForMovableNode(e, nodeId);
     }, [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode]);
 
+    const enabledPortType = useMemo(() => {
+        // For perf consideration, only disable ports when visibleNodes <= 50
+        if (visibleNodes.length > 50) return undefined;
+        return (io: 'input' | 'output', type: string) => {
+            if (flow.selectedPort) return type === flow.selectedPort.type;
+            return true;
+        };
+    }, [flow.selectedPort, visibleNodes]);
+
     const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
         onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
         onHandleMouseDown: onNodeHandleMouseDown,
-        onPortMouseDown: onPortMouseDown,
-    }), [onNodeMouseDown, onNodeClick, onNodeHandleMouseDown, onPortMouseDown]);
-
-    useTraceUpdate({ onNodeMouseDownForMovableNode, onNodeMouseDownForSelectableNode });
+        onPortMouseDown,
+        onPortMouseEnter,
+        onPortMouseLeave,
+        enabledPortType: enabledPortType,
+    }), [onNodeMouseDown, onNodeClick, onNodeHandleMouseDown, onPortMouseDown, onPortMouseEnter, onPortMouseLeave, enabledPortType]);
 
     const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
         onMouseDown: onEdgeMouseDown,
@@ -73,8 +83,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur" />
                 </filter>
                 <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
-                    <feBlend in="SourceGraphic" in2="blur" mode="normal" />
+                    <feDropShadow in="SourceGraphic" dx="0" dy="0" stdDeviation="3" />
+                </filter>
+                <filter id="shadow-for-line" x={flow.viewBound.x} y={flow.viewBound.y} width={flow.viewBound.w} height={flow.viewBound.h} filterUnits="userSpaceOnUse">
+                    <feDropShadow in="SourceGraphic" dx="0" dy="0" stdDeviation="3" />
                 </filter>
             </defs>
 
@@ -117,7 +129,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                     <Edge key={id} id={id} selected={true} {...edge} {...edgeHandlers} />
                 )), [selectedEdges, edgeHandlers])}
 
-                <DraftEdge edge={draftEdge} />
+                <DraftEdge edge={draftEdge?.edge} connected={draftEdge?.connected} />
             </g>
         </svg>
     );

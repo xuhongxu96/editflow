@@ -7,20 +7,23 @@ export interface PortProps {
     title: string;
     x: string | number;
     y: string | number;
-    r: number;
+    disabled?: boolean;
     cursor: string;
     onMouseDown?: (e: React.MouseEvent) => void;
+    onMouseEnter?: (e: React.MouseEvent) => void;
+    onMouseLeave?: (e: React.MouseEvent) => void;
 }
 
 export const Port = React.memo((props: PortProps) => {
     return (
         <circle
-            className={props.className}
+            className={props.className + (props.disabled ? ' disabled' : '')}
             cursor={props.cursor}
             cx={props.x}
             cy={props.y}
-            r={props.r}
             onMouseDown={props.onMouseDown}
+            onMouseEnter={props.onMouseEnter}
+            onMouseLeave={props.onMouseLeave}
         >
             <title>{props.title}</title>
         </circle>
@@ -28,7 +31,10 @@ export const Port = React.memo((props: PortProps) => {
 });
 
 export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
+    enabledType?: (io: 'input' | 'output', type: string) => boolean;
     onPortMouseDown?: (e: React.MouseEvent, port: Flow.Port, type: 'input' | 'output', index: number) => void;
+    onPortMouseEnter?: (e: React.MouseEvent, port: Flow.Port, type: 'input' | 'output', index: number) => void;
+    onPortMouseLeave?: (e: React.MouseEvent, port: Flow.Port, type: 'input' | 'output', index: number) => void;
 }
 
 export const PortBox = React.memo<PortBoxProps>((props) => {
@@ -46,12 +52,20 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                     className={Style.inputPort}
                     key={port.name}
                     title={port.name}
+                    disabled={props.enabledType && !props.enabledType('input', port.type)}
                     x={`${inputOffsetUnit * (i + 1)}%`}
                     y="0"
-                    r={3}
                     cursor="pointer"
                     onMouseDown={e => {
                         props.onPortMouseDown && props.onPortMouseDown(e, port, 'input', i);
+                        e.stopPropagation();
+                    }}
+                    onMouseEnter={e => {
+                        props.onPortMouseEnter && props.onPortMouseEnter(e, port, 'input', i);
+                        e.stopPropagation();
+                    }}
+                    onMouseLeave={e => {
+                        props.onPortMouseLeave && props.onPortMouseLeave(e, port, 'input', i);
                         e.stopPropagation();
                     }}
                 />
@@ -62,12 +76,20 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                     className={Style.outputPort}
                     key={port.name}
                     title={port.name}
+                    disabled={props.enabledType && !props.enabledType('input', port.type)}
                     x={`${outputOffsetUnit * (i + 1)}%`}
                     y="100%"
-                    r={3}
                     cursor="pointer"
                     onMouseDown={e => {
                         props.onPortMouseDown && props.onPortMouseDown(e, port, 'output', i);
+                        e.stopPropagation();
+                    }}
+                    onMouseEnter={e => {
+                        props.onPortMouseEnter && props.onPortMouseEnter(e, port, 'output', i);
+                        e.stopPropagation();
+                    }}
+                    onMouseLeave={e => {
+                        props.onPortMouseLeave && props.onPortMouseLeave(e, port, 'output', i);
                         e.stopPropagation();
                     }}
                 />

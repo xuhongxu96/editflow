@@ -18,7 +18,7 @@ const EdgeCount = 50;
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
     name: `${namePrefix} ${i}`,
-    type: 'null',
+    type: ['str', 'int', 'bool'][Math.trunc(Math.random() * 3)],
   }));
 }
 

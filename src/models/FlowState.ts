@@ -14,6 +14,13 @@ export interface EdgeState {
 
 type PortIndexMap = Map<PortName, number>;
 
+export interface PortMeta {
+    nodeId: NodeId;
+    io: 'input' | 'output';
+    index: number;
+    type: string;
+}
+
 export interface FlowState {
     raw: Flow;
 
@@ -43,7 +50,8 @@ export interface FlowState {
     highlightedEdgeIds: Set<EdgeId>;
     selectedEdgeIds: Set<EdgeId>;
 
-    selectedPort?: { nodeId: NodeId, type: 'input' | 'output', index: number };
+    selectedPort?: PortMeta;
+    targetPort?: PortMeta;
 }
 
 export const EmptyFlowState: FlowState = {

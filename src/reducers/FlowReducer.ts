@@ -1,4 +1,4 @@
-import { FlowState } from "models/FlowState";
+import { FlowState, PortMeta } from "models/FlowState";
 import * as Basic from "models/BasicTypes";
 import { valueof, expandRect, isContained, limitRect, expandRectToContain, getPortPosition, getPortDraftPosition, DecomposeHandleDirection } from "utils";
 import { Reducer } from "use-immer";
@@ -218,16 +218,29 @@ const reducers = {
             }
         });
     },
-    setSelectPort: (draft: DraftFlow, action: { nodeId: string, portType: 'input' | 'output', portIndex: number }) => {
+    setSelectPort: (draft: DraftFlow, action: PortMeta) => {
         draft.selectedPort = {
             nodeId: action.nodeId,
-            type: action.portType,
-            index: action.portIndex,
+            io: action.io,
+            index: action.index,
+            type: draft.raw.nodes[action.nodeId][action.io][action.index].type,
         };
     },
     unselectPort: (draft: DraftFlow, action: {} = {}) => {
         draft.selectedPort = undefined;
-    }
+    },
+    setTargetPort: (draft: DraftFlow, action: PortMeta) => {
+        draft.targetPort = {
+            nodeId: action.nodeId,
+            io: action.io,
+            index: action.index,
+            type: draft.raw.nodes[action.nodeId][action.io][action.index].type,
+        };
+    },
+    unsetTargetPort: (draft: DraftFlow, action: {} = {}) => {
+        draft.targetPort = undefined;
+    },
+
 };
 
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: { type: K } & Parameters<typeof reducers[K]>[1] }>;
