@@ -74,6 +74,8 @@ It will blur the unselected nodes and let you focus on the selected ones.
   ![dagstudio](https://github.com/TimZaman/dagstudio/raw/master/misc/20160907_dagstudio_ex.gif)
 - [alibaba/butterfly](https://github.com/alibaba/butterfly)
   ![butterfly](https://camo.githubusercontent.com/5dd03a6457f868b6f4ff5c5a0f8c3f7a838aa329/68747470733a2f2f696d672e616c6963646e2e636f6d2f7466732f5442316d77723067627231674b306a535a464458586239795658612d313030302d313030302e706e67)
+- [projectstorm/react-diagrams](https://github.com/projectstorm/react-diagrams)
+  ![react-diagrams](https://raw.githubusercontent.com/projectstorm/react-diagrams/master/.gitbook/assets/example1.jpg)
 
 ---
 
