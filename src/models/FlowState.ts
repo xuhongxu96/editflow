@@ -38,6 +38,7 @@ export interface FlowState {
     visibleNodeIds: Set<NodeId>;
     highlightedNodeIds: Set<NodeId>;
     selectedNodeIds: Set<NodeId>;
+    hoveredNodeId?: NodeId;
 
     inputPortMap: Map<NodeId, PortIndexMap>;
     outputPortMap: Map<NodeId, PortIndexMap>;

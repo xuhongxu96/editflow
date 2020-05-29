@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { EdgeState } from "models/FlowState";
 import { useMoving } from "hooks/useMoving";
 import { useEventListener } from "hooks";
-import { OnPortMouseEventListener } from "components/Node";
+import { OnNodePortMouseEventListener } from "components/Node";
 import { getPortPosition } from "utils";
 
 export const useEditableEdge = () => {
@@ -33,22 +33,28 @@ export const useEditableEdge = () => {
         dispatch({ type: 'unselectPort' });
     }, [stopMoving, dispatch]));
 
-    const onPortMouseDown = useCallback<OnPortMouseEventListener>((e, nodeId, _, io, index) => {
+    const onPortMouseDown = useCallback<OnNodePortMouseEventListener>((e, nodeId, _, io, index) => {
         if (io === 'output') {
             dispatch({ type: 'setSelectPort', nodeId, io, index });
             startMoving(e);
         }
     }, [startMoving, dispatch]);
 
-    const onPortMouseEnter = useCallback<OnPortMouseEventListener>((e, nodeId, _, io, index) => {
+    const onPortMouseUp = useCallback<OnNodePortMouseEventListener>((e, nodeId, _, io, index) => {
+        if (selectedPort && targetPort) {
+            dispatch({ type: 'addEdge', startPort: selectedPort, endPort: targetPort });
+        }
+    }, [selectedPort, targetPort, dispatch]);
+
+    const onPortMouseEnter = useCallback<OnNodePortMouseEventListener>((e, nodeId, _, io, index) => {
         if (io === 'input') {
             dispatch({ type: 'setTargetPort', nodeId, io, index });
         }
     }, [dispatch]);
 
-    const onPortMouseLeave = useCallback<OnPortMouseEventListener>((e, nodeId, _, io, index) => {
+    const onPortMouseLeave = useCallback<OnNodePortMouseEventListener>((e, nodeId, _, io, index) => {
         dispatch({ type: 'unsetTargetPort' });
     }, [dispatch]);
 
-    return { onCanvasMouseMove, onPortMouseDown, onPortMouseEnter, onPortMouseLeave, draftEdge };
+    return { onCanvasMouseMove, onPortMouseDown, onPortMouseUp, onPortMouseEnter, onPortMouseLeave, draftEdge };
 };

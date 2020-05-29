@@ -117,6 +117,12 @@ const reducers = {
     unselectAllEdges: (draft: DraftFlow, action: {} = {}) => {
         draft.selectedEdgeIds.clear();
     },
+    setHoveredNode: (draft: DraftFlow, action: { id: string }) => {
+        draft.hoveredNodeId = action.id;
+    },
+    unsetHoveredNode: (draft: DraftFlow, action: {} = {}) => {
+        draft.hoveredNodeId = undefined;
+    },
     setHighlightedNodes: (draft: DraftFlow, action: { ids: string[] }) => {
         draft.highlightedNodeIds = new Set<string>(action.ids);
     },
@@ -240,7 +246,34 @@ const reducers = {
     unsetTargetPort: (draft: DraftFlow, action: {} = {}) => {
         draft.targetPort = undefined;
     },
+    addEdge: (draft: DraftFlow, action: { startPort: PortMeta, endPort: PortMeta }) => {
+        const { startPort, endPort } = action;
+        const edgeId = `${startPort.nodeId}.${startPort.index}-${endPort.nodeId}.${endPort.index}`;
+        const startNode = draft.raw.nodes[startPort.nodeId];
+        const endNode = draft.raw.nodes[endPort.nodeId];
 
+        draft.raw.edges[edgeId] = {
+            start: {
+                nodeId: startPort.nodeId,
+                portName: startNode.output[startPort.index].name,
+            },
+            end: {
+                nodeId: endPort.nodeId,
+                portName: endNode.input[endPort.index].name,
+            },
+        };
+
+        draft.nodeEdgeMap.get(startPort.nodeId)?.add(edgeId);
+        draft.nodeEdgeMap.get(endPort.nodeId)?.add(edgeId);
+
+        draft.edgeStateMap.set(edgeId, {
+            start: getPortPosition(startNode, 'output', startPort.index),
+            end: getPortPosition(endNode, 'input', endPort.index),
+        });
+
+        draft.visibleEdgeIds.add(edgeId);
+        reducers.unsetTargetPort(draft);
+    },
 };
 
 export type FlowAction = valueof<{ [K in keyof typeof reducers]: { type: K } & Parameters<typeof reducers[K]>[1] }>;

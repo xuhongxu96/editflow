@@ -9,7 +9,7 @@ export const useNodes = () => {
         visibleNodeIds,
         highlightedNodeIds,
         selectedNodeIds,
-        raw
+        raw,
     } = useFlowContext();
     const dispatch = useFlowDispatchContext();
 

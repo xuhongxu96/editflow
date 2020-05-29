@@ -1,7 +1,6 @@
 import { Rect, Point } from "models/BasicTypes";
 import { Node } from "models/Flow";
 import { HandleDirection } from "components/HandleBox";
-import { PortMeta } from "models/FlowState";
 
 export type valueof<T> = T[keyof T];
 

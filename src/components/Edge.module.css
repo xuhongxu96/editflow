@@ -12,7 +12,7 @@
 }
 
 .edge:global(.highlighted) {
-    stroke: #0006;
+    stroke: #0008;
     stroke-width: 3px;
     filter: url(#shadow-for-line);
 }

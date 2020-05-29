@@ -42,7 +42,7 @@ It will blur the unselected nodes and let you focus on the selected ones.
    - [x] Tooltip
    - [ ] Context Menu
 - Edge
-   - [ ] Creatable by dragging from an unconnected output port
+   - [x] Creatable by dragging from an unconnected output port
    - [ ] Re-connectable by dragging from a connected input port
    - [ ] Label
    - [ ] Context Menu

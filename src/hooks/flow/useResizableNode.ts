@@ -3,7 +3,7 @@ import { HandleDirection } from "components/HandleBox";
 import { useState, useCallback } from "react";
 import { Offset } from "models/BasicTypes";
 import { useMoving, useEventListener } from "hooks";
-import { OnHandleMouseDownEventListener } from "components/Node";
+import { OnNodeHandleMouseDownEventListener } from "components/Node";
 
 export const useResizableNode = () => {
     const { scale } = useFlowContext();
@@ -36,7 +36,7 @@ export const useResizableNode = () => {
         }
     }, [stopResizingNode, dispatch]))
 
-    const onNodeHandleMouseDown = useCallback<OnHandleMouseDownEventListener>((e, _, direction) => {
+    const onNodeHandleMouseDown = useCallback<OnNodeHandleMouseDownEventListener>((e, _, direction) => {
         // Set handle direction to know which direction to resize the node 
         setResizeHandleDirection(direction);
         _startResizingNode(e);

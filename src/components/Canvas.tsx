@@ -4,7 +4,6 @@ import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge, EdgeProps, DraftEdge } from './Edge';
 import * as FlowHooks from 'hooks/flow';
-import { useTraceUpdate } from 'hooks';
 
 export interface CanvasProps {
     width: string | number;
@@ -28,7 +27,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onNodeClick, onNodeMouseDown: onNodeMouseDownForSelectableNode } = FlowHooks.useSelectableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForResizableNode, onNodeHandleMouseDown } = FlowHooks.useResizableNode();
-    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, onPortMouseEnter, onPortMouseLeave, draftEdge } = FlowHooks.useEditableEdge();
+    const { onNodeMouseEnter, onNodeMouseLeave } = FlowHooks.useHoverableNode();
+    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, onPortMouseUp, onPortMouseEnter, onPortMouseLeave, draftEdge } = FlowHooks.useEditableEdge();
 
     const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
@@ -49,12 +49,18 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
         onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
+        onMouseEnter: onNodeMouseEnter,
+        onPortMouseEnter,
+        enabledPortType,
+    }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, enabledPortType]);
+
+    const hoveredNodeHandlers: Partial<NodeProps> = useMemo(() => ({
+        onMouseLeave: onNodeMouseLeave,
         onHandleMouseDown: onNodeHandleMouseDown,
         onPortMouseDown,
-        onPortMouseEnter,
+        onPortMouseUp,
         onPortMouseLeave,
-        enabledPortType: enabledPortType,
-    }), [onNodeMouseDown, onNodeClick, onNodeHandleMouseDown, onPortMouseDown, onPortMouseEnter, onPortMouseLeave, enabledPortType]);
+    }), [onNodeMouseLeave, onNodeHandleMouseDown, onPortMouseDown, onPortMouseUp, onPortMouseLeave]);
 
     const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
         onMouseDown: onEdgeMouseDown,
@@ -94,32 +100,32 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 <g filter={blurCanvas ? 'url(#blur0)' : ''}>
                     {useMemo(() => newlyVisibleNodes.map(([id, node]) => (
                         <Node key={id} id={id} animated={true} selected={flow.selectedNodeIds.has(id)}
-                            {...node} {...nodeHandlers} />
-                    )), [newlyVisibleNodes, flow.selectedNodeIds, nodeHandlers])}
+                            {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
+                    )), [newlyVisibleNodes, flow.hoveredNodeId, flow.selectedNodeIds, nodeHandlers, hoveredNodeHandlers])}
 
                     {useMemo(() => visibleNodes.map(([id, node]) => (
                         <Node key={id} id={id} selected={flow.selectedNodeIds.has(id)}
-                            {...node} {...nodeHandlers} />
-                    )), [visibleNodes, flow.selectedNodeIds, nodeHandlers])}
-
-                    {useMemo(() => visibleEdges.map(([id, edge]) => (
-                        <Edge key={id} id={id} {...edge} {...edgeHandlers} />
-                    )), [visibleEdges, edgeHandlers])}
-
-                    {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (
-                        <Edge key={id} id={id} {...edge} {...edgeHandlers} />
-                    )), [newlyVisibleEdges, edgeHandlers])}
+                            {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
+                    )), [visibleNodes, flow.hoveredNodeId, flow.selectedNodeIds, nodeHandlers, hoveredNodeHandlers])}
                 </g>
 
                 {useMemo(() => highlightedNodes.map(([id, node]) => (
                     <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} highlighted={true}
-                        {...node} {...nodeHandlers} />
-                )), [highlightedNodes, flow.draftNodeLayout, nodeHandlers])}
+                        {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
+                )), [highlightedNodes, flow.hoveredNodeId, flow.draftNodeLayout, nodeHandlers, hoveredNodeHandlers])}
 
                 {useMemo(() => selectedNodes.map(([id, node]) => (
                     <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} selected={true}
-                        {...node} {...nodeHandlers} />
-                )), [selectedNodes, flow.draftNodeLayout, nodeHandlers])}
+                        {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
+                )), [selectedNodes, flow.hoveredNodeId, flow.draftNodeLayout, nodeHandlers, hoveredNodeHandlers])}
+
+                {useMemo(() => visibleEdges.map(([id, edge]) => (
+                    <Edge key={id} id={id} {...edge} {...edgeHandlers} />
+                )), [visibleEdges, edgeHandlers])}
+
+                {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (
+                    <Edge key={id} id={id} {...edge} {...edgeHandlers} />
+                )), [newlyVisibleEdges, edgeHandlers])}
 
                 {useMemo(() => highlightedEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} highlighted={true} {...edge} {...edgeHandlers} />

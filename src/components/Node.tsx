@@ -5,8 +5,9 @@ import * as Flow from 'models/Flow';
 import { HandleBox, HandleDirection } from './HandleBox';
 import { Rect } from 'models/BasicTypes';
 
-export type OnHandleMouseDownEventListener = (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
-export type OnPortMouseEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, io: 'input' | 'output', portIndex: number) => void;
+export type OnNodeMouseEventListener = (e: React.MouseEvent, id: string, props: NodeProps) => void;
+export type OnNodeHandleMouseDownEventListener = (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
+export type OnNodePortMouseEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, io: 'input' | 'output', portIndex: number) => void;
 
 export interface NodeProps extends Flow.Node {
     id: string;
@@ -15,12 +16,15 @@ export interface NodeProps extends Flow.Node {
     highlighted?: boolean;
     animated?: boolean;
     enabledPortType?: (io: 'input' | 'output', type: string) => boolean;
-    onMouseDown?: (e: React.MouseEvent, id: string, props: NodeProps) => void;
+    onMouseDown?: OnNodeMouseEventListener;
+    onMouseEnter?: OnNodeMouseEventListener;
+    onMouseLeave?: OnNodeMouseEventListener;
     onClick?: (e: React.MouseEvent, id: string) => void;
-    onHandleMouseDown?: OnHandleMouseDownEventListener;
-    onPortMouseDown?: OnPortMouseEventListener;
-    onPortMouseEnter?: OnPortMouseEventListener;
-    onPortMouseLeave?: OnPortMouseEventListener;
+    onHandleMouseDown?: OnNodeHandleMouseDownEventListener;
+    onPortMouseDown?: OnNodePortMouseEventListener;
+    onPortMouseUp?: OnNodePortMouseEventListener;
+    onPortMouseEnter?: OnNodePortMouseEventListener;
+    onPortMouseLeave?: OnNodePortMouseEventListener;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -28,8 +32,11 @@ export const Node = React.memo((props: NodeProps) => {
         id,
         onClick,
         onMouseDown,
+        onMouseEnter,
+        onMouseLeave,
         onHandleMouseDown,
         onPortMouseDown,
+        onPortMouseUp,
         onPortMouseEnter,
         onPortMouseLeave,
         enabledPortType,
@@ -56,6 +63,8 @@ export const Node = React.memo((props: NodeProps) => {
             width={w}
             height={h}
             onMouseDown={e => onMouseDown && onMouseDown(e, id, props)}
+            onMouseEnter={e => onMouseEnter && onMouseEnter(e, id, props)}
+            onMouseLeave={e => onMouseLeave && onMouseLeave(e, id, props)}
             onClick={e => onClick && onClick(e, id)}
         >
             <rect className={Style.nodeRect} width='100%' height='100%' rx={4} ry={4} />
@@ -70,6 +79,7 @@ export const Node = React.memo((props: NodeProps) => {
                 input={input}
                 output={output}
                 onPortMouseDown={(e, port, type, index) => onPortMouseDown && onPortMouseDown(e, id, port, type, index)}
+                onPortMouseUp={(e, port, type, index) => onPortMouseUp && onPortMouseUp(e, id, port, type, index)}
                 onPortMouseEnter={(e, port, type, index) => onPortMouseEnter && onPortMouseEnter(e, id, port, type, index)}
                 onPortMouseLeave={(e, port, type, index) => onPortMouseLeave && onPortMouseLeave(e, id, port, type, index)}
                 enabledType={enabledPortType}
