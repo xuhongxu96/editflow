@@ -114,11 +114,6 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                         {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
                 )), [highlightedNodes, flow.hoveredNodeId, flow.draftNodeLayout, nodeHandlers, hoveredNodeHandlers])}
 
-                {useMemo(() => selectedNodes.map(([id, node]) => (
-                    <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} selected={true}
-                        {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
-                )), [selectedNodes, flow.hoveredNodeId, flow.draftNodeLayout, nodeHandlers, hoveredNodeHandlers])}
-
                 {useMemo(() => visibleEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} {...edge} {...edgeHandlers} />
                 )), [visibleEdges, edgeHandlers])}
@@ -126,6 +121,11 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 {useMemo(() => newlyVisibleEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} {...edge} {...edgeHandlers} />
                 )), [newlyVisibleEdges, edgeHandlers])}
+
+                {useMemo(() => selectedNodes.map(([id, node]) => (
+                    <Node key={id} id={id} draftLayout={flow.draftNodeLayout.get(id)} selected={true}
+                        {...node} {...nodeHandlers} {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})} />
+                )), [selectedNodes, flow.hoveredNodeId, flow.draftNodeLayout, nodeHandlers, hoveredNodeHandlers])}
 
                 {useMemo(() => highlightedEdges.map(([id, edge]) => (
                     <Edge key={id} id={id} highlighted={true} {...edge} {...edgeHandlers} />
