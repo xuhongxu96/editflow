@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useCallback } from 'react';
-import { Node, NodeProps } from './Node';
+import { Node, NodeProps, OnNodeMouseEventListener } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge, EdgeProps, DraftEdge } from './Edge';
@@ -32,21 +32,21 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
-    const onNodeMouseDown = useCallback((e, nodeId) => {
-        onNodeMouseDownForSelectableNode(e, nodeId);
-        onNodeMouseDownForMovableNode(e, nodeId);
+    const onNodeMouseDown = useCallback<OnNodeMouseEventListener>((e, nodeId, props) => {
+        onNodeMouseDownForSelectableNode(e, nodeId, props);
+        onNodeMouseDownForMovableNode(e, nodeId, props);
     }, [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode]);
 
     const enabledPortType = useMemo(() => {
         // For perf consideration, only disable ports when visibleNodes <= 50
         if (visibleNodes.length > 50) return undefined;
-        return (io: 'input' | 'output', type: string) => {
+        return (_: 'input' | 'output', type: string) => {
             if (flow.selectedPort) return type === flow.selectedPort.type;
             return true;
         };
     }, [flow.selectedPort, visibleNodes]);
 
-    const nodeHandlers: Partial<NodeProps> = useMemo(() => ({
+    const nodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
         onMouseEnter: onNodeMouseEnter,
@@ -54,7 +54,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         enabledPortType,
     }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, enabledPortType]);
 
-    const hoveredNodeHandlers: Partial<NodeProps> = useMemo(() => ({
+    const hoveredNodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseLeave: onNodeMouseLeave,
         onHandleMouseDown: onNodeHandleMouseDown,
         onPortMouseDown,

@@ -2,6 +2,7 @@ import { useFlowContext, useFlowDispatchContext } from "contexts/FlowContext";
 import { Offset } from "models/BasicTypes";
 import { useCallback } from "react";
 import { useMoving, useEventListener } from "hooks";
+import { OnNodeMouseEventListener } from "components/Node";
 
 export const useMovableNode = () => {
     const { scale } = useFlowContext();
@@ -26,7 +27,7 @@ export const useMovableNode = () => {
         }
     }, [stopMovingNode, dispatch]))
 
-    const onNodeMouseDown = useCallback((e: React.MouseEvent, id: string) => {
+    const onNodeMouseDown = useCallback<OnNodeMouseEventListener>((e, id) => {
         startMovingNode(e);
         e.stopPropagation();
     }, [startMovingNode]);

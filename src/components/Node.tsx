@@ -19,7 +19,7 @@ export interface NodeProps extends Flow.Node {
     onMouseDown?: OnNodeMouseEventListener;
     onMouseEnter?: OnNodeMouseEventListener;
     onMouseLeave?: OnNodeMouseEventListener;
-    onClick?: (e: React.MouseEvent, id: string) => void;
+    onClick?: OnNodeMouseEventListener;
     onHandleMouseDown?: OnNodeHandleMouseDownEventListener;
     onPortMouseDown?: OnNodePortMouseEventListener;
     onPortMouseUp?: OnNodePortMouseEventListener;
@@ -65,7 +65,7 @@ export const Node = React.memo((props: NodeProps) => {
             onMouseDown={e => onMouseDown && onMouseDown(e, id, props)}
             onMouseEnter={e => onMouseEnter && onMouseEnter(e, id, props)}
             onMouseLeave={e => onMouseLeave && onMouseLeave(e, id, props)}
-            onClick={e => onClick && onClick(e, id)}
+            onClick={e => onClick && onClick(e, id, props)}
         >
             <rect className={Style.nodeRect} width='100%' height='100%' rx={4} ry={4} />
 
