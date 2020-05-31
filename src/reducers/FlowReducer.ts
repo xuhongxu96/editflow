@@ -24,6 +24,8 @@ const reducers = {
         draft.inputPortMap.clear();
         draft.outputPortMap.clear();
         draft.nodeEdgeMap.clear();
+        draft.inputPortEdgeMap.clear();
+        draft.outputPortEdgeMap.clear();
         draft.edgeStateMap.clear();
         draft.newlyVisibleEdgeIds.clear();
         draft.visibleEdgeIds.clear();
@@ -31,15 +33,25 @@ const reducers = {
 
         Object.entries(flow.nodes).forEach(([id, node]) => {
             draft.nodeIdQuadTree.insert(node.layout, id);
+
+            draft.inputPortEdgeMap.set(id, new Map<string, Set<string>>());
+            draft.outputPortEdgeMap.set(id, new Map<string, Set<string>>());
+
             draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
             {
                 const inputPortMap = new Map<string, number>();
-                node.input.forEach((port, i) => inputPortMap.set(port.name, i));
+                node.input.forEach((port, i) => {
+                    inputPortMap.set(port.name, i);
+                    draft.inputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
+                });
                 draft.inputPortMap.set(id, inputPortMap);
             }
             {
                 const outputPortMap = new Map<string, number>();
-                node.output.forEach((port, i) => outputPortMap.set(port.name, i));
+                node.output.forEach((port, i) => {
+                    outputPortMap.set(port.name, i);
+                    draft.outputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
+                });
                 draft.outputPortMap.set(id, outputPortMap);
             }
             draft.nodeEdgeMap.set(id, new Set<string>());
@@ -54,6 +66,9 @@ const reducers = {
 
             draft.nodeEdgeMap.get(edge.start.nodeId)?.add(id);
             draft.nodeEdgeMap.get(edge.end.nodeId)?.add(id);
+
+            draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.add(id);
+            draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.add(id);
 
             draft.edgeStateMap.set(id, {
                 start: getPortPosition(startNode, 'output', startPortIndex!),
@@ -224,30 +239,35 @@ const reducers = {
             }
         });
     },
-    setSelectPort: (draft: DraftFlow, action: PortMeta) => {
+    setSelectPort: (draft: DraftFlow, action: Omit<PortMeta, 'raw'>) => {
+        const port = draft.raw.nodes[action.nodeId][action.io][action.index];
         draft.selectedPort = {
             nodeId: action.nodeId,
             io: action.io,
             index: action.index,
-            type: draft.raw.nodes[action.nodeId][action.io][action.index].type,
+            raw: port,
         };
     },
     unselectPort: (draft: DraftFlow, action: {} = {}) => {
         draft.selectedPort = undefined;
     },
-    setTargetPort: (draft: DraftFlow, action: PortMeta) => {
+    setTargetPort: (draft: DraftFlow, action: Omit<PortMeta, 'raw'>) => {
+        const port = draft.raw.nodes[action.nodeId][action.io][action.index];
         draft.targetPort = {
             nodeId: action.nodeId,
             io: action.io,
             index: action.index,
-            type: draft.raw.nodes[action.nodeId][action.io][action.index].type,
+            raw: port,
         };
     },
     unsetTargetPort: (draft: DraftFlow, action: {} = {}) => {
         draft.targetPort = undefined;
     },
-    addEdge: (draft: DraftFlow, action: { startPort: PortMeta, endPort: PortMeta }) => {
+    addEdge: (draft: DraftFlow, action: { startPort: PortMeta, endPort: PortMeta }, style: CanvasStyle) => {
         const { startPort, endPort } = action;
+
+        if (style.onEdgeAdded && !style.onEdgeAdded(startPort, endPort, draft)) return;
+
         const edgeId = `${startPort.nodeId}.${startPort.index}-${endPort.nodeId}.${endPort.index}`;
         const startNode = draft.raw.nodes[startPort.nodeId];
         const endNode = draft.raw.nodes[endPort.nodeId];
@@ -265,6 +285,9 @@ const reducers = {
 
         draft.nodeEdgeMap.get(startPort.nodeId)?.add(edgeId);
         draft.nodeEdgeMap.get(endPort.nodeId)?.add(edgeId);
+
+        draft.outputPortEdgeMap.get(startPort.nodeId)!.get(startPort.raw.name)!.add(edgeId);
+        draft.inputPortEdgeMap.get(endPort.nodeId)!.get(endPort.raw.name)!.add(edgeId);
 
         draft.edgeStateMap.set(edgeId, {
             start: getPortPosition(startNode, 'output', startPort.index),

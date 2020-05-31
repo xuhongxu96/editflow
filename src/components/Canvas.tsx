@@ -39,20 +39,19 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const enabledPortType = useMemo(() => {
         // For perf consideration, only disable ports when visibleNodes <= 50
-        if (visibleNodes.length > 50) return undefined;
-        return (_: 'input' | 'output', type: string) => {
-            if (flow.selectedPort) return type === flow.selectedPort.type;
+        return (io: 'input' | 'output', type: string) => {
+            if (flow.selectedPort) return io === 'input' && type === flow.selectedPort.raw.type;
             return true;
         };
-    }, [flow.selectedPort, visibleNodes]);
+    }, [flow.selectedPort]);
 
     const nodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
         onMouseEnter: onNodeMouseEnter,
         onPortMouseEnter,
-        enabledPortType,
-    }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, enabledPortType]);
+        enabledPortType: visibleNodes.length > 50 ? undefined : enabledPortType,
+    }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, enabledPortType, visibleNodes]);
 
     const hoveredNodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseLeave: onNodeMouseLeave,
@@ -60,7 +59,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         onPortMouseDown,
         onPortMouseUp,
         onPortMouseLeave,
-    }), [onNodeMouseLeave, onNodeHandleMouseDown, onPortMouseDown, onPortMouseUp, onPortMouseLeave]);
+        enabledPortType,
+    }), [onNodeMouseLeave, onNodeHandleMouseDown, onPortMouseDown, onPortMouseUp, onPortMouseLeave, enabledPortType]);
 
     const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
         onMouseDown: onEdgeMouseDown,

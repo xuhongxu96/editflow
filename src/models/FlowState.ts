@@ -1,4 +1,4 @@
-import { Flow } from 'models/Flow';
+import { Flow, Port } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, EmptyRect, Point } from 'models/BasicTypes';
 
@@ -18,8 +18,10 @@ export interface PortMeta {
     nodeId: NodeId;
     io: 'input' | 'output';
     index: number;
-    type: string;
+    raw: Port;
 }
+
+export type NodePortEdgeMap = Map<NodeId, Map<PortName, Set<EdgeId>>>;
 
 export interface FlowState {
     raw: Flow;
@@ -44,6 +46,8 @@ export interface FlowState {
     outputPortMap: Map<NodeId, PortIndexMap>;
 
     nodeEdgeMap: Map<NodeId, Set<EdgeId>>;
+    inputPortEdgeMap: NodePortEdgeMap;
+    outputPortEdgeMap: NodePortEdgeMap;
     edgeStateMap: Map<EdgeId, EdgeState>;
 
     newlyVisibleEdgeIds: Set<EdgeId>,
@@ -73,6 +77,8 @@ export const EmptyFlowState: FlowState = {
     inputPortMap: new Map<NodeId, PortIndexMap>(),
     outputPortMap: new Map<NodeId, PortIndexMap>(),
     nodeEdgeMap: new Map<NodeId, Set<EdgeId>>(),
+    inputPortEdgeMap: new Map<NodeId, Map<PortName, Set<EdgeId>>>(),
+    outputPortEdgeMap: new Map<NodeId, Map<PortName, Set<EdgeId>>>(),
     edgeStateMap: new Map<EdgeId, EdgeState>(),
     newlyVisibleEdgeIds: new Set<EdgeId>(),
     visibleEdgeIds: new Set<EdgeId>(),
