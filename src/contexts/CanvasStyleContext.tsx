@@ -1,11 +1,11 @@
 import React from "react";
 import { Size } from "models/BasicTypes";
-import { PortMeta, FlowState } from "models/FlowState";
+import { PortMeta, NodePortEdgeMap } from "models/FlowState";
 
 export interface CanvasStyle {
     margin: number;
     minNodeSize: Size;
-    onEdgeAdded?: (startPort: PortMeta, endPort: PortMeta, flowState: FlowState) => boolean;
+    onEdgeAdded?: (startPort: PortMeta, endPort: PortMeta, inputPortEdgeMap: NodePortEdgeMap, outputPortEdgeMap: NodePortEdgeMap) => boolean;
 }
 
 export const DefaultCanvasStyle: CanvasStyle = {
@@ -14,12 +14,12 @@ export const DefaultCanvasStyle: CanvasStyle = {
         w: 60,
         h: 20,
     },
-    onEdgeAdded: (startPort, endPort, flowState) => {
+    onEdgeAdded: (startPort, endPort, inputPortEdgeMap) => {
         return startPort.io === 'output' &&
             endPort.io === 'input' &&
             startPort.raw.type === endPort.raw.type &&
             startPort.nodeId !== endPort.nodeId &&
-            flowState.inputPortEdgeMap.get(endPort.nodeId)!.get(endPort.raw.name)!.size === 0;
+            inputPortEdgeMap.get(endPort.nodeId)!.get(endPort.raw.name)!.size === 0;
     },
 }
 

@@ -266,7 +266,7 @@ const reducers = {
     addEdge: (draft: DraftFlow, action: { startPort: PortMeta, endPort: PortMeta }, style: CanvasStyle) => {
         const { startPort, endPort } = action;
 
-        if (style.onEdgeAdded && !style.onEdgeAdded(startPort, endPort, draft)) return;
+        if (style.onEdgeAdded && !style.onEdgeAdded(startPort, endPort, draft.inputPortEdgeMap, draft.outputPortEdgeMap)) return;
 
         const edgeId = `${startPort.nodeId}.${startPort.index}-${endPort.nodeId}.${endPort.index}`;
         const startNode = draft.raw.nodes[startPort.nodeId];

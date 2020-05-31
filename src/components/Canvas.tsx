@@ -46,10 +46,10 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
                 io,
                 index,
                 raw: port,
-            }, flow) : true;
+            }, flow.inputPortEdgeMap, flow.outputPortEdgeMap) : true;
         }
         return true;
-    }, [flow, onEdgeAdded]);
+    }, [flow.selectedPort, flow.inputPortEdgeMap, flow.outputPortEdgeMap, onEdgeAdded]);
 
     const nodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseDown: onNodeMouseDown,
