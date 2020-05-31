@@ -16,6 +16,7 @@ export const DefaultCanvasStyle: CanvasStyle = {
     },
     onEdgeAdded: (startPort, endPort, flowState) => {
         return startPort.raw.type === endPort.raw.type &&
+            startPort.nodeId !== endPort.nodeId &&
             flowState.inputPortEdgeMap.get(endPort.nodeId)!.get(endPort.raw.name)!.size === 0;
     },
 }
