@@ -8,6 +8,7 @@ import { Rect } from 'models/BasicTypes';
 export type OnNodeMouseEventListener = (e: React.MouseEvent, id: string, props: NodeProps) => void;
 export type OnNodeHandleMouseDownEventListener = (e: React.MouseEvent, id: string, direction: HandleDirection) => void;
 export type OnNodePortMouseEventListener = (e: React.MouseEvent, id: string, port: Flow.Port, io: 'input' | 'output', portIndex: number) => void;
+export type NodePortEnableCallback = (id: string, port: Flow.Port, io: 'input' | 'output', portIndex: number) => boolean;
 
 export interface NodeProps extends Flow.Node {
     id: string;
@@ -15,7 +16,6 @@ export interface NodeProps extends Flow.Node {
     selected?: boolean;
     highlighted?: boolean;
     animated?: boolean;
-    enabledPortType?: (io: 'input' | 'output', type: string) => boolean;
     onMouseDown?: OnNodeMouseEventListener;
     onMouseEnter?: OnNodeMouseEventListener;
     onMouseLeave?: OnNodeMouseEventListener;
@@ -25,6 +25,7 @@ export interface NodeProps extends Flow.Node {
     onPortMouseUp?: OnNodePortMouseEventListener;
     onPortMouseEnter?: OnNodePortMouseEventListener;
     onPortMouseLeave?: OnNodePortMouseEventListener;
+    portEnableCallback?: NodePortEnableCallback;
 }
 
 export const Node = React.memo((props: NodeProps) => {
@@ -39,7 +40,7 @@ export const Node = React.memo((props: NodeProps) => {
         onPortMouseUp,
         onPortMouseEnter,
         onPortMouseLeave,
-        enabledPortType,
+        portEnableCallback: enabledPortType,
         animated,
         highlighted,
         selected,
@@ -78,11 +79,11 @@ export const Node = React.memo((props: NodeProps) => {
             <PortBox
                 input={input}
                 output={output}
-                onPortMouseDown={(e, port, type, index) => onPortMouseDown && onPortMouseDown(e, id, port, type, index)}
-                onPortMouseUp={(e, port, type, index) => onPortMouseUp && onPortMouseUp(e, id, port, type, index)}
-                onPortMouseEnter={(e, port, type, index) => onPortMouseEnter && onPortMouseEnter(e, id, port, type, index)}
-                onPortMouseLeave={(e, port, type, index) => onPortMouseLeave && onPortMouseLeave(e, id, port, type, index)}
-                enabledType={enabledPortType}
+                onPortMouseDown={(e, port, io, index) => onPortMouseDown && onPortMouseDown(e, id, port, io, index)}
+                onPortMouseUp={(e, port, io, index) => onPortMouseUp && onPortMouseUp(e, id, port, io, index)}
+                onPortMouseEnter={(e, port, io, index) => onPortMouseEnter && onPortMouseEnter(e, id, port, io, index)}
+                onPortMouseLeave={(e, port, io, index) => onPortMouseLeave && onPortMouseLeave(e, id, port, io, index)}
+                enableCallback={(port, io, index) => enabledPortType ? enabledPortType(id, port, io, index) : true}
             />
 
             {

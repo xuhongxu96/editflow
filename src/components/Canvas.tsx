@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef, useCallback } from 'react';
-import { Node, NodeProps, OnNodeMouseEventListener } from './Node';
+import React, { useEffect, useMemo, useRef, useCallback, useContext } from 'react';
+import { Node, NodeProps, OnNodeMouseEventListener, NodePortEnableCallback } from './Node';
 import { useClientSize } from 'hooks/useClientSize';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge, EdgeProps, DraftEdge } from './Edge';
 import * as FlowHooks from 'hooks/flow';
+import { CanvasStyleContext } from 'contexts/CanvasStyleContext';
 
 export interface CanvasProps {
     width: string | number;
@@ -14,6 +15,7 @@ export interface CanvasProps {
 export const Canvas: React.FC<CanvasProps> = (props) => {
     const flow = useFlowContext();
     const dispatch = useFlowDispatchContext();
+    const { onEdgeAdded } = useContext(CanvasStyleContext);
 
     const rootRef = useRef<SVGSVGElement>(null);
     const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
@@ -37,21 +39,25 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         onNodeMouseDownForMovableNode(e, nodeId, props);
     }, [onNodeMouseDownForSelectableNode, onNodeMouseDownForMovableNode]);
 
-    const enabledPortType = useMemo(() => {
-        // For perf consideration, only disable ports when visibleNodes <= 50
-        return (io: 'input' | 'output', type: string) => {
-            if (flow.selectedPort) return io === 'input' && type === flow.selectedPort.raw.type;
-            return true;
-        };
-    }, [flow.selectedPort]);
+    const portEnableCallback = useCallback<NodePortEnableCallback>((id, port, io, index) => {
+        if (flow.selectedPort) {
+            return onEdgeAdded ? onEdgeAdded(flow.selectedPort, {
+                nodeId: id,
+                io,
+                index,
+                raw: port,
+            }, flow) : true;
+        }
+        return true;
+    }, [flow, onEdgeAdded]);
 
     const nodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseDown: onNodeMouseDown,
         onClick: onNodeClick,
         onMouseEnter: onNodeMouseEnter,
         onPortMouseEnter,
-        enabledPortType: visibleNodes.length > 50 ? undefined : enabledPortType,
-    }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, enabledPortType, visibleNodes]);
+        portEnableCallback: visibleNodes.length > 100 ? undefined : portEnableCallback,
+    }), [onNodeMouseDown, onNodeClick, onNodeMouseEnter, onPortMouseEnter, portEnableCallback, visibleNodes]);
 
     const hoveredNodeHandlers = useMemo<Partial<NodeProps>>(() => ({
         onMouseLeave: onNodeMouseLeave,
@@ -59,8 +65,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
         onPortMouseDown,
         onPortMouseUp,
         onPortMouseLeave,
-        enabledPortType,
-    }), [onNodeMouseLeave, onNodeHandleMouseDown, onPortMouseDown, onPortMouseUp, onPortMouseLeave, enabledPortType]);
+        portEnableCallback: portEnableCallback,
+    }), [onNodeMouseLeave, onNodeHandleMouseDown, onPortMouseDown, onPortMouseUp, onPortMouseLeave, portEnableCallback]);
 
     const edgeHandlers: Partial<EdgeProps> = useMemo(() => ({
         onMouseDown: onEdgeMouseDown,

@@ -36,7 +36,7 @@ export const Port = React.memo((props: PortProps) => {
 export type OnPortMouseEventListener = (e: React.MouseEvent, port: Flow.Port, type: 'input' | 'output', index: number) => void;
 
 export interface PortBoxProps extends Pick<Flow.Node, 'input' | 'output'> {
-    enabledType?: (io: 'input' | 'output', type: string) => boolean;
+    enableCallback?: (port: Flow.Port, type: 'input' | 'output', index: number) => boolean;
     onPortMouseDown?: OnPortMouseEventListener;
     onPortMouseUp?: OnPortMouseEventListener;
     onPortMouseEnter?: OnPortMouseEventListener;
@@ -57,8 +57,8 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                 <Port
                     className={Style.inputPort}
                     key={port.name}
-                    title={port.name}
-                    disabled={props.enabledType && !props.enabledType('input', port.type)}
+                    title={`${port.name}: ${port.type}`}
+                    disabled={props.enableCallback && !props.enableCallback(port, 'input', i)}
                     x={`${inputOffsetUnit * (i + 1)}%`}
                     y="0"
                     cursor="pointer"
@@ -82,8 +82,8 @@ export const PortBox = React.memo<PortBoxProps>((props) => {
                 <Port
                     className={Style.outputPort}
                     key={port.name}
-                    title={port.name}
-                    disabled={props.enabledType && !props.enabledType('input', port.type)}
+                    title={`${port.name}: ${port.type}`}
+                    disabled={props.enableCallback && !props.enableCallback(port, 'output', i)}
                     x={`${outputOffsetUnit * (i + 1)}%`}
                     y="100%"
                     cursor="pointer"
