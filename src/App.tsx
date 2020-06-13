@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Canvas } from 'components/Canvas';
-import { Flow, NodeMap, EdgeMap } from 'models/Flow';
+import { Flow, NodeMap, EdgeMap, Node } from 'models/Flow';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
@@ -70,8 +70,17 @@ const App: React.FC = () => {
       </CanvasStyleProvider>
 
       <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
-        'First 10 Nodes:\n' +
-        useMemo(() => JSON.stringify(Object.values(flowState.raw.nodes).slice(0, 10), null, ' '), [flowState.raw.nodes])
+        'Selected Nodes:\n' +
+        useMemo(() =>
+          JSON.stringify(Array.from(flowState.selectedNodeIds)
+            .map(id => [flowState.raw.nodes[id], id] as [Node, string])
+            .map(([o, id]) => ({ id: id, title: o.title, layout: o.layout })), null, ' '),
+          [flowState.selectedNodeIds, flowState.raw.nodes])
+        + '\nSelected Edges:\n' +
+        useMemo(() =>
+          JSON.stringify(Array.from(flowState.selectedEdgeIds)
+            .map(id => ({ id: id, ...flowState.raw.edges[id] })), null, ' '),
+          [flowState.selectedEdgeIds, flowState.raw.edges])
       } />
     </div >
   );
