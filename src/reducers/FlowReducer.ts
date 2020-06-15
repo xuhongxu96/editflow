@@ -4,11 +4,56 @@ import { valueof, expandRect, isContained, limitRect, expandRectToContain, getPo
 import { Reducer } from "use-immer";
 import { Draft } from "immer";
 import { Dispatch } from "react";
-import { CanvasStyle } from "contexts/CanvasStyleContext";
-import { Flow } from "models/Flow";
+import { Flow, Node, Edge } from "models/Flow";
 import { HandleDirection } from "components/HandleBox";
+import { CanvasStyle } from "models/CanvasStyle";
 
 type DraftFlow = Draft<FlowState>;
+
+function updateStateForNode(draft: DraftFlow, id: string, node: Node) {
+    draft.nodeIdQuadTree.insert(node.layout, id);
+
+    draft.inputPortEdgeMap.set(id, new Map<string, Set<string>>());
+    draft.outputPortEdgeMap.set(id, new Map<string, Set<string>>());
+
+    draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
+    {
+        const inputPortMap = new Map<string, number>();
+        node.input.forEach((port, i) => {
+            inputPortMap.set(port.name, i);
+            draft.inputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
+        });
+        draft.inputPortMap.set(id, inputPortMap);
+    }
+    {
+        const outputPortMap = new Map<string, number>();
+        node.output.forEach((port, i) => {
+            outputPortMap.set(port.name, i);
+            draft.outputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
+        });
+        draft.outputPortMap.set(id, outputPortMap);
+    }
+    draft.nodeEdgeMap.set(id, new Set<string>());
+}
+
+function updateStateForEdge(draft: DraftFlow, id: string, edge: Edge) {
+    const startNode = draft.raw.nodes[edge.start.nodeId];
+    const endNode = draft.raw.nodes[edge.end.nodeId];
+
+    const startPortIndex = draft.outputPortMap.get(edge.start.nodeId)?.get(edge.start.portName);
+    const endPortIndex = draft.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName);
+
+    draft.nodeEdgeMap.get(edge.start.nodeId)?.add(id);
+    draft.nodeEdgeMap.get(edge.end.nodeId)?.add(id);
+
+    draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.add(id);
+    draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.add(id);
+
+    draft.edgeStateMap.set(id, {
+        start: getPortPosition(startNode, 'output', startPortIndex!),
+        end: getPortPosition(endNode, 'input', endPortIndex!),
+    });
+}
 
 const reducers = {
     init: (draft: DraftFlow, action: { flow: Flow }) => {
@@ -32,48 +77,11 @@ const reducers = {
         draft.selectedEdgeIds.clear();
 
         Object.entries(flow.nodes).forEach(([id, node]) => {
-            draft.nodeIdQuadTree.insert(node.layout, id);
-
-            draft.inputPortEdgeMap.set(id, new Map<string, Set<string>>());
-            draft.outputPortEdgeMap.set(id, new Map<string, Set<string>>());
-
-            draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
-            {
-                const inputPortMap = new Map<string, number>();
-                node.input.forEach((port, i) => {
-                    inputPortMap.set(port.name, i);
-                    draft.inputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
-                });
-                draft.inputPortMap.set(id, inputPortMap);
-            }
-            {
-                const outputPortMap = new Map<string, number>();
-                node.output.forEach((port, i) => {
-                    outputPortMap.set(port.name, i);
-                    draft.outputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
-                });
-                draft.outputPortMap.set(id, outputPortMap);
-            }
-            draft.nodeEdgeMap.set(id, new Set<string>());
+            updateStateForNode(draft, id, node);
         });
 
         Object.entries(flow.edges).forEach(([id, edge]) => {
-            const startNode = flow.nodes[edge.start.nodeId];
-            const endNode = flow.nodes[edge.end.nodeId];
-
-            const startPortIndex = draft.outputPortMap.get(edge.start.nodeId)?.get(edge.start.portName);
-            const endPortIndex = draft.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName);
-
-            draft.nodeEdgeMap.get(edge.start.nodeId)?.add(id);
-            draft.nodeEdgeMap.get(edge.end.nodeId)?.add(id);
-
-            draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.add(id);
-            draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.add(id);
-
-            draft.edgeStateMap.set(id, {
-                start: getPortPosition(startNode, 'output', startPortIndex!),
-                end: getPortPosition(endNode, 'input', endPortIndex!),
-            });
+            updateStateForEdge(draft, id, edge);
         });
 
         reducers.updateVisibleNodes(draft, { cacheExpandSize: 500 });
@@ -268,11 +276,11 @@ const reducers = {
 
         if (style.onEdgeAdded && !style.onEdgeAdded(startPort, endPort, draft.inputPortEdgeMap, draft.outputPortEdgeMap)) return;
 
-        const edgeId = `${startPort.nodeId}.${startPort.index}-${endPort.nodeId}.${endPort.index}`;
+        const edgeId = style.generateEdgeId(startPort, endPort, draft);
         const startNode = draft.raw.nodes[startPort.nodeId];
         const endNode = draft.raw.nodes[endPort.nodeId];
 
-        draft.raw.edges[edgeId] = {
+        const edge = {
             start: {
                 nodeId: startPort.nodeId,
                 portName: startNode.output[startPort.index].name,
@@ -283,19 +291,23 @@ const reducers = {
             },
         };
 
-        draft.nodeEdgeMap.get(startPort.nodeId)?.add(edgeId);
-        draft.nodeEdgeMap.get(endPort.nodeId)?.add(edgeId);
-
-        draft.outputPortEdgeMap.get(startPort.nodeId)!.get(startPort.raw.name)!.add(edgeId);
-        draft.inputPortEdgeMap.get(endPort.nodeId)!.get(endPort.raw.name)!.add(edgeId);
-
-        draft.edgeStateMap.set(edgeId, {
-            start: getPortPosition(startNode, 'output', startPort.index),
-            end: getPortPosition(endNode, 'input', endPort.index),
-        });
+        draft.raw.edges[edgeId] = edge;
+        updateStateForEdge(draft, edgeId, edge);
 
         draft.visibleEdgeIds.add(edgeId);
         reducers.unsetTargetPort(draft);
+    },
+    addNode: (draft: DraftFlow, action: { node: Node }, style: CanvasStyle) => {
+        const { node } = action;
+
+        if (style.onNodeAdded && !style.onNodeAdded(node, draft)) return;
+
+        const nodeId = style.generateNodeId(node, draft);
+
+        draft.raw.nodes[nodeId] = node;
+        updateStateForNode(draft, nodeId, node);
+
+        draft.visibleNodeIds.add(nodeId);
     },
 };
 
