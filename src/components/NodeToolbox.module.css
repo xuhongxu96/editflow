@@ -1,0 +1,23 @@
+.toolbox {
+    width: 160px;
+    border: solid 1px black;
+    margin: 4px;
+    margin-top: 48px;
+    padding: 4px;
+}
+
+.toolbox li {
+    display: block;
+    padding: 8px;
+    text-align: center;
+    cursor: pointer;
+    border: solid 1px gray;
+    margin: 2px;
+    transition: all 0.3s;
+    user-select: none;
+}
+
+.toolbox li:hover {
+    background: black;
+    color: white;
+}

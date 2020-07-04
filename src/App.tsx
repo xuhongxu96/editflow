@@ -5,15 +5,16 @@ import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
 import { useFlowState } from 'hooks/flow';
+import { NodeToolbox } from 'components/NodeToolbox';
 
 const W = 120;
 const H = 40;
 const Space = 10;
-const RowSize = 10;
+const RowSize = 5;
 const OffsetX = 0;
 const OffsetY = 48;
-const NodeCount = 1000;
-const EdgeCount = 50;
+const NodeCount = 10;
+const EdgeCount = 2;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
@@ -60,6 +61,15 @@ const App: React.FC = () => {
 
   return (
     <div className='App' style={{ display: 'flex' }}>
+      <NodeToolbox nodeTemplates={[
+        {
+          title: '拆分数据', input: [], output: []
+        },
+        {
+          title: '数据文件', input: [], output: []
+        }
+      ]} />
+
       <CanvasStyleProvider>
         <FlowProvider flowState={flowState} dispatch={dispatch}>
           <Canvas width='80%' height='600' />

@@ -5,8 +5,9 @@ import { useMoving } from "hooks/useMoving";
 import { useEventListener } from "hooks";
 import { OnNodePortMouseEventListener } from "components/Node";
 import { getPortPosition } from "utils";
+import { Rect } from "models/BasicTypes";
 
-export const useEditableEdge = () => {
+export const useEditableEdge = (clientRect: Rect) => {
     const { raw, selectedPort, targetPort, viewBound, scale } = useFlowContext();
     const dispatch = useFlowDispatchContext();
 
@@ -18,14 +19,14 @@ export const useEditableEdge = () => {
                 edge: {
                     start: getPortPosition(raw.nodes[selectedPort.nodeId], selectedPort.io, selectedPort.index),
                     end: targetPort ? getPortPosition(raw.nodes[targetPort.nodeId], targetPort.io, targetPort.index) : {
-                        x: e.pageX / scale + viewBound.x,
-                        y: e.pageY / scale + viewBound.y,
+                        x: (e.pageX - clientRect.x) / scale + viewBound.x,
+                        y: (e.pageY - clientRect.y) / scale + viewBound.y,
                     },
                 },
                 connected: targetPort !== undefined,
             });
         }
-    }, [raw.nodes, selectedPort, targetPort, viewBound, scale]));
+    }, [raw.nodes, selectedPort, targetPort, viewBound, scale, clientRect]));
 
     useEventListener('mouseup', useCallback(() => {
         stopMoving(false);

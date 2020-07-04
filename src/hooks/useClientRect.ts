@@ -1,13 +1,15 @@
 import { useState, useEffect, RefObject, DependencyList } from "react";
-import { Size } from "models/BasicTypes";
+import { Rect } from "models/BasicTypes";
 
-export function useClientSize<T extends Element>(ref: RefObject<T>, deps: DependencyList = []): Size {
+export function useClientRect<T extends Element>(ref: RefObject<T>, deps: DependencyList = []): Rect {
     const [sizeChanged, _setSizeChanged] = useState<number>(0);
-    const [realSize, setRealSize] = useState<Size>({ w: 0, h: 0 });
+    const [realRect, setRealRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
 
     useEffect(() => {
         if (ref.current != null)
-            setRealSize({
+            setRealRect({
+                x: ref.current.getBoundingClientRect().x,
+                y: ref.current.getBoundingClientRect().y,
                 w: ref.current.getBoundingClientRect().width,
                 h: ref.current.getBoundingClientRect().height,
             });
@@ -19,5 +21,5 @@ export function useClientSize<T extends Element>(ref: RefObject<T>, deps: Depend
         return () => window.removeEventListener('resize', listener);
     }, []);
 
-    return realSize;
+    return realRect;
 }

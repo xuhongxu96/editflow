@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useCallback, useContext } from 'react';
 import { Node, NodeProps, OnNodeMouseEventListener, NodePortEnableCallback } from './Node';
-import { useClientSize } from 'hooks/useClientSize';
+import { useClientRect } from 'hooks/useClientRect';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge, EdgeProps, DraftEdge } from './Edge';
 import * as FlowHooks from 'hooks/flow';
@@ -18,8 +18,8 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onEdgeAdded } = useContext(CanvasStyleContext);
 
     const rootRef = useRef<SVGSVGElement>(null);
-    const rootClientSize = useClientSize(rootRef, [props.width, props.height]);
-    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientSize }), [rootClientSize, dispatch]);
+    const rootClientRect = useClientRect(rootRef, [props.width, props.height]);
+    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientRect }), [rootClientRect, dispatch]);
 
     const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
 
@@ -30,7 +30,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
     const { onCanvasMouseMove: onCanvasMouseMoveForMovableNode, onNodeMouseDown: onNodeMouseDownForMovableNode } = FlowHooks.useMovableNode();
     const { onCanvasMouseMove: onCanvasMouseMoveForResizableNode, onNodeHandleMouseDown } = FlowHooks.useResizableNode();
     const { onNodeMouseEnter, onNodeMouseLeave } = FlowHooks.useHoverableNode();
-    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, onPortMouseUp, onPortMouseEnter, onPortMouseLeave, draftEdge } = FlowHooks.useEditableEdge();
+    const { onCanvasMouseMove: onCanvasMouseMoveForEditableEdge, onPortMouseDown, onPortMouseUp, onPortMouseEnter, onPortMouseLeave, draftEdge } = FlowHooks.useEditableEdge(rootClientRect);
 
     const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
 
