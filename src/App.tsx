@@ -14,7 +14,7 @@ const RowSize = 5;
 const OffsetX = 0;
 const OffsetY = 48;
 const NodeCount = 10;
-const EdgeCount = 2;
+const EdgeCount = 1;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
@@ -61,23 +61,23 @@ const App: React.FC = () => {
 
   return (
     <div className='App' style={{ display: 'flex' }}>
-      <NodeToolbox nodeTemplates={[
-        {
-          title: '拆分数据', input: [], output: []
-        },
-        {
-          title: '数据文件', input: [], output: []
-        }
-      ]} />
+      <FlowProvider flowState={flowState} dispatch={dispatch}>
+        <NodeToolbox nodeTemplates={[
+          {
+            title: '拆分数据', input: [], output: []
+          },
+          {
+            title: '数据文件', input: [], output: []
+          }
+        ]} />
 
-      <CanvasStyleProvider>
-        <FlowProvider flowState={flowState} dispatch={dispatch}>
+        <CanvasStyleProvider>
           <Canvas width='80%' height='600' />
           <Toolbar>
             <button onClick={() => { setFlow(genFlow()) }}>change</button>
           </Toolbar>
-        </FlowProvider>
-      </CanvasStyleProvider>
+        </CanvasStyleProvider>
+      </FlowProvider>
 
       <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
         'Selected Nodes:\n' +

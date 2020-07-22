@@ -23,9 +23,9 @@ export const useSelectableNode = () => {
         }
     }, [dispatch]);
 
-    useEventListener('mousedown', () => {
+    useEventListener('mousedown', useCallback(() => {
         dispatch({ type: 'unselectAllNodes' });
-    });
+    }, [dispatch]));
 
     return { onNodeMouseDown, onNodeClick };
 };

@@ -6,9 +6,9 @@ export const useSelectableEdge = () => {
     const { selectedEdgeIds, raw } = useFlowContext();
     const dispatch = useFlowDispatchContext();
 
-    useEventListener('mousedown', () => {
+    useEventListener('mousedown', useCallback(() => {
         dispatch({ type: 'unselectAllEdges' });
-    });
+    }, [dispatch]));
 
     useEffect(() => {
         if (selectedEdgeIds.size > 0) dispatch({ type: 'unselectAllNodes' });

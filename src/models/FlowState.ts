@@ -1,4 +1,4 @@
-import { Flow, Port } from 'models/Flow';
+import { Flow, Port, Node } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, EmptyRect, Point } from 'models/BasicTypes';
 
@@ -30,6 +30,7 @@ export interface FlowState {
 
     nodeIdQuadTree: QuadTree<NodeId>;
 
+    clientRect: Rect;
     cachedViewBound: Rect;
     viewBound: Rect;
     nodeBound: Rect;
@@ -66,6 +67,7 @@ export const EmptyFlowState: FlowState = {
     },
     draftNodeLayout: new Map<NodeId, Rect>(),
     nodeIdQuadTree: new QuadTree(1024, 768),
+    clientRect: EmptyRect,
     cachedViewBound: EmptyRect,
     viewBound: EmptyRect,
     nodeBound: EmptyRect,

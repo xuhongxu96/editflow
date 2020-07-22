@@ -36,6 +36,23 @@ function updateStateForNode(draft: DraftFlow, id: string, node: Node) {
     draft.nodeEdgeMap.set(id, new Set<string>());
 }
 
+function removeStateForNode(draft: DraftFlow, id: string, node: Node) {
+    draft.nodeIdQuadTree.remove(node.layout, id);
+
+    draft.inputPortEdgeMap.delete(id);
+    draft.outputPortEdgeMap.delete(id);
+
+    draft.inputPortMap.delete(id);
+    draft.outputPortMap.delete(id);
+    draft.nodeEdgeMap.delete(id);
+
+    draft.visibleNodeIds.delete(id);
+    draft.highlightedNodeIds.delete(id);
+    draft.selectedNodeIds.delete(id);
+    draft.newlyVisibleNodeIds = [];
+    if (draft.hoveredNodeId === id) draft.hoveredNodeId = undefined;
+}
+
 function updateStateForEdge(draft: DraftFlow, id: string, edge: Edge) {
     const startNode = draft.raw.nodes[edge.start.nodeId];
     const endNode = draft.raw.nodes[edge.end.nodeId];
@@ -99,9 +116,10 @@ const reducers = {
         draft.viewBound.y += action.delta.y;
         draft.viewBound = limitRect(draft.viewBound, expandRect(draft.nodeBound, style.margin, draft.scale));
     },
-    updateClientSize: (draft: DraftFlow, action: { clientSize: Basic.Size }) => {
-        draft.viewBound.w = action.clientSize.w;
-        draft.viewBound.h = action.clientSize.h;
+    updateClientSize: (draft: DraftFlow, action: { clientRect: Basic.Rect }) => {
+        draft.clientRect = action.clientRect;
+        draft.viewBound.w = action.clientRect.w;
+        draft.viewBound.h = action.clientRect.h;
     },
     updateNewlyVisibleNodes: (draft: DraftFlow, action: {}) => {
         if (!isContained(draft.cachedViewBound, draft.viewBound)) {
@@ -295,19 +313,42 @@ const reducers = {
         updateStateForEdge(draft, edgeId, edge);
 
         draft.visibleEdgeIds.add(edgeId);
-        reducers.unsetTargetPort(draft);
     },
-    addNode: (draft: DraftFlow, action: { node: Node }, style: CanvasStyle) => {
+    addNode: (draft: DraftFlow, action: { id?: string, node: Node }, style: CanvasStyle) => {
         const { node } = action;
 
         if (style.onNodeAdded && !style.onNodeAdded(node, draft)) return;
 
-        const nodeId = style.generateNodeId(node, draft);
+        const nodeId = action.id || style.generateNodeId(node, draft);
 
         draft.raw.nodes[nodeId] = node;
         updateStateForNode(draft, nodeId, node);
 
         draft.visibleNodeIds.add(nodeId);
+    },
+    deleteNode: (draft: DraftFlow, action: { id: string }) => {
+        const { id } = action;
+        const node = draft.raw.nodes[id];
+        if (node) {
+            removeStateForNode(draft, id, node);
+            delete draft.raw.nodes[id];
+        }
+    },
+    setDraftNode: (draft: DraftFlow, action: { node: Node }, style: CanvasStyle) => {
+        reducers.addNode(draft, { id: 'draft', node: action.node }, style);
+        reducers.setSelectNodes(draft, { ids: ['draft'] });
+    },
+    unsetDraftNode: (draft: DraftFlow, action: { cancel: boolean }, style: CanvasStyle) => {
+        const draftNode = draft.raw.nodes['draft'];
+        if (draftNode) {
+            if (!action.cancel) {
+                reducers.addNode(draft, { node: draftNode }, style);
+            }
+        }
+        reducers.deleteNode(draft, { id: 'draft' });
+    },
+    moveDraftNode: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
+        reducers.moveSelectedNodes(draft, action);
     },
 };
 

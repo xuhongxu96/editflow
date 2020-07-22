@@ -19,7 +19,7 @@ export const Canvas: React.FC<CanvasProps> = (props) => {
 
     const rootRef = useRef<SVGSVGElement>(null);
     const rootClientRect = useClientRect(rootRef, [props.width, props.height]);
-    useEffect(() => dispatch({ type: 'updateClientSize', clientSize: rootClientRect }), [rootClientRect, dispatch]);
+    useEffect(() => dispatch({ type: 'updateClientSize', clientRect: rootClientRect }), [rootClientRect, dispatch]);
 
     const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
 

@@ -4,20 +4,13 @@ export function useEventListener<K extends keyof WindowEventMap>(type: K, listen
 export function useEventListener<K extends keyof HTMLElementEventMap>(type: K, listener: (this: HTMLElement, ev: HTMLElementEventMap[K]) => any, element: HTMLElement): void;
 
 export function useEventListener(type: string, listener: (this: Window | HTMLElement, ev: Event) => any, el?: Window | HTMLElement) {
-    const savedListener = useRef<any>();
-    useEffect(() => {
-        savedListener.current = listener;
-    }, [listener]);
-
     const element = el || window;
 
     useEffect(() => {
-        if (savedListener.current)
-            element.addEventListener(type, savedListener.current);
+        if (listener) element.addEventListener(type, listener);
 
         return () => {
-            if (savedListener.current)
-                element.removeEventListener(type, savedListener.current);
+            if (listener) element.removeEventListener(type, listener);
         };
-    }, [type, element]);
+    }, [type, element, listener]);
 }
