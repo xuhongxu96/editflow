@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import Style from './NodeToolbox.module.css';
 import { NodeTemplate } from 'models/NodeTemplate';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
-import { useMoving, useEventListener, useTraceUpdate } from 'hooks';
+import { useMoving, useEventListener } from 'hooks';
 
 export interface NodeToolboxProps {
     nodeTemplates: NodeTemplate[];
@@ -17,7 +17,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
         if (selectedIndex !== undefined) {
             dispatch({ type: 'moveDraftNode', offset: { x: offset.x / scale, y: offset.y / scale } });
         }
-    }, [dispatch, selectedIndex, clientRect, scale]))
+    }, [dispatch, selectedIndex, scale]))
 
     const onMouseDown = useCallback((i: number, e: React.MouseEvent) => {
         console.log(clientRect, viewBound)
@@ -36,7 +36,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
         });
         startMoving(e);
         e.stopPropagation();
-    }, [startMoving, clientRect, viewBound, scale, setSelectedIndex, props.nodeTemplates]);
+    }, [dispatch, startMoving, clientRect, viewBound, scale, props.nodeTemplates]);
 
     useEventListener('mouseup', useCallback(e => {
         if (selectedIndex !== undefined) {
@@ -44,7 +44,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
             dispatch({ type: 'unsetDraftNode', cancel: false });
             setSelectedIndex(undefined);
         }
-    }, [stopMoving]));
+    }, [stopMoving, dispatch, selectedIndex]));
 
     useEventListener('mousemove', useCallback(e => {
         onMoving(e);

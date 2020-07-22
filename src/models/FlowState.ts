@@ -1,4 +1,4 @@
-import { Flow, Port, Node } from 'models/Flow';
+import { Flow, Port } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, EmptyRect, Point } from 'models/BasicTypes';
 

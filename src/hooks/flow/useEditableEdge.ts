@@ -6,7 +6,6 @@ import { useEventListener } from "hooks";
 import { OnNodePortMouseEventListener } from "components/Node";
 import { getPortPosition } from "utils";
 import { Rect } from "models/BasicTypes";
-import { useTraceUpdate } from "hooks/useTraceUpdate";
 
 export const useEditableEdge = (clientRect: Rect) => {
     const { raw, selectedPort, targetPort, viewBound, scale } = useFlowContext();
