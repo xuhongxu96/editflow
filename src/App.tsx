@@ -64,11 +64,14 @@ const App: React.FC = () => {
       <FlowProvider flowState={flowState} dispatch={dispatch}>
         <NodeToolbox nodeTemplates={[
           {
-            title: '拆分数据', input: [], output: []
+            title: '数据文件', input: [],
+            output: [{ type: 'str', name: 'o1' }]
           },
           {
-            title: '数据文件', input: [], output: []
-          }
+            title: '拆分数据',
+            input: [{ type: 'str', name: 'input' }],
+            output: [{ type: 'str', name: 'o1' }, { type: 'str', name: 'o2' }]
+          },
         ]} />
 
         <CanvasStyleProvider>

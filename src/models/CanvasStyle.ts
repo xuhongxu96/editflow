@@ -4,6 +4,7 @@ import { Node } from "models/Flow";
 
 export interface CanvasStyle {
     margin: number;
+    defaultNodeSize: Size;
     minNodeSize: Size;
     generateNodeId: (node: Node, flow: FlowState) => string;
     generateEdgeId: (startPort: PortMeta, endPort: PortMeta, flow: FlowState) => string;
@@ -13,6 +14,10 @@ export interface CanvasStyle {
 
 export const DefaultCanvasStyle: CanvasStyle = {
     margin: 32,
+    defaultNodeSize: {
+        w: 120,
+        h: 40,
+    },
     minNodeSize: {
         w: 60,
         h: 20,

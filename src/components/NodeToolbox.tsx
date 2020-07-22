@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useContext } from 'react';
 import Style from './NodeToolbox.module.css';
 import { NodeTemplate } from 'models/NodeTemplate';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { useMoving, useEventListener } from 'hooks';
+import { CanvasStyleContext } from 'contexts/CanvasStyleContext';
 
 export interface NodeToolboxProps {
     nodeTemplates: NodeTemplate[];
@@ -10,6 +11,7 @@ export interface NodeToolboxProps {
 
 export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
     const { clientRect, viewBound, scale } = useFlowContext();
+    const { defaultNodeSize } = useContext(CanvasStyleContext);
     const dispatch = useFlowDispatchContext();
     const [selectedIndex, setSelectedIndex] = useState<number>();
 
@@ -29,14 +31,13 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
                 layout: {
                     x: (e.pageX - clientRect.x) / scale + viewBound.x,
                     y: (e.pageY - clientRect.y) / scale + viewBound.y,
-                    w: 100,
-                    h: 30,
+                    ...defaultNodeSize
                 }
             }
         });
         startMoving(e);
         e.stopPropagation();
-    }, [dispatch, startMoving, clientRect, viewBound, scale, props.nodeTemplates]);
+    }, [dispatch, startMoving, clientRect, viewBound, scale, props.nodeTemplates, defaultNodeSize]);
 
     useEventListener('mouseup', useCallback(e => {
         if (selectedIndex !== undefined) {

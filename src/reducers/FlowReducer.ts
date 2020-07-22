@@ -342,7 +342,9 @@ const reducers = {
         const draftNode = draft.raw.nodes['draft'];
         if (draftNode) {
             if (!action.cancel) {
-                reducers.addNode(draft, { node: draftNode }, style);
+                const nodeId = style.generateNodeId(draftNode, draft);
+                reducers.addNode(draft, { id: nodeId, node: draftNode }, style);
+                reducers.setSelectNodes(draft, { ids: [nodeId] });
             }
         }
         reducers.deleteNode(draft, { id: 'draft' });
