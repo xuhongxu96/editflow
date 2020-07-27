@@ -70,6 +70,24 @@ function updateStateForEdge(draft: DraftFlow, id: string, edge: Edge) {
         start: getPortPosition(startNode, 'output', startPortIndex!),
         end: getPortPosition(endNode, 'input', endPortIndex!),
     });
+
+}
+
+function removeStateForEdge(draft: DraftFlow, id: string, edge: Edge){
+
+    draft.nodeEdgeMap.get(edge.start.nodeId)?.delete(id);
+    draft.nodeEdgeMap.get(edge.end.nodeId)?.delete(id);
+
+    draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.delete(id);
+    draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.delete(id);
+
+    draft.edgeStateMap.delete(id);
+
+    draft.visibleEdgeIds.delete(id);
+    draft.highlightedEdgeIds.delete(id);
+    draft.selectedEdgeIds.delete(id);
+    draft.newlyVisibleEdgeIds.delete(id);
+
 }
 
 const reducers = {
@@ -314,9 +332,16 @@ const reducers = {
 
         draft.visibleEdgeIds.add(edgeId);
     },
+    deleteEdge: (draft: DraftFlow, action: { id: string } ) => {
+        const { id } = action;
+        const edge = draft.raw.edges[id];
+        if(edge){
+            removeStateForEdge(draft, id, edge);
+            delete draft.raw.edges[id];
+        }
+    },
     addNode: (draft: DraftFlow, action: { id?: string, node: Node }, style: CanvasStyle) => {
         const { node } = action;
-
         if (style.onNodeAdded && !style.onNodeAdded(node, draft)) return;
 
         const nodeId = action.id || style.generateNodeId(node, draft);
@@ -330,6 +355,12 @@ const reducers = {
         const { id } = action;
         const node = draft.raw.nodes[id];
         if (node) {
+            const edgeIds =  draft.nodeEdgeMap.get(id)?.keys();
+            if(edgeIds){
+                for(let edgeId of edgeIds){
+                    reducers.deleteEdge(draft, { id: edgeId });
+                }
+            }
             removeStateForNode(draft, id, node);
             delete draft.raw.nodes[id];
         }

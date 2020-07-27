@@ -3,12 +3,25 @@ import { useEventListener } from "hooks";
 import { useCallback, useEffect } from "react";
 
 export const useSelectableEdge = () => {
-    const { selectedEdgeIds, raw } = useFlowContext();
+    const { selectedEdgeIds, raw, clientRect } = useFlowContext();
     const dispatch = useFlowDispatchContext();
 
-    useEventListener('mousedown', useCallback(() => {
-        dispatch({ type: 'unselectAllEdges' });
-    }, [dispatch]));
+    useEventListener(
+        "mousedown",
+        useCallback(
+          (e) => {
+            if (
+              e.pageX >= clientRect.x &&
+              e.pageX <= clientRect.x + clientRect.w &&
+              e.pageY >= clientRect.y &&
+              e.pageY <= clientRect.h - clientRect.y
+            ) {
+              dispatch({ type: "unselectAllEdges" });
+            }
+          },
+          [dispatch, clientRect]
+        )
+      );
 
     useEffect(() => {
         if (selectedEdgeIds.size > 0) dispatch({ type: 'unselectAllNodes' });
