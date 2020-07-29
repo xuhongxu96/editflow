@@ -1,33 +1,33 @@
-import { Rect } from "./BasicTypes";
+import { Rect } from './BasicTypes';
 
 export interface Port {
-    name: string;
-    type: string;
+  name: string;
+  type: string;
 }
 
 export interface Node {
-    layout: Rect;
+  layout: Rect;
 
-    title: string;
+  title: string;
 
-    input: Port[];
-    output: Port[];
+  input: Port[];
+  output: Port[];
 }
 
 export interface NodePort {
-    nodeId: string;
-    portName: string;
+  nodeId: string;
+  portName: string;
 }
 
 export interface Edge {
-    start: NodePort;
-    end: NodePort;
+  start: NodePort;
+  end: NodePort;
 }
 
 export type NodeMap = { [nodeId: string]: Node };
 export type EdgeMap = { [edgeId: string]: Edge };
 
 export interface Flow {
-    nodes: NodeMap;
-    edges: EdgeMap;
+  nodes: NodeMap;
+  edges: EdgeMap;
 }

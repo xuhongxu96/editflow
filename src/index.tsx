@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
-import { enableAllPlugins } from "immer"
+import { enableAllPlugins } from 'immer';
 
 enableAllPlugins();
 

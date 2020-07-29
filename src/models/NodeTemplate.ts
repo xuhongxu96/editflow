@@ -1,4 +1,3 @@
-import { Node } from "./Flow";
+import { Node } from './Flow';
 
-export interface NodeTemplate extends Omit<Node, 'layout'> {
-}
+export interface NodeTemplate extends Omit<Node, 'layout'> {}

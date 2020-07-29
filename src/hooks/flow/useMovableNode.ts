@@ -1,35 +1,55 @@
-import { useFlowContext, useFlowDispatchContext } from "contexts/FlowContext";
-import { useCallback } from "react";
-import { useMoving, useEventListener } from "hooks";
-import { OnNodeMouseEventListener } from "components/Node";
+import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import { useCallback } from 'react';
+import { useMoving, useEventListener } from 'hooks';
+import { OnNodeMouseEventListener } from 'components/Node';
 
 export const useMovableNode = () => {
-    const { scale } = useFlowContext();
-    const dispatch = useFlowDispatchContext();
+  const { scale } = useFlowContext();
+  const dispatch = useFlowDispatchContext();
 
-    // Correct the offset by current scale factor
-    const [startMovingNode, stopMovingNode, onCanvasMouseMove] = useMoving(useCallback((offset) => {
-        dispatch({ type: 'moveSelectedNodes', offset: { x: offset.x / scale, y: offset.y / scale } });
-    }, [dispatch, scale]));
+  // Correct the offset by current scale factor
+  const [startMovingNode, stopMovingNode, onCanvasMouseMove] = useMoving(
+    useCallback(
+      offset => {
+        dispatch({
+          type: 'moveSelectedNodes',
+          offset: { x: offset.x / scale, y: offset.y / scale },
+        });
+      },
+      [dispatch, scale]
+    )
+  );
 
-    // Mouse up will stop and confirm moving or resizing to update the draft layout to real layout
-    useEventListener('mouseup', useCallback(() => {
-        stopMovingNode(false);
-        dispatch({ type: 'stopMovingNodes', cancel: false });
-    }, [stopMovingNode, dispatch]));
+  // Mouse up will stop and confirm moving or resizing to update the draft layout to real layout
+  useEventListener(
+    'mouseup',
+    useCallback(() => {
+      stopMovingNode(false);
+      dispatch({ type: 'stopMovingNodes', cancel: false });
+    }, [stopMovingNode, dispatch])
+  );
 
-    useEventListener('keydown', useCallback((e) => {
+  useEventListener(
+    'keydown',
+    useCallback(
+      e => {
         // Escape will cancel the current moving or resizing and restore the previous layout
         if (e.key === 'Escape') {
-            stopMovingNode(true);
-            dispatch({ type: 'stopMovingNodes', cancel: true });
+          stopMovingNode(true);
+          dispatch({ type: 'stopMovingNodes', cancel: true });
         }
-    }, [stopMovingNode, dispatch]))
+      },
+      [stopMovingNode, dispatch]
+    )
+  );
 
-    const onNodeMouseDown = useCallback<OnNodeMouseEventListener>((e, id) => {
-        startMovingNode(e);
-        e.stopPropagation();
-    }, [startMovingNode]);
+  const onNodeMouseDown = useCallback<OnNodeMouseEventListener>(
+    (e, id) => {
+      startMovingNode(e);
+      e.stopPropagation();
+    },
+    [startMovingNode]
+  );
 
-    return { onNodeMouseDown, onCanvasMouseMove };
+  return { onNodeMouseDown, onCanvasMouseMove };
 };
