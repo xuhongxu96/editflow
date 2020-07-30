@@ -6,58 +6,93 @@ import { useMoving, useEventListener } from 'hooks';
 import { CanvasStyleContext } from 'contexts/CanvasStyleContext';
 
 export interface NodeToolboxProps {
-    nodeTemplates: NodeTemplate[];
+  nodeTemplates: NodeTemplate[];
 }
 
-export const NodeToolbox: React.FC<NodeToolboxProps> = (props) => {
-    const { clientRect, viewBound, scale } = useFlowContext();
-    const { defaultNodeSize } = useContext(CanvasStyleContext);
-    const dispatch = useFlowDispatchContext();
-    const [selectedIndex, setSelectedIndex] = useState<number>();
+export const NodeToolbox: React.FC<NodeToolboxProps> = props => {
+  const { clientRect, viewBound, scale } = useFlowContext();
+  const { defaultNodeSize } = useContext(CanvasStyleContext);
+  const dispatch = useFlowDispatchContext();
+  const [selectedIndex, setSelectedIndex] = useState<number>();
 
-    const [startMoving, stopMoving, onMoving] = useMoving(useCallback((offset) => {
+  const [startMoving, stopMoving, onMoving] = useMoving(
+    useCallback(
+      offset => {
         if (selectedIndex !== undefined) {
-            dispatch({ type: 'moveDraftNode', offset: { x: offset.x / scale, y: offset.y / scale } });
+          dispatch({
+            type: 'moveDraftNode',
+            offset: { x: offset.x / scale, y: offset.y / scale },
+          });
         }
-    }, [dispatch, selectedIndex, scale]))
+      },
+      [dispatch, selectedIndex, scale]
+    )
+  );
 
-    const onMouseDown = useCallback((i: number, e: React.MouseEvent) => {
-        console.log(clientRect, viewBound)
-        setSelectedIndex(i);
-        dispatch({
-            type: 'setDraftNode',
-            node: {
-                ...props.nodeTemplates[i],
-                layout: {
-                    x: (e.pageX - clientRect.x) / scale + viewBound.x,
-                    y: (e.pageY - clientRect.y) / scale + viewBound.y,
-                    ...defaultNodeSize
-                }
-            }
-        });
-        startMoving(e);
-        e.stopPropagation();
-    }, [dispatch, startMoving, clientRect, viewBound, scale, props.nodeTemplates, defaultNodeSize]);
+  const onMouseDown = useCallback(
+    (i: number, e: React.MouseEvent) => {
+      console.log(clientRect, viewBound);
+      setSelectedIndex(i);
+      dispatch({
+        type: 'setDraftNode',
+        node: {
+          ...props.nodeTemplates[i],
+          layout: {
+            x: (e.pageX - clientRect.x) / scale + viewBound.x,
+            y: (e.pageY - clientRect.y) / scale + viewBound.y,
+            ...defaultNodeSize,
+          },
+        },
+      });
+      startMoving(e);
+      e.stopPropagation();
+    },
+    [dispatch, startMoving, clientRect, viewBound, scale, props.nodeTemplates, defaultNodeSize]
+  );
 
-    useEventListener('mouseup', useCallback(e => {
+  useEventListener(
+    'mouseup',
+    useCallback(
+      e => {
         if (selectedIndex !== undefined) {
-            stopMoving(false);
+          stopMoving(false);
+          if (
+            (e.pageX - clientRect.x) / scale < -(defaultNodeSize.w / 2) ||
+            (e.pageY - clientRect.y) / scale > clientRect.h - defaultNodeSize.h / 2
+          ) {
+            dispatch({ type: 'unsetDraftNode', cancel: true });
+          } else {
             dispatch({ type: 'unsetDraftNode', cancel: false });
-            setSelectedIndex(undefined);
+          }
+          setSelectedIndex(undefined);
         }
-    }, [stopMoving, dispatch, selectedIndex]));
+      },
+      [stopMoving, dispatch, selectedIndex, clientRect, defaultNodeSize, scale]
+    )
+  );
 
-    useEventListener('mousemove', useCallback(e => {
+  useEventListener(
+    'mousemove',
+    useCallback(
+      e => {
         onMoving(e);
-    }, [onMoving]));
+      },
+      [onMoving]
+    )
+  );
 
-    return (
-        <ul className={Style.toolbox}>
-            {props.nodeTemplates.map((tpl, i) => (
-                <li key={i}
-                    onMouseDown={e => { onMouseDown(i, e); }}
-                >{tpl.title}</li>
-            ))}
-        </ul>
-    );
+  return (
+    <ul className={Style.toolbox}>
+      {props.nodeTemplates.map((tpl, i) => (
+        <li
+          key={i}
+          onMouseDown={e => {
+            onMouseDown(i, e);
+          }}
+        >
+          {tpl.title}
+        </li>
+      ))}
+    </ul>
+  );
 };

@@ -21,7 +21,7 @@ const generatePorts = (namePrefix: string, n: number) => {
     name: `${namePrefix} ${i}`,
     type: ['str', 'int', 'bool'][Math.trunc(Math.random() * 3)],
   }));
-}
+};
 
 const genFlow = (): Flow => {
   return {
@@ -34,8 +34,8 @@ const genFlow = (): Flow => {
           h: H,
         },
         title: `Component ${i}`,
-        input: generatePorts("In", Math.trunc(Math.random() * 8) + 2),
-        output: generatePorts("Out", Math.trunc(Math.random() * 8) + 2),
+        input: generatePorts('In', Math.trunc(Math.random() * 8) + 2),
+        output: generatePorts('Out', Math.trunc(Math.random() * 8) + 2),
       };
       return o;
     }, {} as NodeMap),
@@ -53,50 +53,80 @@ const genFlow = (): Flow => {
       return o;
     }, {} as EdgeMap),
   };
-}
+};
 
 const App: React.FC = () => {
   const [flow, setFlow] = useState(() => genFlow());
   const [flowState, dispatch] = useFlowState(flow);
 
   return (
-    <div className='App' style={{ display: 'flex' }}>
+    <div className="App" style={{ display: 'flex' }}>
       <FlowProvider flowState={flowState} dispatch={dispatch}>
-        <NodeToolbox nodeTemplates={[
-          {
-            title: '数据文件', input: [],
-            output: [{ type: 'str', name: 'o1' }]
-          },
-          {
-            title: '拆分数据',
-            input: [{ type: 'str', name: 'input' }],
-            output: [{ type: 'str', name: 'o1' }, { type: 'str', name: 'o2' }]
-          },
-        ]} />
+        <NodeToolbox
+          nodeTemplates={[
+            {
+              title: '数据文件',
+              input: [],
+              output: [{ type: 'str', name: 'o1' }],
+            },
+            {
+              title: '拆分数据',
+              input: [{ type: 'str', name: 'input' }],
+              output: [
+                { type: 'str', name: 'o1' },
+                { type: 'str', name: 'o2' },
+              ],
+            },
+          ]}
+        />
 
         <CanvasStyleProvider>
-          <Canvas width='80%' height='600' />
+          <Canvas width="80%" height="600" />
           <Toolbar>
-            <button onClick={() => { setFlow(genFlow()) }}>change</button>
+            <button
+              onClick={() => {
+                setFlow(genFlow());
+              }}
+            >
+              change
+            </button>
           </Toolbar>
         </CanvasStyleProvider>
       </FlowProvider>
 
-      <textarea readOnly style={{ width: '20%', marginTop: 48, marginLeft: 10 }} value={
-        'Selected Nodes:\n' +
-        useMemo(() =>
-          JSON.stringify(Array.from(flowState.selectedNodeIds)
-            .map(id => [flowState.raw.nodes[id], id] as [Node, string])
-            .map(([o, id]) => ({ id: id, title: o.title, layout: o.layout })), null, ' '),
-          [flowState.selectedNodeIds, flowState.raw.nodes])
-        + '\nSelected Edges:\n' +
-        useMemo(() =>
-          JSON.stringify(Array.from(flowState.selectedEdgeIds)
-            .map(id => ({ id: id, ...flowState.raw.edges[id] })), null, ' '),
-          [flowState.selectedEdgeIds, flowState.raw.edges])
-      } />
-    </div >
+      <textarea
+        readOnly
+        style={{ width: '20%', marginTop: 48, marginLeft: 10 }}
+        value={
+          'Selected Nodes:\n' +
+          useMemo(
+            () =>
+              JSON.stringify(
+                Array.from(flowState.selectedNodeIds)
+                  .map(id => [flowState.raw.nodes[id], id] as [Node, string])
+                  .map(([o, id]) => ({ id: id, title: o.title, layout: o.layout })),
+                null,
+                ' '
+              ),
+            [flowState.selectedNodeIds, flowState.raw.nodes]
+          ) +
+          '\nSelected Edges:\n' +
+          useMemo(
+            () =>
+              JSON.stringify(
+                Array.from(flowState.selectedEdgeIds).map(id => ({
+                  id: id,
+                  ...flowState.raw.edges[id],
+                })),
+                null,
+                ' '
+              ),
+            [flowState.selectedEdgeIds, flowState.raw.edges]
+          )
+        }
+      />
+    </div>
   );
-}
+};
 
 export default App;

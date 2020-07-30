@@ -1,0 +1,13 @@
+{
+    "arrowParens": "avoid",
+    "useTabs": false,
+    "semi": true,
+    "singleQuote": true,
+    "bracketSpacing": true,
+    "jsxBracketSameLine": false,
+    "tabWidth": 2,
+    "parser": "babel-ts",
+    "printWidth": 100,
+    "trailingComma": "es5"
+
+}
