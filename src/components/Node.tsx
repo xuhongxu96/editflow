@@ -63,7 +63,9 @@ export const Node = React.memo((props: NodeProps) => {
     input,
     output,
   } = props;
-
+  if (!props.draftLayout && !props.layout) {
+    console.log(props);
+  }
   const { x, y, w, h } = props.draftLayout || props.layout;
 
   return (

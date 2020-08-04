@@ -1,5 +1,10 @@
-import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import {
+  useFlowStackContext,
+  useFlowDispatchContext,
+  useFlowStackDispatchContext,
+} from 'contexts/FlowContext';
 import { useCallback, useState } from 'react';
+import _ from 'lodash';
 import { EdgeState } from 'models/FlowState';
 import { useMoving } from 'hooks/useMoving';
 import { useEventListener } from 'hooks';
@@ -8,8 +13,10 @@ import { getPortPosition } from 'utils';
 import { Rect } from 'models/BasicTypes';
 
 export const useEditableEdge = (clientRect: Rect) => {
-  const { raw, selectedPort, targetPort, viewBound, scale } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { raw, selectedPort, targetPort, viewBound, scale } = present;
   const dispatch = useFlowDispatchContext();
+  const flowStackDispatch = useFlowStackDispatchContext();
 
   const [draftEdge, setDraftEdge] = useState<{ edge: EdgeState; connected: boolean }>();
 
@@ -41,14 +48,24 @@ export const useEditableEdge = (clientRect: Rect) => {
 
   useEventListener(
     'mouseup',
-    useCallback(() => {
-      if (selectedPort) {
-        stopMoving(false);
-        setDraftEdge(undefined);
-        dispatch({ type: 'unselectPort' });
-        dispatch({ type: 'unsetTargetPort' });
-      }
-    }, [stopMoving, dispatch, selectedPort])
+    useCallback(
+      e => {
+        if (
+          e.pageX >= clientRect.x &&
+          e.pageX <= clientRect.x + clientRect.w &&
+          e.pageY >= clientRect.y &&
+          e.pageY <= clientRect.h - clientRect.y
+        ) {
+          if (selectedPort) {
+            stopMoving(false);
+            setDraftEdge(undefined);
+            dispatch({ type: 'unselectPort' });
+            dispatch({ type: 'unsetTargetPort' });
+          }
+        }
+      },
+      [stopMoving, dispatch, selectedPort, clientRect]
+    )
   );
 
   const onPortMouseDown = useCallback<OnNodePortMouseEventListener>(
@@ -62,12 +79,17 @@ export const useEditableEdge = (clientRect: Rect) => {
   );
 
   const onPortMouseUp = useCallback<OnNodePortMouseEventListener>(
-    (e, nodeId, _, io, index) => {
+    (e, nodeId, port, io, index) => {
       if (selectedPort && targetPort) {
         dispatch({ type: 'addEdge', startPort: selectedPort, endPort: targetPort });
+        flowStackDispatch({
+          type: 'set',
+          newflowState: present,
+          quadTree: _.cloneDeep(present.nodeIdQuadTree),
+        });
       }
     },
-    [selectedPort, targetPort, dispatch]
+    [selectedPort, targetPort, dispatch, present, flowStackDispatch]
   );
 
   const onPortMouseEnter = useCallback<OnNodePortMouseEventListener>(

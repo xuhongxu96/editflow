@@ -27,7 +27,7 @@ export const DefaultCanvasStyle: CanvasStyle = {
     w: 60,
     h: 20,
   },
-  generateNodeId: (_, flow) => `node-${Object.keys(flow.raw.nodes).length}`,
+  generateNodeId: (_, flow) => `node-${Object.keys(flow.raw.nodes).length - 1}`,
   generateEdgeId: (startPort, endPort) =>
     `${startPort.nodeId}.${startPort.index}-${endPort.nodeId}.${endPort.index}`,
   onNodeAdded: () => true,

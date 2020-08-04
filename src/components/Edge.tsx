@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import Style from './Edge.module.css';
 import { EdgeState } from 'models/FlowState';
 
+export type OnEdgeMouseEventListener = (e: React.MouseEvent, id: string, props: EdgeProps) => void;
+
 export interface EdgeProps extends EdgeState {
   id: string;
   highlighted?: boolean;
   selected?: boolean;
-  onMouseDown?: (e: React.MouseEvent, id: string) => void;
+  onMouseDown?: OnEdgeMouseEventListener;
+  onClick?: OnEdgeMouseEventListener;
 }
 
 export const Edge = React.memo((props: EdgeProps) => {
@@ -19,7 +22,7 @@ export const Edge = React.memo((props: EdgeProps) => {
       y1={props.start.y}
       x2={props.end.x}
       y2={props.end.y}
-      onMouseDown={e => props.onMouseDown && props.onMouseDown(e, props.id)}
+      onMouseDown={e => props.onMouseDown && props.onMouseDown(e, props.id, props)}
     />
   );
 });

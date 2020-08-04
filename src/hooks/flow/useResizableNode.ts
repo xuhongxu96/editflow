@@ -1,13 +1,20 @@
-import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import {
+  useFlowStackContext,
+  useFlowDispatchContext,
+  useFlowStackDispatchContext,
+} from 'contexts/FlowContext';
 import { HandleDirection } from 'components/HandleBox';
 import { useState, useCallback } from 'react';
 import { Offset } from 'models/BasicTypes';
 import { useMoving, useEventListener } from 'hooks';
 import { OnNodeHandleMouseDownEventListener } from 'components/Node';
+import _ from 'lodash';
 
 export const useResizableNode = () => {
-  const { scale } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { scale, clientRect } = present;
   const dispatch = useFlowDispatchContext();
+  const flowStackDispatch = useFlowStackDispatchContext();
 
   const [resizeHandleDirection, setResizeHandleDirection] = useState<HandleDirection>();
 
@@ -30,10 +37,20 @@ export const useResizableNode = () => {
   // Mouse up will stop and confirm moving or resizing to update the draft layout to real layout
   useEventListener(
     'mouseup',
-    useCallback(() => {
-      stopResizingNode(false);
-      dispatch({ type: 'stopResizingNodes', cancel: false });
-    }, [stopResizingNode, dispatch])
+    useCallback(
+      e => {
+        if (
+          e.pageX >= clientRect.x &&
+          e.pageX <= clientRect.x + clientRect.w &&
+          e.pageY >= clientRect.y &&
+          e.pageY <= clientRect.h - clientRect.y
+        ) {
+          stopResizingNode(false);
+          dispatch({ type: 'stopResizingNodes', cancel: false });
+        }
+      },
+      [stopResizingNode, dispatch, clientRect]
+    )
   );
 
   useEventListener(
@@ -51,13 +68,18 @@ export const useResizableNode = () => {
   );
 
   const onNodeHandleMouseDown = useCallback<OnNodeHandleMouseDownEventListener>(
-    (e, _, direction) => {
+    (e, port, direction) => {
       // Set handle direction to know which direction to resize the node
       setResizeHandleDirection(direction);
       _startResizingNode(e);
       e.stopPropagation();
+      flowStackDispatch({
+        type: 'set',
+        newflowState: present,
+        quadTree: _.cloneDeep(present.nodeIdQuadTree),
+      });
     },
-    [_startResizingNode]
+    [_startResizingNode, flowStackDispatch, present]
   );
 
   return { onNodeHandleMouseDown, onCanvasMouseMove };

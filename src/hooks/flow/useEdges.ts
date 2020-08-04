@@ -1,8 +1,9 @@
-import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import { useFlowStackContext, useFlowDispatchContext } from 'contexts/FlowContext';
 import { useEffect, useMemo } from 'react';
 import { EdgeState } from 'models/FlowState';
 
 export const useEdges = () => {
+  const { present } = useFlowStackContext();
   const {
     newlyVisibleNodeIds,
     visibleNodeIds,
@@ -13,7 +14,7 @@ export const useEdges = () => {
     selectedEdgeIds,
     nodeEdgeMap,
     edgeStateMap,
-  } = useFlowContext();
+  } = present;
   const dispatch = useFlowDispatchContext();
 
   useEffect(() => dispatch({ type: 'updateNewlyVisibleEdges', nodeIds: newlyVisibleNodeIds }), [
@@ -27,8 +28,6 @@ export const useEdges = () => {
   );
 
   useEffect(() => {
-    if (selectedNodeIds.size > 0) dispatch({ type: 'unselectAllEdges' });
-
     dispatch({
       type: 'setHighlightedEdges',
       ids: Array.from(

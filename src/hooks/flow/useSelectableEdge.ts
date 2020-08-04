@@ -1,9 +1,11 @@
-import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
+import { useFlowDispatchContext, useFlowStackContext } from 'contexts/FlowContext';
 import { useEventListener } from 'hooks';
 import { useCallback, useEffect } from 'react';
+import { OnEdgeMouseEventListener } from 'components/Edge';
 
 export const useSelectableEdge = () => {
-  const { selectedEdgeIds, raw, clientRect } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { selectedEdgeIds, raw, clientRect, selectedNodeIds } = present;
   const dispatch = useFlowDispatchContext();
 
   useEventListener(
@@ -24,8 +26,6 @@ export const useSelectableEdge = () => {
   );
 
   useEffect(() => {
-    if (selectedEdgeIds.size > 0) dispatch({ type: 'unselectAllNodes' });
-
     dispatch({
       type: 'setHighlightedNodes',
       ids: Array.from(
@@ -40,13 +40,27 @@ export const useSelectableEdge = () => {
     });
   }, [raw.edges, selectedEdgeIds, dispatch]);
 
-  const onEdgeMouseDown = useCallback(
-    (e, edgeId) => {
-      dispatch({ type: 'setSelectEdges', ids: [edgeId] });
+  const onEdgeMouseDown = useCallback<OnEdgeMouseEventListener>(
+    (e, edgeId, props) => {
+      if (e.ctrlKey) {
+        dispatch({ type: 'addSelectEdges', ids: [edgeId] });
+      } else if (!props.selected) {
+        dispatch({ type: 'setSelectEdges', ids: [edgeId] });
+        if (selectedNodeIds.size > 0) dispatch({ type: 'unselectAllNodes' });
+      }
       e.stopPropagation();
+    },
+    [dispatch, selectedNodeIds]
+  );
+
+  const onEdgeClick = useCallback<OnEdgeMouseEventListener>(
+    (e, id) => {
+      if (e.ctrlKey) {
+        dispatch({ type: 'unselectEdges', ids: [id] });
+      }
     },
     [dispatch]
   );
 
-  return { onEdgeMouseDown };
+  return { onEdgeMouseDown, onEdgeClick };
 };

@@ -1,8 +1,9 @@
-import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import { useFlowStackContext, useFlowDispatchContext } from 'contexts/FlowContext';
 import { useEffect, useMemo } from 'react';
 import { Node } from 'models/Flow';
 
 export const useNodes = () => {
+  const { present } = useFlowStackContext();
   const {
     viewBound,
     newlyVisibleNodeIds,
@@ -10,7 +11,7 @@ export const useNodes = () => {
     highlightedNodeIds,
     selectedNodeIds,
     raw,
-  } = useFlowContext();
+  } = present;
   const dispatch = useFlowDispatchContext();
 
   // Update newly visible nodes once view bound is changed without timeout

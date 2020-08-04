@@ -1,26 +1,36 @@
 import React, { useContext } from 'react';
 import { FlowDispatch } from 'reducers/FlowReducer';
-import { EmptyFlowState, FlowState } from 'models/FlowState';
+import { FlowStackDispatch } from 'reducers/FlowStackReducer';
+import { EmptyFlowStack, FlowStack } from 'models/FlowState';
 
-const FlowStateContext = React.createContext<FlowState>(EmptyFlowState);
 const FlowDispatchContext = React.createContext<FlowDispatch>(() => {});
+const FlowStackContext = React.createContext<FlowStack>(EmptyFlowStack);
+const FlowStackDispatchContext = React.createContext<FlowStackDispatch>(() => {});
 
 export const FlowProvider: React.FC<React.PropsWithChildren<{
-  flowState: FlowState;
   dispatch: FlowDispatch;
+  flowStack: FlowStack;
+  flowStackDispatch: FlowStackDispatch;
 }>> = props => {
-  const { flowState, dispatch, children } = props;
+  const { dispatch, flowStack, flowStackDispatch, children } = props;
 
   return (
-    <FlowDispatchContext.Provider value={dispatch}>
-      <FlowStateContext.Provider value={flowState}>{children}</FlowStateContext.Provider>
-    </FlowDispatchContext.Provider>
+    <FlowStackDispatchContext.Provider value={flowStackDispatch}>
+      <FlowDispatchContext.Provider value={dispatch}>
+        <FlowStackContext.Provider value={flowStack}>{children}</FlowStackContext.Provider>
+      </FlowDispatchContext.Provider>
+    </FlowStackDispatchContext.Provider>
   );
 };
 
-export const useFlowContext = () => {
-  return useContext(FlowStateContext);
+export const useFlowStackContext = () => {
+  return useContext(FlowStackContext);
 };
+
+export const useFlowStackDispatchContext = () => {
+  return useContext(FlowStackDispatchContext);
+};
+
 export const useFlowDispatchContext = () => {
   return useContext(FlowDispatchContext);
 };

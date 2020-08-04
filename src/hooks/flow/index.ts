@@ -1,4 +1,5 @@
 export * from './useFlowState';
+export * from './useFlowStack';
 export * from './useUpdateViewOffsetByDelta';
 export * from './useNodes';
 export * from './useSelectableNode';

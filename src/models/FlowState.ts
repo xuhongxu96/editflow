@@ -86,3 +86,17 @@ export const EmptyFlowState: FlowState = {
   highlightedEdgeIds: new Set<EdgeId>(),
   selectedEdgeIds: new Set<EdgeId>(),
 };
+
+export interface FlowStack {
+  present: FlowState;
+  update: FlowState;
+  past: FlowState[];
+  future: FlowState[];
+}
+
+export const EmptyFlowStack: FlowStack = {
+  present: EmptyFlowState,
+  update: EmptyFlowState,
+  past: [],
+  future: [],
+};

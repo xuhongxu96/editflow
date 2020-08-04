@@ -127,6 +127,16 @@ const reducers = {
 
     reducers.updateVisibleNodes(draft, { cacheExpandSize: 500 });
   },
+  setNewFlowState: (draft: DraftFlow, action: { newflowState: FlowState }) => {
+    Object.keys(draft).forEach(
+      key =>
+        ((draft as { [key: string]: any })[key] = (action.newflowState as { [key: string]: any })[
+          key
+        ])
+    );
+    draft.selectedPort = undefined;
+    draft.targetPort = undefined;
+  },
   setScale: (draft: DraftFlow, action: { scale: number }) => {
     draft.scale = action.scale;
   },
@@ -214,6 +224,9 @@ const reducers = {
   },
   unselectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
     action.ids.forEach(id => draft.selectedNodeIds.delete(id));
+  },
+  unselectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
+    action.ids.forEach(id => draft.selectedEdgeIds.delete(id));
   },
   unselectAllNodes: (draft: DraftFlow, action: {} = {}) => {
     draft.selectedNodeIds.clear();

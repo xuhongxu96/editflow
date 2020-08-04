@@ -4,7 +4,7 @@ import { Flow, NodeMap, EdgeMap, Node } from 'models/Flow';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
-import { useFlowState } from 'hooks/flow';
+import { useFlowState, useFlowStack } from 'hooks/flow';
 import { NodeToolbox } from 'components/NodeToolbox';
 
 const W = 120;
@@ -58,10 +58,11 @@ const genFlow = (): Flow => {
 const App: React.FC = () => {
   const [flow, setFlow] = useState(() => genFlow());
   const [flowState, dispatch] = useFlowState(flow);
+  const [flowStack, flowStackDispatch] = useFlowStack(flowState);
 
   return (
     <div className="App" style={{ display: 'flex' }}>
-      <FlowProvider flowState={flowState} dispatch={dispatch}>
+      <FlowProvider dispatch={dispatch} flowStack={flowStack} flowStackDispatch={flowStackDispatch}>
         <NodeToolbox
           nodeTemplates={[
             {

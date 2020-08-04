@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { OnNodeMouseEventListener } from 'components/Node';
-import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
+import { useFlowDispatchContext, useFlowStackContext } from 'contexts/FlowContext';
 
 export const useHoverableNode = () => {
-  const { hoveredNodeId } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { hoveredNodeId } = present;
   const dispatch = useFlowDispatchContext();
 
   const onNodeMouseEnter = useCallback<OnNodeMouseEventListener>(

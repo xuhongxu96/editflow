@@ -1,11 +1,18 @@
-import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
+import {
+  useFlowStackContext,
+  useFlowDispatchContext,
+  useFlowStackDispatchContext,
+} from 'contexts/FlowContext';
 import { useCallback } from 'react';
 import { useMoving, useEventListener } from 'hooks';
 import { OnNodeMouseEventListener } from 'components/Node';
+import _ from 'lodash';
 
 export const useMovableNode = () => {
-  const { scale } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { scale, clientRect } = present;
   const dispatch = useFlowDispatchContext();
+  const flowStackDispatch = useFlowStackDispatchContext();
 
   // Correct the offset by current scale factor
   const [startMovingNode, stopMovingNode, onCanvasMouseMove] = useMoving(
@@ -23,10 +30,20 @@ export const useMovableNode = () => {
   // Mouse up will stop and confirm moving or resizing to update the draft layout to real layout
   useEventListener(
     'mouseup',
-    useCallback(() => {
-      stopMovingNode(false);
-      dispatch({ type: 'stopMovingNodes', cancel: false });
-    }, [stopMovingNode, dispatch])
+    useCallback(
+      e => {
+        if (
+          e.pageX >= clientRect.x &&
+          e.pageX <= clientRect.x + clientRect.w &&
+          e.pageY >= clientRect.y &&
+          e.pageY <= clientRect.h - clientRect.y
+        ) {
+          stopMovingNode(false);
+          dispatch({ type: 'stopMovingNodes', cancel: false });
+        }
+      },
+      [stopMovingNode, dispatch, clientRect]
+    )
   );
 
   useEventListener(
@@ -47,8 +64,13 @@ export const useMovableNode = () => {
     (e, id) => {
       startMovingNode(e);
       e.stopPropagation();
+      flowStackDispatch({
+        type: 'set',
+        newflowState: present,
+        quadTree: _.cloneDeep(present.nodeIdQuadTree),
+      });
     },
-    [startMovingNode]
+    [startMovingNode, flowStackDispatch, present]
   );
 
   return { onNodeMouseDown, onCanvasMouseMove };

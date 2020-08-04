@@ -1,21 +1,23 @@
-import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
+import { useFlowDispatchContext, useFlowStackContext } from 'contexts/FlowContext';
 import { useCallback } from 'react';
 import { useEventListener } from 'hooks';
 import { OnNodeMouseEventListener } from 'components/Node';
 
 export const useSelectableNode = () => {
   const dispatch = useFlowDispatchContext();
-  const { clientRect } = useFlowContext();
+  const { present } = useFlowStackContext();
+  const { clientRect, selectedEdgeIds } = present;
   const onNodeMouseDown = useCallback<OnNodeMouseEventListener>(
     (e, id, props) => {
       if (e.ctrlKey) {
         dispatch({ type: 'addSelectNodes', ids: [id] });
       } else if (!props.selected) {
         dispatch({ type: 'setSelectNodes', ids: [id] });
+        if (selectedEdgeIds.size > 0) dispatch({ type: 'unselectAllEdges' });
       }
       e.stopPropagation();
     },
-    [dispatch]
+    [dispatch, selectedEdgeIds]
   );
 
   const onNodeClick = useCallback<OnNodeMouseEventListener>(
