@@ -559,6 +559,7 @@ const reducers = {
     action: { cancel: boolean },
     style: CanvasStyle
   ): ReducerReturnType => {
+    reducers.stopMovingNodes(flow, action);
     const draftNode = flow.raw.nodes['draft'];
     if (draftNode) {
       if (!action.cancel) {
