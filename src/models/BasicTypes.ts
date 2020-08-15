@@ -1,21 +1,35 @@
-export interface Point {
+import { Record, RecordOf } from 'immutable';
+
+export interface IPoint {
   x: number;
   y: number;
 }
-export interface Offset {
+
+export type Point = RecordOf<IPoint>;
+export const makePoint = Record<IPoint>({ x: 0, y: 0 });
+
+export interface IOffset {
   x: number;
   y: number;
 }
-export interface Size {
+
+export type Offset = RecordOf<IOffset>;
+export const makeOffset = Record<IOffset>({ x: 0, y: 0 });
+
+export interface ISize {
   w: number;
   h: number;
 }
 
-export interface Rect {
+export type Size = RecordOf<ISize>;
+export const makeSize = Record<ISize>({ w: 0, h: 0 });
+
+export interface IRect {
   x: number;
   y: number;
   w: number;
   h: number;
 }
 
-export const EmptyRect: Rect = { x: 0, y: 0, w: 0, h: 0 };
+export type Rect = RecordOf<IRect>;
+export const makeRect = Record<IRect>({ x: 0, y: 0, w: 0, h: 0 });

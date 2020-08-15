@@ -1,17 +1,17 @@
-import { Size } from 'models/BasicTypes';
-import { PortMeta, NodePortEdgeMap, FlowState } from 'models/FlowState';
+import { ISize } from 'models/BasicTypes';
+import { IPortMeta, NodePortEdgeMap, FlowState } from 'models/FlowState';
 import { Node } from 'models/Flow';
 
 export interface CanvasStyle {
   margin: number;
-  defaultNodeSize: Size;
-  minNodeSize: Size;
+  defaultNodeSize: ISize;
+  minNodeSize: ISize;
   generateNodeId: (node: Node, flow: FlowState) => string;
-  generateEdgeId: (startPort: PortMeta, endPort: PortMeta, flow: FlowState) => string;
+  generateEdgeId: (startPort: IPortMeta, endPort: IPortMeta, flow: FlowState) => string;
   onNodeAdded?: (node: Node, flow: FlowState) => boolean;
   onEdgeAdded?: (
-    startPort: PortMeta,
-    endPort: PortMeta,
+    startPort: IPortMeta,
+    endPort: IPortMeta,
     inputPortEdgeMap: NodePortEdgeMap,
     outputPortEdgeMap: NodePortEdgeMap
   ) => boolean;

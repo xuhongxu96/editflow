@@ -1,6 +1,6 @@
 import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
 import { useCallback, useState } from 'react';
-import { EdgeState } from 'models/FlowState';
+import { EdgeState, makeEdgeState } from 'models/FlowState';
 import { useMoving } from 'hooks/useMoving';
 import { useEventListener } from 'hooks';
 import { OnNodePortMouseEventListener } from 'components/Node';
@@ -18,7 +18,7 @@ export const useEditableEdge = (clientRect: Rect) => {
       (offset, e) => {
         if (selectedPort && e) {
           setDraftEdge({
-            edge: {
+            edge: makeEdgeState({
               start: getPortPosition(
                 raw.nodes[selectedPort.nodeId],
                 selectedPort.io,
@@ -30,7 +30,7 @@ export const useEditableEdge = (clientRect: Rect) => {
                     x: (e.pageX - clientRect.x) / scale + viewBound.x,
                     y: (e.pageY - clientRect.y) / scale + viewBound.y,
                   },
-            },
+            }),
             connected: targetPort !== undefined,
           });
         }

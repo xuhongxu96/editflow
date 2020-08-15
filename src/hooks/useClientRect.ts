@@ -1,21 +1,23 @@
 import { useState, useEffect, RefObject, DependencyList } from 'react';
-import { Rect } from 'models/BasicTypes';
+import { Rect, makeRect } from 'models/BasicTypes';
 
 export function useClientRect<T extends Element>(
   ref: RefObject<T>,
   deps: DependencyList = []
 ): Rect {
   const [sizeChanged, _setSizeChanged] = useState<number>(0);
-  const [realRect, setRealRect] = useState<Rect>({ x: 0, y: 0, w: 0, h: 0 });
+  const [realRect, setRealRect] = useState<Rect>(makeRect({ x: 0, y: 0, w: 0, h: 0 }));
 
   useEffect(() => {
     if (ref.current != null)
-      setRealRect({
-        x: ref.current.getBoundingClientRect().x,
-        y: ref.current.getBoundingClientRect().y,
-        w: ref.current.getBoundingClientRect().width,
-        h: ref.current.getBoundingClientRect().height,
-      });
+      setRealRect(
+        makeRect({
+          x: ref.current.getBoundingClientRect().x,
+          y: ref.current.getBoundingClientRect().y,
+          w: ref.current.getBoundingClientRect().width,
+          h: ref.current.getBoundingClientRect().height,
+        })
+      );
   }, [ref, sizeChanged, /* eslint-disable */ ...deps /* eslint-enable */]);
 
   useEffect(() => {

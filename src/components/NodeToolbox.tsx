@@ -31,7 +31,6 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = props => {
 
   const onMouseDown = useCallback(
     (i: number, e: React.MouseEvent) => {
-      console.log(clientRect, viewBound);
       setSelectedIndex(i);
       dispatch({
         type: 'setDraftNode',

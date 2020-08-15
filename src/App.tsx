@@ -6,15 +6,16 @@ import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';
 import { useFlowState } from 'hooks/flow';
 import { NodeToolbox } from 'components/NodeToolbox';
+import { makeRect } from 'models/BasicTypes';
 
 const W = 120;
 const H = 40;
 const Space = 10;
 const RowSize = 5;
 const OffsetX = 0;
-const OffsetY = 48;
-const NodeCount = 10;
-const EdgeCount = 1;
+const OffsetY = 0;
+const NodeCount = 100000;
+const EdgeCount = 100;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
@@ -27,12 +28,12 @@ const genFlow = (): Flow => {
   return {
     nodes: Array.from(Array(NodeCount).keys()).reduce((o, i) => {
       o[`node-${i}`] = {
-        layout: {
+        layout: makeRect({
           x: OffsetX + Space + (W + Space) * (i % RowSize),
           y: OffsetY + Space + (H + Space) * Math.trunc(i / RowSize),
           w: W,
           h: H,
-        },
+        }),
         title: `Component ${i}`,
         input: generatePorts('In', Math.trunc(Math.random() * 8) + 2),
         output: generatePorts('Out', Math.trunc(Math.random() * 8) + 2),
@@ -96,7 +97,7 @@ const App: React.FC = () => {
 
       <textarea
         readOnly
-        style={{ width: '20%', marginTop: 48, marginLeft: 10 }}
+        style={{ width: '20%', marginLeft: 10 }}
         value={
           'Selected Nodes:\n' +
           useMemo(

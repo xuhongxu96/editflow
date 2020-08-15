@@ -1,7 +1,7 @@
 import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
 import { HandleDirection } from 'components/HandleBox';
 import { useState, useCallback } from 'react';
-import { Offset } from 'models/BasicTypes';
+import { IOffset } from 'models/BasicTypes';
 import { useMoving, useEventListener } from 'hooks';
 import { OnNodeHandleMouseDownEventListener } from 'components/Node';
 
@@ -14,7 +14,7 @@ export const useResizableNode = () => {
   // Correct the offset by current scale factor
   const [_startResizingNode, stopResizingNode, onCanvasMouseMove] = useMoving(
     useCallback(
-      (offset: Offset) => {
+      (offset: IOffset) => {
         if (resizeHandleDirection) {
           dispatch({
             type: 'resizeSelectedNodes',

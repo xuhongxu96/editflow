@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import { FlowDispatch } from 'reducers/FlowReducer';
-import { EmptyFlowState, FlowState } from 'models/FlowState';
+import { FlowState, makeFlowState } from 'models/FlowState';
 
-const FlowStateContext = React.createContext<FlowState>(EmptyFlowState);
+const FlowStateContext = React.createContext<FlowState>(makeFlowState());
 const FlowDispatchContext = React.createContext<FlowDispatch>(() => {});
 
 export const FlowProvider: React.FC<React.PropsWithChildren<{

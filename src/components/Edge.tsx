@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Style from './Edge.module.css';
-import { EdgeState } from 'models/FlowState';
+import { IEdgeState } from 'models/FlowState';
 
-export interface EdgeProps extends EdgeState {
+export interface EdgeProps extends IEdgeState {
   id: string;
   highlighted?: boolean;
   selected?: boolean;
@@ -25,7 +25,7 @@ export const Edge = React.memo((props: EdgeProps) => {
 });
 
 export interface DraftEdgeProps {
-  edge?: EdgeState;
+  edge?: IEdgeState;
   connected?: boolean;
 }
 

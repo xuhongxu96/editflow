@@ -1,33 +1,43 @@
 import { Flow, Port } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
-import { Rect, EmptyRect, Point } from 'models/BasicTypes';
+import { Rect, IPoint, makeRect } from 'models/BasicTypes';
+import { Map, Set, List, Record, RecordOf } from 'immutable';
 
 type NodeId = string;
 type EdgeId = string;
 type PortName = string;
 
-export interface EdgeState {
-  start: Point;
-  end: Point;
+export interface IEdgeState {
+  start: IPoint;
+  end: IPoint;
 }
+
+export type EdgeState = RecordOf<IEdgeState>;
+export const makeEdgeState = Record<IEdgeState>({ start: { x: 0, y: 0 }, end: { x: 0, y: 0 } });
 
 type PortIndexMap = Map<PortName, number>;
 
-export interface PortMeta {
+export interface IPortMeta {
   nodeId: NodeId;
   io: 'input' | 'output';
   index: number;
   raw: Port;
 }
+export type PortMeta = RecordOf<IPortMeta>;
+export const makePortMeta = Record<IPortMeta>({
+  nodeId: '',
+  io: 'input',
+  index: 0,
+  raw: { name: '', type: '' },
+});
 
 export type NodePortEdgeMap = Map<NodeId, Map<PortName, Set<EdgeId>>>;
 
-export interface FlowState {
+export interface IFlowState {
   raw: Flow;
+  nodeIdQuadTree: QuadTree<NodeId>;
 
   draftNodeLayout: Map<NodeId, Rect>;
-
-  nodeIdQuadTree: QuadTree<NodeId>;
 
   clientRect: Rect;
   cachedViewBound: Rect;
@@ -36,7 +46,7 @@ export interface FlowState {
 
   scale: number;
 
-  newlyVisibleNodeIds: NodeId[];
+  newlyVisibleNodeIds: List<NodeId>;
   visibleNodeIds: Set<NodeId>;
   highlightedNodeIds: Set<NodeId>;
   selectedNodeIds: Set<NodeId>;
@@ -59,30 +69,34 @@ export interface FlowState {
   targetPort?: PortMeta;
 }
 
-export const EmptyFlowState: FlowState = {
+export type FlowState = RecordOf<IFlowState>;
+export const makeFlowState = Record<IFlowState>({
   raw: {
     nodes: {},
     edges: {},
   },
-  draftNodeLayout: new Map<NodeId, Rect>(),
+  draftNodeLayout: Map(),
   nodeIdQuadTree: new QuadTree(1024, 768),
-  clientRect: EmptyRect,
-  cachedViewBound: EmptyRect,
-  viewBound: EmptyRect,
-  nodeBound: EmptyRect,
+  clientRect: makeRect(),
+  cachedViewBound: makeRect(),
+  viewBound: makeRect(),
+  nodeBound: makeRect(),
   scale: 1,
-  newlyVisibleNodeIds: [],
-  visibleNodeIds: new Set<NodeId>(),
-  highlightedNodeIds: new Set<NodeId>(),
-  selectedNodeIds: new Set<NodeId>(),
-  inputPortMap: new Map<NodeId, PortIndexMap>(),
-  outputPortMap: new Map<NodeId, PortIndexMap>(),
-  nodeEdgeMap: new Map<NodeId, Set<EdgeId>>(),
-  inputPortEdgeMap: new Map<NodeId, Map<PortName, Set<EdgeId>>>(),
-  outputPortEdgeMap: new Map<NodeId, Map<PortName, Set<EdgeId>>>(),
-  edgeStateMap: new Map<EdgeId, EdgeState>(),
-  newlyVisibleEdgeIds: new Set<EdgeId>(),
-  visibleEdgeIds: new Set<EdgeId>(),
-  highlightedEdgeIds: new Set<EdgeId>(),
-  selectedEdgeIds: new Set<EdgeId>(),
-};
+  newlyVisibleNodeIds: List(),
+  visibleNodeIds: Set(),
+  highlightedNodeIds: Set(),
+  selectedNodeIds: Set(),
+  hoveredNodeId: undefined,
+  inputPortMap: Map(),
+  outputPortMap: Map(),
+  nodeEdgeMap: Map(),
+  inputPortEdgeMap: Map(),
+  outputPortEdgeMap: Map(),
+  edgeStateMap: Map(),
+  newlyVisibleEdgeIds: Set(),
+  visibleEdgeIds: Set(),
+  highlightedEdgeIds: Set(),
+  selectedEdgeIds: Set(),
+  selectedPort: undefined,
+  targetPort: undefined,
+});

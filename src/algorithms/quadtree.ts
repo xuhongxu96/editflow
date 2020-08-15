@@ -8,7 +8,7 @@ type UpOrDown = 'up' | 'down';
 export interface Node<T> {
   data: T[];
 
-  bound: Basic.Rect;
+  bound: Basic.IRect;
 
   left: {
     top?: Node<T>;
@@ -20,7 +20,11 @@ export interface Node<T> {
   };
 }
 
-function subRect<T>(node: Node<T>, leftOrRight: LeftOrRight, topOrBottom: TopOrBottom): Basic.Rect {
+function subRect<T>(
+  node: Node<T>,
+  leftOrRight: LeftOrRight,
+  topOrBottom: TopOrBottom
+): Basic.IRect {
   return {
     x: leftOrRight === 'left' ? node.bound.x : node.bound.x + node.bound.w / 2,
     y: topOrBottom === 'top' ? node.bound.y : node.bound.y + node.bound.h / 2,
@@ -35,7 +39,7 @@ function calculateExpandTimes(unit: number, need: number) {
   return times;
 }
 
-function insert<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number) {
+function insert<T>(root: Node<T>, rect: Basic.IRect, data: T, resolution: number) {
   // Not intersected means the node's children cannot contain it either
   if (!isIntersected(root.bound, rect)) return;
   root.data.push(data);
@@ -60,7 +64,7 @@ function insert<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number)
   }
 }
 
-function remove<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number) {
+function remove<T>(root: Node<T>, rect: Basic.IRect, data: T, resolution: number) {
   if (!isIntersected(root.bound, rect)) return;
   root.data.splice(root.data.indexOf(data), 1);
 
@@ -74,7 +78,7 @@ function remove<T>(root: Node<T>, rect: Basic.Rect, data: T, resolution: number)
   }
 }
 
-function getCoveredData<T>(node: Node<T>, cover: Basic.Rect, resolution: number): Set<T> {
+function getCoveredData<T>(node: Node<T>, cover: Basic.IRect, resolution: number): Set<T> {
   const { bound } = node;
 
   if (!isIntersected(bound, cover)) return new Set<T>();
@@ -106,10 +110,17 @@ export class QuadTree<T> {
     this.resolution = resolution;
   }
 
+  private clone() {
+    const res = new QuadTree<T>(0, 0, this.resolution);
+    res.root = this.root;
+    return res;
+  }
+
   clear() {
     this.root.data = [];
     this.root.left = {};
     this.root.right = {};
+    return this.clone();
   }
 
   expand(leftOrRight: LeftOrRight, upOrDown: UpOrDown) {
@@ -132,13 +143,15 @@ export class QuadTree<T> {
       },
     };
     this.root = newRoot;
+    return this.clone();
   }
 
   expandTimes(leftOrRight: LeftOrRight, upOrDown: UpOrDown, times: number) {
     for (let i = 0; i < times; ++i) this.expand(leftOrRight, upOrDown);
+    return this.clone();
   }
 
-  insert(rect: Basic.Rect, data: T) {
+  insert(rect: Basic.IRect, data: T) {
     const { bound } = this.root;
     let maxFactor = 0;
     let leftOrRight: 'left' | 'right' = 'right';
@@ -164,13 +177,15 @@ export class QuadTree<T> {
     }
 
     insert(this.root, rect, data, this.resolution);
+    return this.clone();
   }
 
-  remove(rect: Basic.Rect, data: T) {
+  remove(rect: Basic.IRect, data: T) {
     remove(this.root, rect, data, this.resolution);
+    return this.clone();
   }
 
-  getCoveredData(cover: Basic.Rect) {
+  getCoveredData(cover: Basic.IRect) {
     return Array.from(getCoveredData(this.root, cover, this.resolution));
   }
 

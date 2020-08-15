@@ -1,4 +1,4 @@
-import { FlowState, PortMeta } from 'models/FlowState';
+import { FlowState, makeEdgeState, makePortMeta, IPortMeta } from 'models/FlowState';
 import * as Basic from 'models/BasicTypes';
 import {
   valueof,
@@ -10,364 +10,477 @@ import {
   getPortDraftPosition,
   DecomposeHandleDirection,
 } from 'utils';
-import { Reducer } from 'use-immer';
-import { Draft } from 'immer';
-import { Dispatch } from 'react';
+import { Dispatch, Reducer } from 'react';
 import { Flow, Node, Edge } from 'models/Flow';
 import { HandleDirection } from 'components/HandleBox';
 import { CanvasStyle } from 'models/CanvasStyle';
+import { Map, Set, List } from 'immutable';
 
-type DraftFlow = Draft<FlowState>;
-
-function updateStateForNode(draft: DraftFlow, id: string, node: Node) {
-  draft.nodeIdQuadTree.insert(node.layout, id);
-
-  draft.inputPortEdgeMap.set(id, new Map<string, Set<string>>());
-  draft.outputPortEdgeMap.set(id, new Map<string, Set<string>>());
-
-  draft.nodeBound = expandRectToContain(draft.nodeBound, node.layout);
-  {
-    const inputPortMap = new Map<string, number>();
-    node.input.forEach((port, i) => {
-      inputPortMap.set(port.name, i);
-      draft.inputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
-    });
-    draft.inputPortMap.set(id, inputPortMap);
-  }
-  {
-    const outputPortMap = new Map<string, number>();
-    node.output.forEach((port, i) => {
-      outputPortMap.set(port.name, i);
-      draft.outputPortEdgeMap.get(id)?.set(port.name, new Set<string>());
-    });
-    draft.outputPortMap.set(id, outputPortMap);
-  }
-  draft.nodeEdgeMap.set(id, new Set<string>());
-}
-
-function removeStateForNode(draft: DraftFlow, id: string, node: Node) {
-  draft.nodeIdQuadTree.remove(node.layout, id);
-
-  draft.inputPortEdgeMap.delete(id);
-  draft.outputPortEdgeMap.delete(id);
-
-  draft.inputPortMap.delete(id);
-  draft.outputPortMap.delete(id);
-  draft.nodeEdgeMap.delete(id);
-
-  draft.visibleNodeIds.delete(id);
-  draft.highlightedNodeIds.delete(id);
-  draft.selectedNodeIds.delete(id);
-  draft.newlyVisibleNodeIds = [];
-  if (draft.hoveredNodeId === id) draft.hoveredNodeId = undefined;
-}
-
-function updateStateForEdge(draft: DraftFlow, id: string, edge: Edge) {
-  const startNode = draft.raw.nodes[edge.start.nodeId];
-  const endNode = draft.raw.nodes[edge.end.nodeId];
-
-  const startPortIndex = draft.outputPortMap.get(edge.start.nodeId)?.get(edge.start.portName);
-  const endPortIndex = draft.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName);
-
-  draft.nodeEdgeMap.get(edge.start.nodeId)?.add(id);
-  draft.nodeEdgeMap.get(edge.end.nodeId)?.add(id);
-
-  draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.add(id);
-  draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.add(id);
-
-  draft.edgeStateMap.set(id, {
-    start: getPortPosition(startNode, 'output', startPortIndex!),
-    end: getPortPosition(endNode, 'input', endPortIndex!),
+function updateStateForNode(flow: FlowState, id: string, node: Node) {
+  return flow.withMutations(m => {
+    m.update('nodeIdQuadTree', u => u.insert(node.layout, id));
+    m.set('nodeBound', Basic.makeRect(expandRectToContain(flow.nodeBound, node.layout)));
+    {
+      const inputPortMap = Map<string, number>().asMutable();
+      const inputPortEdgeMap = (
+        flow.inputPortEdgeMap.get(id) ?? Map<string, Set<string>>()
+      ).asMutable();
+      node.input.forEach((port, i) => {
+        inputPortMap.set(port.name, i);
+        inputPortEdgeMap.set(port.name, Set<string>());
+      });
+      m.set('inputPortEdgeMap', flow.inputPortEdgeMap.set(id, inputPortEdgeMap.asImmutable()));
+      m.set('inputPortMap', flow.inputPortMap.set(id, inputPortMap.asImmutable()));
+    }
+    {
+      const outputPortMap = Map<string, number>().asMutable();
+      const outputPortEdgeMap = (
+        flow.outputPortEdgeMap.get(id) ?? Map<string, Set<string>>()
+      ).asMutable();
+      node.output.forEach((port, i) => {
+        outputPortMap.set(port.name, i);
+        outputPortEdgeMap.set(port.name, Set<string>());
+      });
+      m.set('outputPortEdgeMap', flow.outputPortEdgeMap.set(id, outputPortEdgeMap.asImmutable()));
+      m.set('outputPortMap', flow.outputPortMap.set(id, outputPortMap.asImmutable()));
+    }
+    m.set('nodeEdgeMap', flow.nodeEdgeMap.set(id, Set<string>()));
   });
 }
 
-function removeStateForEdge(draft: DraftFlow, id: string, edge: Edge) {
-  draft.nodeEdgeMap.get(edge.start.nodeId)?.delete(id);
-  draft.nodeEdgeMap.get(edge.end.nodeId)?.delete(id);
+function removeStateForNode(flow: FlowState, id: string, node: Node) {
+  return flow.withMutations(m => {
+    m.update('nodeIdQuadTree', u => u.remove(node.layout, id));
 
-  draft.outputPortEdgeMap.get(edge.start.nodeId)!.get(edge.start.portName)!.delete(id);
-  draft.inputPortEdgeMap.get(edge.end.nodeId)!.get(edge.end.portName)!.delete(id);
+    m.set('inputPortEdgeMap', flow.inputPortEdgeMap.delete(id));
+    m.set('outputPortEdgeMap', flow.outputPortEdgeMap.delete(id));
 
-  draft.edgeStateMap.delete(id);
+    m.set('inputPortMap', flow.inputPortMap.delete(id));
+    m.set('outputPortMap', flow.outputPortMap.delete(id));
+    m.set('nodeEdgeMap', flow.nodeEdgeMap.delete(id));
 
-  draft.visibleEdgeIds.delete(id);
-  draft.highlightedEdgeIds.delete(id);
-  draft.selectedEdgeIds.delete(id);
-  draft.newlyVisibleEdgeIds.delete(id);
+    m.set('visibleNodeIds', flow.visibleNodeIds.delete(id));
+    m.set('highlightedNodeIds', flow.highlightedNodeIds.delete(id));
+    m.set('selectedNodeIds', flow.selectedNodeIds.delete(id));
+    m.set('newlyVisibleNodeIds', List<string>());
+    if (flow.hoveredNodeId === id) m.set('hoveredNodeId', undefined);
+  });
+}
+
+function updateStateForEdge(flow: FlowState, id: string, edge: Edge) {
+  const startNode = flow.raw.nodes[edge.start.nodeId];
+  const endNode = flow.raw.nodes[edge.end.nodeId];
+
+  const startPortIndex = flow.outputPortMap.get(edge.start.nodeId)!.get(edge.start.portName);
+  const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)!.get(edge.end.portName);
+
+  return flow.withMutations(m => {
+    m.set(
+      'nodeEdgeMap',
+      flow.nodeEdgeMap.withMutations(m => {
+        m.update(edge.start.nodeId, u => u.add(id)).update(edge.end.nodeId, u => u.add(id));
+      })
+    );
+
+    m.set(
+      'outputPortEdgeMap',
+      flow.outputPortEdgeMap.updateIn([edge.start.nodeId, edge.start.portName], u => u?.add(id))
+    );
+    m.set(
+      'inputPortEdgeMap',
+      flow.inputPortEdgeMap.updateIn([edge.end.nodeId, edge.end.portName], u => u?.add(id))
+    );
+
+    m.set(
+      'edgeStateMap',
+      flow.edgeStateMap.set(
+        id,
+        makeEdgeState({
+          start: getPortPosition(startNode, 'output', startPortIndex!),
+          end: getPortPosition(endNode, 'input', endPortIndex!),
+        })
+      )
+    );
+  });
+}
+
+function removeStateForEdge(flow: FlowState, id: string, edge: Edge) {
+  return flow.withMutations(m => {
+    m.set(
+      'nodeEdgeMap',
+      flow.nodeEdgeMap.withMutations(m2 => {
+        m2.update(edge.start.nodeId, u => u.delete(id)).update(edge.end.nodeId, u => u.delete(id));
+      })
+    );
+
+    m.set(
+      'outputPortEdgeMap',
+      flow.outputPortEdgeMap.updateIn([edge.start.nodeId, edge.start.portName], u => u.delete(id))
+    );
+    m.set(
+      'inputPortEdgeMap',
+      flow.inputPortEdgeMap.updateIn([edge.end.nodeId, edge.end.portName], u => u.delete(id))
+    );
+
+    m.set('edgeStateMap', flow.edgeStateMap.delete(id));
+
+    m.set('visibleEdgeIds', flow.visibleEdgeIds.delete(id));
+    m.set('highlightedEdgeIds', flow.highlightedEdgeIds.delete(id));
+    m.set('selectedEdgeIds', flow.selectedEdgeIds.delete(id));
+    m.set('newlyVisibleEdgeIds', flow.newlyVisibleEdgeIds.delete(id));
+  });
 }
 
 const reducers = {
-  init: (draft: DraftFlow, action: { flow: Flow }) => {
-    const { flow } = action;
+  init: (flow: FlowState, action: { flow: Flow }): FlowState => {
+    return flow.withMutations(m => {
+      m.update('nodeIdQuadTree', u => u.clear());
 
-    draft.raw = flow;
-    draft.draftNodeLayout.clear();
-    draft.nodeIdQuadTree.clear();
-    draft.cachedViewBound = draft.nodeBound = Basic.EmptyRect;
-    draft.newlyVisibleNodeIds = [];
-    draft.visibleNodeIds.clear();
-    draft.selectedNodeIds.clear();
-    draft.inputPortMap.clear();
-    draft.outputPortMap.clear();
-    draft.nodeEdgeMap.clear();
-    draft.inputPortEdgeMap.clear();
-    draft.outputPortEdgeMap.clear();
-    draft.edgeStateMap.clear();
-    draft.newlyVisibleEdgeIds.clear();
-    draft.visibleEdgeIds.clear();
-    draft.selectedEdgeIds.clear();
+      m.set('raw', action.flow)
+        .set('draftNodeLayout', Map())
+        .set('cachedViewBound', Basic.makeRect())
+        .set('nodeBound', Basic.makeRect())
+        .set('newlyVisibleNodeIds', List())
+        .set('visibleNodeIds', Set())
+        .set('selectedNodeIds', Set())
+        .set('inputPortMap', Map())
+        .set('outputPortMap', Map())
+        .set('nodeEdgeMap', Map())
+        .set('inputPortEdgeMap', Map())
+        .set('outputPortEdgeMap', Map())
+        .set('edgeStateMap', Map())
+        .set('newlyVisibleEdgeIds', Set())
+        .set('visibleEdgeIds', Set())
+        .set('selectedEdgeIds', Set());
 
-    Object.entries(flow.nodes).forEach(([id, node]) => {
-      updateStateForNode(draft, id, node);
+      Object.entries(action.flow.nodes).forEach(([id, node]) => {
+        updateStateForNode(m, id, node);
+      });
+
+      Object.entries(action.flow.edges).forEach(([id, edge]) => {
+        updateStateForEdge(m, id, edge);
+      });
+
+      reducers.updateVisibleNodes(m, { cacheExpandSize: 500 });
     });
-
-    Object.entries(flow.edges).forEach(([id, edge]) => {
-      updateStateForEdge(draft, id, edge);
-    });
-
-    reducers.updateVisibleNodes(draft, { cacheExpandSize: 500 });
   },
-  setScale: (draft: DraftFlow, action: { scale: number }) => {
-    draft.scale = action.scale;
+  setScale: (flow: FlowState, action: { scale: number }): FlowState => {
+    return flow.set('scale', action.scale);
   },
-  setViewOffset: (draft: DraftFlow, action: { offset: Basic.Offset }, style: CanvasStyle) => {
-    draft.viewBound.x = action.offset.x;
-    draft.viewBound.y = action.offset.y;
-    draft.viewBound = limitRect(
-      draft.viewBound,
-      expandRect(draft.nodeBound, style.margin, draft.scale)
+  setViewOffset: (
+    flow: FlowState,
+    action: { offset: Basic.IOffset },
+    style: CanvasStyle
+  ): FlowState => {
+    return flow.set(
+      'viewBound',
+      Basic.makeRect(
+        limitRect(
+          { ...flow.viewBound, ...action.offset },
+          expandRect(flow.nodeBound, style.margin, flow.scale)
+        )
+      )
     );
   },
   updateViewOffsetByDelta: (
-    draft: DraftFlow,
-    action: { delta: Basic.Offset },
+    flow: FlowState,
+    action: { delta: Basic.IOffset },
     style: CanvasStyle
-  ) => {
-    draft.viewBound.x += action.delta.x;
-    draft.viewBound.y += action.delta.y;
-    draft.viewBound = limitRect(
-      draft.viewBound,
-      expandRect(draft.nodeBound, style.margin, draft.scale)
+  ): FlowState => {
+    return flow.set(
+      'viewBound',
+      Basic.makeRect(
+        limitRect(
+          {
+            w: flow.viewBound.w,
+            h: flow.viewBound.h,
+            x: flow.viewBound.x + action.delta.x,
+            y: flow.viewBound.y + action.delta.y,
+          },
+          expandRect(flow.nodeBound, style.margin, flow.scale)
+        )
+      )
     );
   },
-  updateClientSize: (draft: DraftFlow, action: { clientRect: Basic.Rect }) => {
-    draft.clientRect = action.clientRect;
-    draft.viewBound.w = action.clientRect.w;
-    draft.viewBound.h = action.clientRect.h;
-  },
-  updateNewlyVisibleNodes: (draft: DraftFlow, action: {}) => {
-    if (!isContained(draft.cachedViewBound, draft.viewBound)) {
-      const viewBoundToCache = draft.viewBound;
-      draft.newlyVisibleNodeIds = draft.nodeIdQuadTree
-        .getCoveredData(viewBoundToCache)
-        .filter(i => !draft.visibleNodeIds.has(i))
-        .sort();
-      draft.cachedViewBound = viewBoundToCache;
-    }
-  },
-  updateVisibleNodes: (draft: DraftFlow, action: { cacheExpandSize: number }) => {
-    const viewBoundToCache = expandRect(draft.viewBound, action.cacheExpandSize);
-    draft.newlyVisibleNodeIds = [];
-    draft.visibleNodeIds = new Set<string>(draft.nodeIdQuadTree.getCoveredData(viewBoundToCache));
-    draft.cachedViewBound = viewBoundToCache;
-  },
-  updateNewlyVisibleEdges: (draft: DraftFlow, action: { nodeIds: string[] }) => {
-    draft.newlyVisibleEdgeIds = action.nodeIds.reduce((p, nodeId) => {
-      draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i));
-      return p;
-    }, new Set<string>());
-    draft.visibleEdgeIds.forEach(id => draft.newlyVisibleEdgeIds.delete(id));
-  },
-  updateVisibleEdges: (draft: DraftFlow, action: { nodeIds: string[] }) => {
-    draft.newlyVisibleEdgeIds.clear();
-    draft.visibleEdgeIds = action.nodeIds.reduce((p, nodeId) => {
-      draft.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i));
-      return p;
-    }, new Set<string>());
-  },
-  setHighlightedEdges: (draft: DraftFlow, action: { ids: string[] }) => {
-    draft.highlightedEdgeIds = new Set<string>(action.ids);
-  },
-  setSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
-    draft.selectedEdgeIds = new Set<string>(action.ids);
-  },
-  addSelectEdges: (draft: DraftFlow, action: { ids: string[] }) => {
-    action.ids.forEach(id => draft.selectedEdgeIds.add(id));
-  },
-  unselectAllEdges: (draft: DraftFlow, action: {} = {}) => {
-    draft.selectedEdgeIds.clear();
-  },
-  setHoveredNode: (draft: DraftFlow, action: { id: string }) => {
-    draft.hoveredNodeId = action.id;
-  },
-  unsetHoveredNode: (draft: DraftFlow, action: {} = {}) => {
-    draft.hoveredNodeId = undefined;
-  },
-  setHighlightedNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-    draft.highlightedNodeIds = new Set<string>(action.ids);
-  },
-  setSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-    draft.selectedNodeIds = new Set<string>(action.ids);
-  },
-  addSelectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-    action.ids.forEach(id => draft.selectedNodeIds.add(id));
-  },
-  unselectNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-    action.ids.forEach(id => draft.selectedNodeIds.delete(id));
-  },
-  unselectAllNodes: (draft: DraftFlow, action: {} = {}) => {
-    draft.selectedNodeIds.clear();
-  },
-  toggleNodes: (draft: DraftFlow, action: { ids: string[] }) => {
-    action.ids.forEach(id => {
-      if (draft.selectedNodeIds.has(id)) {
-        draft.selectedNodeIds.delete(id);
-      } else {
-        draft.selectedNodeIds.add(id);
-      }
+  updateClientSize: (flow: FlowState, action: { clientRect: Basic.IRect }): FlowState => {
+    return flow.withMutations(m => {
+      m.set('clientRect', Basic.makeRect(action.clientRect))
+        .setIn(['viewBound', 'w'], action.clientRect.w)
+        .setIn(['viewBound', 'h'], action.clientRect.h);
     });
   },
-  moveSelectedNodes: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
-    draft.selectedNodeIds.forEach(id => {
-      const node = draft.raw.nodes[id];
-      const draftLayout = {
-        x: node.layout.x + action.offset.x,
-        y: node.layout.y + action.offset.y,
-        w: node.layout.w,
-        h: node.layout.h,
-      };
-      draft.draftNodeLayout.set(id, draftLayout);
-      reducers.updateEdgeStates(draft, { nodeId: id, draft: true });
-    });
-  },
-  stopMovingNodes: (draft: DraftFlow, action: { cancel: boolean }) => {
-    if (!action.cancel) {
-      draft.draftNodeLayout.forEach((layout, id) => {
-        draft.nodeIdQuadTree.remove(draft.raw.nodes[id].layout, id);
-        draft.raw.nodes[id].layout = layout;
-        draft.nodeIdQuadTree.insert(layout, id);
-        draft.nodeBound = expandRectToContain(draft.nodeBound, layout);
-        reducers.updateEdgeStates(draft, { nodeId: id });
+  updateNewlyVisibleNodes: (flow: FlowState, action: {}): FlowState => {
+    if (!isContained(flow.cachedViewBound, flow.viewBound)) {
+      const viewBoundToCache = flow.viewBound;
+      return flow.withMutations(m => {
+        m.set(
+          'newlyVisibleNodeIds',
+          List(
+            flow.nodeIdQuadTree
+              .getCoveredData(viewBoundToCache)
+              .filter(i => !flow.visibleNodeIds.has(i))
+              .sort()
+          )
+        );
+        m.set('cachedViewBound', viewBoundToCache);
       });
     }
-    draft.draftNodeLayout.clear();
+    return flow;
   },
-  resizeSelectedNodes: (
-    draft: DraftFlow,
-    action: { direction: HandleDirection; offset: Basic.Offset },
-    style: CanvasStyle
-  ) => {
-    const [hDirection, vDirection] = DecomposeHandleDirection(action.direction);
-
-    draft.selectedNodeIds.forEach(id => {
-      const node = draft.raw.nodes[id];
-      const draftLayout = {
-        x:
-          hDirection === 'left'
-            ? Math.min(
-                node.layout.x + action.offset.x,
-                node.layout.x + node.layout.w - style.minNodeSize.w
-              )
-            : node.layout.x,
-
-        y:
-          vDirection === 'top'
-            ? Math.min(
-                node.layout.y + action.offset.y,
-                node.layout.y + node.layout.h - style.minNodeSize.h
-              )
-            : node.layout.y,
-
-        w:
-          hDirection === 'left'
-            ? Math.max(style.minNodeSize.w, node.layout.w - action.offset.x)
-            : Math.max(style.minNodeSize.w, node.layout.w + action.offset.x),
-
-        h:
-          vDirection === 'middle'
-            ? node.layout.h
-            : vDirection === 'top'
-            ? Math.max(style.minNodeSize.h, node.layout.h - action.offset.y)
-            : Math.max(style.minNodeSize.h, node.layout.h + action.offset.y),
-      };
-      draft.draftNodeLayout.set(id, draftLayout);
-      reducers.updateEdgeStates(draft, { nodeId: id, draft: true });
+  updateVisibleNodes: (flow: FlowState, action: { cacheExpandSize: number }): FlowState => {
+    const viewBoundToCache = expandRect(flow.viewBound, action.cacheExpandSize);
+    return flow.withMutations(m => {
+      m.set('newlyVisibleNodeIds', List())
+        .set('visibleNodeIds', Set(flow.nodeIdQuadTree.getCoveredData(viewBoundToCache)))
+        .set('cachedViewBound', Basic.makeRect(viewBoundToCache));
     });
   },
-  stopResizingNodes: (draft: DraftFlow, action: { cancel: boolean }) => {
-    reducers.stopMovingNodes(draft, action);
+  updateNewlyVisibleEdges: (flow: FlowState, action: { nodeIds: string[] }): FlowState => {
+    const newlyVisibleEdgeIds = action.nodeIds.reduce((p, nodeId) => {
+      flow.nodeEdgeMap.get(nodeId)!.forEach(i => p.add(i));
+      return p;
+    }, Set<string>().asMutable());
+    flow.visibleEdgeIds.forEach(id => newlyVisibleEdgeIds.delete(id));
+    return flow.set('newlyVisibleEdgeIds', newlyVisibleEdgeIds.asImmutable());
   },
-  updateEdgeStates: (draft: DraftFlow, action: { nodeId: string; draft?: boolean }) => {
-    draft.nodeEdgeMap.get(action.nodeId)!.forEach(edgeId => {
-      const edge = draft.raw.edges[edgeId];
-      const startNode = draft.raw.nodes[edge.start.nodeId];
-      const endNode = draft.raw.nodes[edge.end.nodeId];
-      const startPortIndex = draft.outputPortMap.get(edge.start.nodeId)?.get(edge.start.portName)!;
-      const endPortIndex = draft.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName)!;
-
-      if (action.draft) {
-        draft.edgeStateMap.set(edgeId, {
-          start: getPortDraftPosition(
-            startNode,
-            draft.draftNodeLayout.get(edge.start.nodeId) ?? startNode.layout,
-            'output',
-            startPortIndex
-          ),
-          end: getPortDraftPosition(
-            endNode,
-            draft.draftNodeLayout.get(edge.end.nodeId) ?? endNode.layout,
-            'input',
-            endPortIndex
-          ),
+  updateVisibleEdges: (flow: FlowState, action: { nodeIds: string[] }): FlowState => {
+    return flow.withMutations(m => {
+      m.set('newlyVisibleEdgeIds', Set()).set(
+        'visibleEdgeIds',
+        action.nodeIds
+          .reduce((p, nodeId) => {
+            flow.nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
+            return p;
+          }, Set<string>().asMutable())
+          .asImmutable()
+      );
+    });
+  },
+  setHighlightedEdges: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.set('highlightedEdgeIds', Set(action.ids));
+  },
+  setSelectEdges: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.set('selectedEdgeIds', Set(action.ids));
+  },
+  addSelectEdges: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.update('selectedEdgeIds', u =>
+      u.withMutations(m => {
+        action.ids.forEach(id => m.add(id));
+      })
+    );
+  },
+  unselectAllEdges: (flow: FlowState, action: {} = {}): FlowState => {
+    return flow.set('selectedEdgeIds', Set());
+  },
+  setHoveredNode: (flow: FlowState, action: { id: string }): FlowState => {
+    return flow.set('hoveredNodeId', action.id);
+  },
+  unsetHoveredNode: (flow: FlowState, action: {} = {}): FlowState => {
+    return flow.set('hoveredNodeId', undefined);
+  },
+  setHighlightedNodes: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.set('highlightedNodeIds', Set(action.ids));
+  },
+  setSelectNodes: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.set('selectedNodeIds', Set(action.ids));
+  },
+  addSelectNodes: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.update('selectedNodeIds', u =>
+      u.withMutations(m => {
+        action.ids.forEach(id => m.add(id));
+      })
+    );
+  },
+  unselectNodes: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.update('selectedNodeIds', u =>
+      u.withMutations(m => {
+        action.ids.forEach(id => m.delete(id));
+      })
+    );
+  },
+  unselectAllNodes: (flow: FlowState, action: {} = {}): FlowState => {
+    return flow.set('selectedNodeIds', Set());
+  },
+  toggleNodes: (flow: FlowState, action: { ids: string[] }): FlowState => {
+    return flow.update('selectedNodeIds', u =>
+      u.withMutations(m => {
+        action.ids.forEach(id => {
+          if (flow.selectedNodeIds.has(id)) {
+            m.delete(id);
+          } else {
+            m.add(id);
+          }
         });
-      } else {
-        draft.edgeStateMap.set(edgeId, {
-          start: getPortPosition(startNode, 'output', startPortIndex),
-          end: getPortPosition(endNode, 'input', endPortIndex),
+      })
+    );
+  },
+  moveSelectedNodes: (flow: FlowState, action: { offset: Basic.IOffset }): FlowState => {
+    return flow.withMutations(m => {
+      flow.selectedNodeIds.forEach(id => {
+        const node = flow.raw.nodes[id];
+        const draftLayout = {
+          x: node.layout.x + action.offset.x,
+          y: node.layout.y + action.offset.y,
+          w: node.layout.w,
+          h: node.layout.h,
+        };
+        m.update('draftNodeLayout', u => u.set(id, Basic.makeRect(draftLayout)));
+        reducers.updateEdgeStates(m, { nodeId: id, draft: true });
+      });
+    });
+  },
+  stopMovingNodes: (flow: FlowState, action: { cancel: boolean }): FlowState => {
+    return flow.withMutations(m => {
+      if (!action.cancel) {
+        flow.draftNodeLayout.forEach((layout, id) => {
+          m.update('nodeIdQuadTree', u => u.remove(flow.raw.nodes[id].layout, id));
+          m.raw.nodes[id].layout = layout;
+          m.update('nodeIdQuadTree', u => u.insert(layout, id));
+          m.set('nodeBound', Basic.makeRect(expandRectToContain(flow.nodeBound, layout)));
+          reducers.updateEdgeStates(m, { nodeId: id });
         });
       }
+      m.set('draftNodeLayout', Map());
     });
   },
-  setSelectPort: (draft: DraftFlow, action: Omit<PortMeta, 'raw'>) => {
-    const port = draft.raw.nodes[action.nodeId][action.io][action.index];
-    draft.selectedPort = {
-      nodeId: action.nodeId,
-      io: action.io,
-      index: action.index,
-      raw: port,
-    };
+  resizeSelectedNodes: (
+    flow: FlowState,
+    action: { direction: HandleDirection; offset: Basic.IOffset },
+    style: CanvasStyle
+  ): FlowState => {
+    const [hDirection, vDirection] = DecomposeHandleDirection(action.direction);
+
+    return flow.withMutations(m => {
+      const draftNodeLayout = m.draftNodeLayout.asMutable();
+      flow.selectedNodeIds.forEach(id => {
+        const node = flow.raw.nodes[id];
+        const draftLayout = {
+          x:
+            hDirection === 'left'
+              ? Math.min(
+                  node.layout.x + action.offset.x,
+                  node.layout.x + node.layout.w - style.minNodeSize.w
+                )
+              : node.layout.x,
+
+          y:
+            vDirection === 'top'
+              ? Math.min(
+                  node.layout.y + action.offset.y,
+                  node.layout.y + node.layout.h - style.minNodeSize.h
+                )
+              : node.layout.y,
+
+          w:
+            hDirection === 'left'
+              ? Math.max(style.minNodeSize.w, node.layout.w - action.offset.x)
+              : Math.max(style.minNodeSize.w, node.layout.w + action.offset.x),
+
+          h:
+            vDirection === 'middle'
+              ? node.layout.h
+              : vDirection === 'top'
+              ? Math.max(style.minNodeSize.h, node.layout.h - action.offset.y)
+              : Math.max(style.minNodeSize.h, node.layout.h + action.offset.y),
+        };
+        draftNodeLayout.set(id, Basic.makeRect(draftLayout));
+        reducers.updateEdgeStates(m, { nodeId: id, draft: true });
+      });
+      m.set('draftNodeLayout', draftNodeLayout.asImmutable());
+    });
   },
-  unselectPort: (draft: DraftFlow, action: {} = {}) => {
-    draft.selectedPort = undefined;
+  stopResizingNodes: (flow: FlowState, action: { cancel: boolean }): FlowState => {
+    return reducers.stopMovingNodes(flow, action);
   },
-  setTargetPort: (draft: DraftFlow, action: Omit<PortMeta, 'raw'>) => {
-    const port = draft.raw.nodes[action.nodeId][action.io][action.index];
-    draft.targetPort = {
-      nodeId: action.nodeId,
-      io: action.io,
-      index: action.index,
-      raw: port,
-    };
+  updateEdgeStates: (flow: FlowState, action: { nodeId: string; draft?: boolean }): FlowState => {
+    return flow.update('edgeStateMap', u =>
+      u.withMutations(m => {
+        flow.nodeEdgeMap.get(action.nodeId)!.forEach(edgeId => {
+          const edge = flow.raw.edges[edgeId];
+          const startNode = flow.raw.nodes[edge.start.nodeId];
+          const endNode = flow.raw.nodes[edge.end.nodeId];
+          const startPortIndex = flow.outputPortMap
+            .get(edge.start.nodeId)
+            ?.get(edge.start.portName)!;
+          const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)?.get(edge.end.portName)!;
+
+          if (action.draft) {
+            m.set(
+              edgeId,
+              makeEdgeState({
+                start: getPortDraftPosition(
+                  startNode,
+                  flow.draftNodeLayout.get(edge.start.nodeId) ?? startNode.layout,
+                  'output',
+                  startPortIndex
+                ),
+                end: getPortDraftPosition(
+                  endNode,
+                  flow.draftNodeLayout.get(edge.end.nodeId) ?? endNode.layout,
+                  'input',
+                  endPortIndex
+                ),
+              })
+            );
+          } else {
+            m.set(
+              edgeId,
+              makeEdgeState({
+                start: getPortPosition(startNode, 'output', startPortIndex),
+                end: getPortPosition(endNode, 'input', endPortIndex),
+              })
+            );
+          }
+        });
+      })
+    );
   },
-  unsetTargetPort: (draft: DraftFlow, action: {} = {}) => {
-    draft.targetPort = undefined;
+  setSelectPort: (flow: FlowState, action: Omit<IPortMeta, 'raw'>): FlowState => {
+    const port = flow.raw.nodes[action.nodeId][action.io][action.index];
+    return flow.set(
+      'selectedPort',
+      makePortMeta({
+        nodeId: action.nodeId,
+        io: action.io,
+        index: action.index,
+        raw: port,
+      })
+    );
+  },
+  unselectPort: (flow: FlowState, action: {} = {}): FlowState => {
+    return flow.set('selectedPort', undefined);
+  },
+  setTargetPort: (flow: FlowState, action: Omit<IPortMeta, 'raw'>): FlowState => {
+    const port = flow.raw.nodes[action.nodeId][action.io][action.index];
+    return flow.set(
+      'targetPort',
+      makePortMeta({
+        nodeId: action.nodeId,
+        io: action.io,
+        index: action.index,
+        raw: port,
+      })
+    );
+  },
+  unsetTargetPort: (flow: FlowState, action: {} = {}): FlowState => {
+    return flow.set('targetPort', undefined);
   },
   addEdge: (
-    draft: DraftFlow,
-    action: { startPort: PortMeta; endPort: PortMeta },
+    flow: FlowState,
+    action: { startPort: IPortMeta; endPort: IPortMeta },
     style: CanvasStyle
-  ) => {
+  ): FlowState => {
     const { startPort, endPort } = action;
 
     if (
       style.onEdgeAdded &&
-      !style.onEdgeAdded(startPort, endPort, draft.inputPortEdgeMap, draft.outputPortEdgeMap)
+      !style.onEdgeAdded(startPort, endPort, flow.inputPortEdgeMap, flow.outputPortEdgeMap)
     )
-      return;
+      return flow;
 
-    const edgeId = style.generateEdgeId(startPort, endPort, draft);
-    const startNode = draft.raw.nodes[startPort.nodeId];
-    const endNode = draft.raw.nodes[endPort.nodeId];
+    const edgeId = style.generateEdgeId(startPort, endPort, flow);
+    const startNode = flow.raw.nodes[startPort.nodeId];
+    const endNode = flow.raw.nodes[endPort.nodeId];
 
     const edge = {
       start: {
@@ -380,61 +493,77 @@ const reducers = {
       },
     };
 
-    draft.raw.edges[edgeId] = edge;
-    updateStateForEdge(draft, edgeId, edge);
-
-    draft.visibleEdgeIds.add(edgeId);
+    return flow.withMutations(m => {
+      m.raw.edges[edgeId] = edge;
+      updateStateForEdge(m, edgeId, edge);
+      m.update('visibleEdgeIds', u => u.add(edgeId));
+    });
   },
-  deleteEdge: (draft: DraftFlow, action: { id: string }) => {
+  deleteEdge: (flow: FlowState, action: { id: string }): FlowState => {
     const { id } = action;
-    const edge = draft.raw.edges[id];
+    const edge = flow.raw.edges[id];
     if (edge) {
-      removeStateForEdge(draft, id, edge);
-      delete draft.raw.edges[id];
+      return flow.withMutations(m => {
+        removeStateForEdge(m, id, edge);
+        delete m.raw.edges[id];
+      });
     }
+    return flow;
   },
-  addNode: (draft: DraftFlow, action: { id?: string; node: Node }, style: CanvasStyle) => {
+  addNode: (
+    flow: FlowState,
+    action: { id?: string; node: Node },
+    style: CanvasStyle
+  ): FlowState => {
     const { node } = action;
-    if (style.onNodeAdded && !style.onNodeAdded(node, draft)) return;
+    if (style.onNodeAdded && !style.onNodeAdded(node, flow)) return flow;
 
-    const nodeId = action.id || style.generateNodeId(node, draft);
+    const nodeId = action.id || style.generateNodeId(node, flow);
 
-    draft.raw.nodes[nodeId] = node;
-    updateStateForNode(draft, nodeId, node);
-
-    draft.visibleNodeIds.add(nodeId);
+    return flow.withMutations(m => {
+      m.raw.nodes[nodeId] = node;
+      updateStateForNode(m, nodeId, node);
+      m.update('visibleNodeIds', u => u.add(nodeId));
+    });
   },
-  deleteNode: (draft: DraftFlow, action: { id: string }) => {
+  deleteNode: (flow: FlowState, action: { id: string }): FlowState => {
     const { id } = action;
-    const node = draft.raw.nodes[id];
+    const node = flow.raw.nodes[id];
     if (node) {
-      const edgeIds = draft.nodeEdgeMap.get(id)?.keys();
-      if (edgeIds) {
-        for (let edgeId of edgeIds) {
-          reducers.deleteEdge(draft, { id: edgeId });
+      return flow.withMutations(m => {
+        const edgeIds = flow.nodeEdgeMap.get(id)?.keys();
+        if (edgeIds) {
+          for (let edgeId of edgeIds) {
+            reducers.deleteEdge(m, { id: edgeId });
+          }
         }
-      }
-      removeStateForNode(draft, id, node);
-      delete draft.raw.nodes[id];
+        removeStateForNode(m, id, node);
+        delete m.raw.nodes[id];
+      });
     }
+    return flow;
   },
-  setDraftNode: (draft: DraftFlow, action: { node: Node }, style: CanvasStyle) => {
-    reducers.addNode(draft, { id: 'draft', node: action.node }, style);
-    reducers.setSelectNodes(draft, { ids: ['draft'] });
+  setDraftNode: (flow: FlowState, action: { node: Node }, style: CanvasStyle): FlowState => {
+    return flow.withMutations(m => {
+      reducers.addNode(m, { id: 'draft', node: action.node }, style);
+      reducers.setSelectNodes(m, { ids: ['draft'] });
+    });
   },
-  unsetDraftNode: (draft: DraftFlow, action: { cancel: boolean }, style: CanvasStyle) => {
-    const draftNode = draft.raw.nodes['draft'];
+  unsetDraftNode: (flow: FlowState, action: { cancel: boolean }, style: CanvasStyle): FlowState => {
+    const draftNode = flow.raw.nodes['draft'];
     if (draftNode) {
       if (!action.cancel) {
-        const nodeId = style.generateNodeId(draftNode, draft);
-        reducers.addNode(draft, { id: nodeId, node: draftNode }, style);
-        reducers.setSelectNodes(draft, { ids: [nodeId] });
+        const nodeId = style.generateNodeId(draftNode, flow);
+        flow = flow.withMutations(m => {
+          reducers.addNode(m, { id: nodeId, node: draftNode }, style);
+          reducers.setSelectNodes(m, { ids: [nodeId] });
+        });
       }
     }
-    reducers.deleteNode(draft, { id: 'draft' });
+    return reducers.deleteNode(flow, { id: 'draft' });
   },
-  moveDraftNode: (draft: DraftFlow, action: { offset: Basic.Offset }) => {
-    reducers.moveSelectedNodes(draft, action);
+  moveDraftNode: (draft: FlowState, action: { offset: Basic.IOffset }): FlowState => {
+    return reducers.moveSelectedNodes(draft, action);
   },
 };
 
@@ -445,7 +574,8 @@ export type FlowDispatch = Dispatch<FlowAction>;
 export type FlowReducer = Reducer<FlowState, FlowAction>;
 
 export const makeFlowReducer = (style: CanvasStyle): FlowReducer => {
-  return (draft: Draft<FlowState>, action: FlowAction) => {
+  return (draft: FlowState, action: FlowAction) => {
+    console.debug(action);
     return reducers[action.type](draft, action as any, style);
   };
 };

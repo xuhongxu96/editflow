@@ -1,4 +1,4 @@
-import { Rect } from './BasicTypes';
+import { IRect } from './BasicTypes';
 
 export interface Port {
   name: string;
@@ -6,7 +6,7 @@ export interface Port {
 }
 
 export interface Node {
-  layout: Rect;
+  layout: IRect;
 
   title: string;
 

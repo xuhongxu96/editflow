@@ -1,14 +1,14 @@
-import { Rect, Point } from 'models/BasicTypes';
+import { IRect, IPoint } from 'models/BasicTypes';
 import { Node } from 'models/Flow';
 import { HandleDirection } from 'components/HandleBox';
 
 export type valueof<T> = T[keyof T];
 
-export const isIntersected = (r1: Rect, r2: Rect) => {
+export const isIntersected = (r1: IRect, r2: IRect) => {
   return r1.x <= r2.x + r2.w && r1.y <= r2.y + r2.h && r1.x + r1.w >= r2.x && r1.y + r1.h >= r2.y;
 };
 
-export const isContained = (parent: Rect, child: Rect) => {
+export const isContained = (parent: IRect, child: IRect) => {
   return (
     parent.x <= child.x &&
     parent.y <= child.y &&
@@ -17,7 +17,7 @@ export const isContained = (parent: Rect, child: Rect) => {
   );
 };
 
-export const expandRect = (r: Rect, margin: number, scale: number = 1): Rect => {
+export const expandRect = (r: IRect, margin: number, scale: number = 1): IRect => {
   return {
     x: (r.x - margin) * scale,
     y: (r.y - margin) * scale,
@@ -26,7 +26,7 @@ export const expandRect = (r: Rect, margin: number, scale: number = 1): Rect => 
   };
 };
 
-export const expandRectToContain = (r: Rect, toBeContained: Rect): Rect => {
+export const expandRectToContain = (r: IRect, toBeContained: IRect): IRect => {
   return {
     x: r.x > toBeContained.x ? toBeContained.x : r.x,
     y: r.y > toBeContained.y ? toBeContained.y : r.y,
@@ -37,7 +37,7 @@ export const expandRectToContain = (r: Rect, toBeContained: Rect): Rect => {
   };
 };
 
-export const limitRect = (r: Rect, limit: Rect) => {
+export const limitRect = (r: IRect, limit: IRect): IRect => {
   // Because limit rect has a padding, when limit right < view width,
   // it will force the view origin change to (-paddingW, -paddingH).
   // The following 2 lines make (0, 0) possible to be view origin.
@@ -53,7 +53,7 @@ export const limitRect = (r: Rect, limit: Rect) => {
   return r;
 };
 
-export const getPortPosition = (node: Node, type: 'input' | 'output', index: number): Point => {
+export const getPortPosition = (node: Node, type: 'input' | 'output', index: number): IPoint => {
   return {
     x: node.layout.x + (node.layout.w * (index + 1)) / (node[type].length + 1),
     y: type === 'input' ? node.layout.y : node.layout.y + node.layout.h,
@@ -62,10 +62,10 @@ export const getPortPosition = (node: Node, type: 'input' | 'output', index: num
 
 export const getPortDraftPosition = (
   node: Node,
-  draftLayout: Rect,
+  draftLayout: IRect,
   type: 'input' | 'output',
   index: number
-): Point => {
+): IPoint => {
   return {
     x: draftLayout.x + (draftLayout.w * (index + 1)) / (node[type].length + 1),
     y: type === 'input' ? draftLayout.y : draftLayout.y + draftLayout.h,
