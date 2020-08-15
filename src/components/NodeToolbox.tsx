@@ -80,6 +80,19 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = props => {
     )
   );
 
+  useEventListener(
+    'keydown',
+    useCallback(
+      e => {
+        // Escape will cancel the current moving or resizing and restore the previous layout
+        if (e.key === 'Escape') {
+          dispatch({ type: 'unsetDraftNode', cancel: true });
+        }
+      },
+      [dispatch]
+    )
+  );
+
   return (
     <ul className={Style.toolbox}>
       {props.nodeTemplates.map((tpl, i) => (

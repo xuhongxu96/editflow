@@ -334,7 +334,7 @@ const reducers = {
       if (!action.cancel) {
         flow.draftNodeLayout.forEach((layout, id) => {
           m.update('nodeIdQuadTree', u => u.remove(flow.raw.nodes[id].layout, id));
-          m.raw.nodes[id].layout = layout;
+          m.setIn(['raw', 'nodes', id, 'layout'], layout);
           m.update('nodeIdQuadTree', u => u.insert(layout, id));
           m.set('nodeBound', Basic.makeRect(expandRectToContain(flow.nodeBound, layout)));
           reducers.updateEdgeStates(m, { nodeId: id });
@@ -495,6 +495,7 @@ const reducers = {
 
     return flow.withMutations(m => {
       m.raw.edges[edgeId] = edge;
+      m.setIn(['raw', 'edges', edgeId], edge);
       updateStateForEdge(m, edgeId, edge);
       m.update('visibleEdgeIds', u => u.add(edgeId));
     });
@@ -505,7 +506,7 @@ const reducers = {
     if (edge) {
       return flow.withMutations(m => {
         removeStateForEdge(m, id, edge);
-        delete m.raw.edges[id];
+        m.deleteIn(['raw', 'edges', id]);
       });
     }
     return flow;
@@ -521,7 +522,7 @@ const reducers = {
     const nodeId = action.id || style.generateNodeId(node, flow);
 
     return flow.withMutations(m => {
-      m.raw.nodes[nodeId] = node;
+      m.setIn(['raw', 'nodes', nodeId], node);
       updateStateForNode(m, nodeId, node);
       m.update('visibleNodeIds', u => u.add(nodeId));
     });
@@ -538,7 +539,7 @@ const reducers = {
           }
         }
         removeStateForNode(m, id, node);
-        delete m.raw.nodes[id];
+        m.deleteIn(['raw', 'node', id]);
       });
     }
     return flow;
