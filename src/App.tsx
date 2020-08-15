@@ -14,8 +14,8 @@ const Space = 10;
 const RowSize = 5;
 const OffsetX = 0;
 const OffsetY = 0;
-const NodeCount = 100000;
-const EdgeCount = 100;
+const NodeCount = 100;
+const EdgeCount = 10;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({
@@ -123,7 +123,15 @@ const App: React.FC = () => {
                 ' '
               ),
             [flowState.selectedEdgeIds, flowState.raw.edges]
-          )
+          ) +
+          '\n\nUndo:\n' +
+          useMemo(() => JSON.stringify(flowState.undoStack.toJS(), null, ' '), [
+            flowState.undoStack,
+          ]) +
+          '\n\nRedo:\n' +
+          useMemo(() => JSON.stringify(flowState.redoStack.toJS(), null, ' '), [
+            flowState.redoStack,
+          ])
         }
       />
     </div>

@@ -86,6 +86,7 @@ export const NodeToolbox: React.FC<NodeToolboxProps> = props => {
       e => {
         // Escape will cancel the current moving or resizing and restore the previous layout
         if (e.key === 'Escape') {
+          setSelectedIndex(undefined);
           dispatch({ type: 'unsetDraftNode', cancel: true });
         }
       },

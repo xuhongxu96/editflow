@@ -24,8 +24,7 @@ export const useMovableNode = () => {
   useEventListener(
     'mouseup',
     useCallback(() => {
-      stopMovingNode(false);
-      dispatch({ type: 'stopMovingNodes', cancel: false });
+      if (stopMovingNode(false)) dispatch({ type: 'stopMovingNodes', cancel: false });
     }, [stopMovingNode, dispatch])
   );
 
@@ -35,8 +34,7 @@ export const useMovableNode = () => {
       e => {
         // Escape will cancel the current moving or resizing and restore the previous layout
         if (e.key === 'Escape') {
-          stopMovingNode(true);
-          dispatch({ type: 'stopMovingNodes', cancel: true });
+          if (stopMovingNode(true)) dispatch({ type: 'stopMovingNodes', cancel: true });
         }
       },
       [stopMovingNode, dispatch]

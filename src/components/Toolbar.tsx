@@ -13,6 +13,8 @@ export const Toolbar: React.FC<React.PropsWithChildren<{}>> = props => {
       </button>
       <button onClick={() => dispatch({ type: 'setScale', scale: 1 })}>x1</button>
       <button onClick={() => dispatch({ type: 'setScale', scale: 2 })}>x2</button>
+      <button onClick={() => dispatch({ type: 'undo' })}>undo</button>
+      <button onClick={() => dispatch({ type: 'redo' })}>redo</button>
       <button
         onClick={() => {
           flowState.selectedEdgeIds.forEach(edgeId => dispatch({ type: 'deleteEdge', id: edgeId }));

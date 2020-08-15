@@ -9,7 +9,7 @@ export interface LimitRect {
 }
 
 export type StartMovingFunction = (e: React.MouseEvent | MouseEvent, limit?: LimitRect) => void;
-export type StopMovingFunction = (cancel: boolean) => void;
+export type StopMovingFunction = (cancel: boolean) => boolean;
 export type MovingEventListener = (e: React.MouseEvent | MouseEvent) => boolean;
 
 export function useMoving(
@@ -26,10 +26,15 @@ export function useMoving(
 
   const stopMoving = useCallback<StopMovingFunction>(
     cancel => {
-      if (cancel) callback(makePoint({ x: 0, y: 0 }));
-      setInitPos(undefined);
+      if (initPos) {
+        if (cancel) callback(makePoint({ x: 0, y: 0 }));
+        setInitPos(undefined);
+        return true;
+      } else {
+        return false;
+      }
     },
-    [callback]
+    [initPos, callback]
   );
 
   const onMoving = useCallback<MovingEventListener>(

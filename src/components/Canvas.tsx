@@ -90,7 +90,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
       onClick: onNodeClick,
       onMouseEnter: onNodeMouseEnter,
       onPortMouseEnter,
-      portEnableCallback: visibleNodes.length > 100 ? undefined : portEnableCallback,
+      portEnableCallback: visibleNodes.length > 50 ? undefined : portEnableCallback,
     }),
     [
       onNodeMouseDown,

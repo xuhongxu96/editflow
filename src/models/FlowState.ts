@@ -2,6 +2,7 @@ import { Flow, Port } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, IPoint, makeRect } from 'models/BasicTypes';
 import { Map, Set, List, Record, RecordOf } from 'immutable';
+import { UndoAction, FlowAction } from 'reducers/FlowReducer';
 
 type NodeId = string;
 type EdgeId = string;
@@ -67,6 +68,9 @@ export interface IFlowState {
 
   selectedPort?: PortMeta;
   targetPort?: PortMeta;
+
+  undoStack: List<UndoAction>;
+  redoStack: List<FlowAction>;
 }
 
 export type FlowState = RecordOf<IFlowState>;
@@ -99,4 +103,6 @@ export const makeFlowState = Record<IFlowState>({
   selectedEdgeIds: Set(),
   selectedPort: undefined,
   targetPort: undefined,
+  undoStack: List(),
+  redoStack: List(),
 });

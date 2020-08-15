@@ -3,6 +3,7 @@ import { IPortMeta, NodePortEdgeMap, FlowState } from 'models/FlowState';
 import { Node } from 'models/Flow';
 
 export interface CanvasStyle {
+  undoStackSize: number;
   margin: number;
   defaultNodeSize: ISize;
   minNodeSize: ISize;
@@ -18,6 +19,7 @@ export interface CanvasStyle {
 }
 
 export const DefaultCanvasStyle: CanvasStyle = {
+  undoStackSize: 10,
   margin: 32,
   defaultNodeSize: {
     w: 120,
