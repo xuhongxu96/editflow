@@ -28,42 +28,6 @@ It will blur the unselected nodes and let you focus on the selected ones.
 
 ---
 
-## TODO
-
-- Node
-   - [ ] Creatable by dragging in
-   - [x] Selectable (multiple)
-   - [x] Movable
-   - [x] Re-sizable
-   - [ ] Context Menu
-   - [ ] Customizable (Custom Decorations)
-- Port
-   - [ ] Dynamic Add/Remove/Edit
-   - [x] Tooltip
-   - [ ] Context Menu
-- Edge
-   - [x] Creatable by dragging from an unconnected output port
-   - [ ] Re-connectable by dragging from a connected input port
-   - [ ] Label
-   - [ ] Context Menu
-   - [ ] Customizable 
-     - [ ] Line / Curve
-- Canvas
-   - [ ] Scalable? (Zoom In, Zoom Out)
-      - [ ] Fit width
-      - [ ] Fit to view
-      - [x] Scale by a factor
-   - [ ] Translatable
-      - [ ] Move to center
-      - [x] Restore to (0, 0)
-   - [ ] Alignment
-      - [ ] Reference lines
-   - [ ] Box Selection
-   - [ ] Context Menu
-   - [ ] Auto Layout
-   - [ ] Thumbnail
-   - [x] Lazy loading
-
 ## Open-Source Alternatives
 
 - [alibaba/GGEditor](https://github.com/alibaba/GGEditor)
