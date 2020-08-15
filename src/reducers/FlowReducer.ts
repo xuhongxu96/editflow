@@ -602,13 +602,17 @@ const reducers = {
     reducers.stopMovingNodes(flow, action);
     const draftNode = flow.raw.nodes['draft'];
     if (draftNode) {
-      if (!action.cancel) {
-        const nodeId = style.generateNodeId(draftNode, flow);
-        reducers.addNode(flow, { id: nodeId, node: draftNode }, style);
-        reducers.setSelectNodes(flow, { ids: [nodeId] });
+      if (action.cancel) {
+        reducers.deleteNode(flow, { id: 'draft' });
+        return;
       }
+
+      const nodeId = style.generateNodeId(draftNode, flow);
+      const undo = reducers.addNode(flow, { id: nodeId, node: draftNode }, style);
+      reducers.setSelectNodes(flow, { ids: [nodeId] });
+      reducers.deleteNode(flow, { id: 'draft' });
+      return undo;
     }
-    reducers.deleteNode(flow, { id: 'draft' });
   },
   moveDraftNode: (flow: FlowState, action: { offset: Basic.IOffset }): ReducerReturnType => {
     reducers.moveSelectedNodes(flow, action);
