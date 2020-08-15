@@ -4,7 +4,6 @@ import { useClientRect } from 'hooks/useClientRect';
 import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { Edge, EdgeProps, DraftEdge } from './Edge';
 import * as FlowHooks from 'hooks/flow';
-import { useEventListener } from 'hooks';
 import { CanvasStyleContext } from 'contexts/CanvasStyleContext';
 
 export interface CanvasProps {
@@ -141,19 +140,8 @@ export const Canvas: React.FC<CanvasProps> = props => {
     ]
   );
 
-  useEventListener(
-    'keydown',
-    useCallback(
-      e => {
-        const key = e.key;
-        if (key === 'Backspace' || key === 'Delete') {
-          flow.selectedEdgeIds.forEach(edgeId => dispatch({ type: 'deleteEdge', id: edgeId }));
-          flow.selectedNodeIds.forEach(nodeId => dispatch({ type: 'deleteNode', id: nodeId }));
-        }
-      },
-      [dispatch, flow]
-    )
-  );
+  FlowHooks.useDeletableNode();
+  FlowHooks.useDeletableEdge();
 
   const blurCanvas =
     (flow.selectedNodeIds.size > 0 || flow.selectedEdgeIds.size > 0) && draftEdge === undefined;
