@@ -125,7 +125,7 @@ function removeStateForEdge(flow: FlowState, id: string, edge: Edge) {
 
 export interface UndoAction {
   action: FlowAction;
-  undoFn: (flow: FlowState) => void;
+  undoFn: (flow: FlowState, style: CanvasStyle) => void;
 }
 type ReducerReturnType = UndoAction | void | null | undefined;
 
@@ -479,7 +479,7 @@ const reducers = {
   },
   addEdge: (
     flow: FlowState,
-    action: { startPort: IPortMeta; endPort: IPortMeta },
+    action: { startPort: IPortMeta; endPort: IPortMeta; id?: string },
     style: CanvasStyle
   ): ReducerReturnType => {
     const { startPort, endPort } = action;
@@ -490,7 +490,7 @@ const reducers = {
     )
       return;
 
-    const edgeId = style.generateEdgeId(startPort, endPort, flow);
+    const edgeId = action.id ?? style.generateEdgeId(startPort, endPort, flow);
     const startNode = flow.raw.nodes[startPort.nodeId];
     const endNode = flow.raw.nodes[endPort.nodeId];
 
@@ -509,13 +509,42 @@ const reducers = {
     flow.setIn(['raw', 'edges', edgeId], edge);
     updateStateForEdge(flow, edgeId, edge);
     flow.update('visibleEdgeIds', u => u.add(edgeId));
+
+    return {
+      action: { type: 'addEdge', ...action, id: edgeId },
+      undoFn: undoFlow => {
+        reducers.deleteEdge(undoFlow, { id: edgeId });
+      },
+    };
   },
   deleteEdge: (flow: FlowState, action: { id: string }): ReducerReturnType => {
     const { id } = action;
     const edge = flow.raw.edges[id];
     if (edge) {
+      const startPortIndex = flow.outputPortMap.get(edge.start.nodeId)!.get(edge.start.portName)!;
+      const startPort: IPortMeta = {
+        nodeId: edge.start.nodeId,
+        io: 'output',
+        index: startPortIndex,
+        raw: flow.raw.nodes[edge.start.nodeId].output[startPortIndex],
+      };
+      const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)!.get(edge.end.portName)!;
+      const endPort: IPortMeta = {
+        nodeId: edge.end.nodeId,
+        io: 'input',
+        index: endPortIndex,
+        raw: flow.raw.nodes[edge.end.nodeId].input[endPortIndex],
+      };
+
       removeStateForEdge(flow, id, edge);
       flow.deleteIn(['raw', 'edges', id]);
+
+      return {
+        action: { type: 'deleteEdge', ...action },
+        undoFn: (undoFlow, style) => {
+          reducers.addEdge(undoFlow, { id, startPort, endPort }, style);
+        },
+      };
     }
   },
   addNode: (
@@ -531,19 +560,30 @@ const reducers = {
     flow.setIn(['raw', 'nodes', nodeId], node);
     updateStateForNode(flow, nodeId, node);
     flow.update('visibleNodeIds', u => u.add(nodeId));
+
+    return {
+      action: { type: 'addNode', ...action, id: nodeId },
+      undoFn: (undoFlow, style) => {
+        reducers.deleteNode(undoFlow, { id: nodeId });
+      },
+    };
   },
   deleteNode: (flow: FlowState, action: { id: string }): ReducerReturnType => {
     const { id } = action;
     const node = flow.raw.nodes[id];
     if (node) {
-      const edgeIds = flow.nodeEdgeMap.get(id)?.keys();
-      if (edgeIds) {
-        for (let edgeId of edgeIds) {
-          reducers.deleteEdge(flow, { id: edgeId });
-        }
-      }
+      const edgeIds = Array.from(flow.nodeEdgeMap.get(id)!.keys());
+      const undoDeleteEdges = edgeIds.map(edgeId => reducers.deleteEdge(flow, { id: edgeId }));
       removeStateForNode(flow, id, node);
       flow.deleteIn(['raw', 'node', id]);
+
+      return {
+        action: { type: 'deleteNode', ...action },
+        undoFn: (undoFlow, style) => {
+          reducers.addNode(undoFlow, { id, node }, style);
+          undoDeleteEdges.forEach(o => o && o.undoFn(undoFlow, style));
+        },
+      };
     }
   },
   setDraftNode: (
@@ -573,12 +613,12 @@ const reducers = {
   moveDraftNode: (flow: FlowState, action: { offset: Basic.IOffset }): ReducerReturnType => {
     reducers.moveSelectedNodes(flow, action);
   },
-  undo: (flow: FlowState, action: {}): ReducerReturnType => {
+  undo: (flow: FlowState, action: {}, style: CanvasStyle): ReducerReturnType => {
     const undoAction = flow.undoStack.last(null);
     if (undoAction) {
       flow.update('undoStack', u => u.pop());
       flow.update('redoStack', u => u.push(undoAction.action));
-      undoAction.undoFn(flow);
+      undoAction.undoFn(flow, style);
     }
   },
   redo: (flow: FlowState, action: {}, style: CanvasStyle): ReducerReturnType => {

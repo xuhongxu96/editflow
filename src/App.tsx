@@ -40,19 +40,7 @@ const genFlow = (): Flow => {
       };
       return o;
     }, {} as NodeMap),
-    edges: Array.from(Array(EdgeCount).keys()).reduce((o, i) => {
-      o[`edge-${i}`] = {
-        start: {
-          nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
-          portName: `Out ${Math.trunc(Math.random() * 2)}`,
-        },
-        end: {
-          nodeId: `node-${Math.trunc(Math.random() * NodeCount)}`,
-          portName: `In ${Math.trunc(Math.random() * 2)}`,
-        },
-      };
-      return o;
-    }, {} as EdgeMap),
+    edges: {},
   };
 };
 
