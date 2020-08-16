@@ -15,7 +15,6 @@ const RowSize = 5;
 const OffsetX = 0;
 const OffsetY = 0;
 const NodeCount = 100;
-const EdgeCount = 10;
 
 const generatePorts = (namePrefix: string, n: number) => {
   return Array.from(Array(n).keys()).map((_, i) => ({

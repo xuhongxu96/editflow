@@ -1,3 +1,4 @@
+export * from './useTranslatableCanvas';
 export * from './useFlowState';
 export * from './useUpdateViewOffsetByDelta';
 export * from './useNodes';

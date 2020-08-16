@@ -127,16 +127,20 @@ export const Canvas: React.FC<CanvasProps> = props => {
     [onEdgeMouseDown]
   );
 
+  const { startTranslate, onTranslate } = FlowHooks.useTranslatableCanvas();
+
   const onCanvasMouseMove = useCallback(
     (e: React.MouseEvent) => {
       onCanvasMouseMoveForResizableNode(e);
       onCanvasMouseMoveForMovableNode(e);
       onCanvasMouseMoveForEditableEdge(e);
+      onTranslate(e);
     },
     [
       onCanvasMouseMoveForMovableNode,
       onCanvasMouseMoveForResizableNode,
       onCanvasMouseMoveForEditableEdge,
+      onTranslate,
     ]
   );
 
@@ -154,6 +158,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
       height={props.height}
       onWheel={e => updateViewOffsetByDelta(e)}
       onMouseMove={onCanvasMouseMove}
+      onMouseDown={startTranslate}
     >
       <defs>
         <filter id="blur0" x="-50%" y="-50%" width="200%" height="200%">
