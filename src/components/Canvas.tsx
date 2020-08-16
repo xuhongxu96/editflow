@@ -128,6 +128,18 @@ export const Canvas: React.FC<CanvasProps> = props => {
   );
 
   const { startTranslate, onTranslate } = FlowHooks.useTranslatableCanvas();
+  const { startSelection, onSelection, selection: boxSelection } = FlowHooks.useBoxSelection();
+
+  const onCanvasMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.ctrlKey) {
+        startSelection(e);
+      } else {
+        startTranslate(e);
+      }
+    },
+    [startTranslate, startSelection]
+  );
 
   const onCanvasMouseMove = useCallback(
     (e: React.MouseEvent) => {
@@ -135,12 +147,14 @@ export const Canvas: React.FC<CanvasProps> = props => {
       onCanvasMouseMoveForMovableNode(e);
       onCanvasMouseMoveForEditableEdge(e);
       onTranslate(e);
+      onSelection(e);
     },
     [
       onCanvasMouseMoveForMovableNode,
       onCanvasMouseMoveForResizableNode,
       onCanvasMouseMoveForEditableEdge,
       onTranslate,
+      onSelection,
     ]
   );
 
@@ -158,7 +172,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
       height={props.height}
       onWheel={e => updateViewOffsetByDelta(e)}
       onMouseMove={onCanvasMouseMove}
-      onMouseDown={startTranslate}
+      onMouseDown={onCanvasMouseDown}
     >
       <defs>
         <filter id="blur0" x="-50%" y="-50%" width="200%" height="200%">
@@ -300,6 +314,17 @@ export const Canvas: React.FC<CanvasProps> = props => {
         )}
 
         <DraftEdge edge={draftEdge?.edge} connected={draftEdge?.connected} />
+
+        {boxSelection && (
+          <rect
+            x={boxSelection.x}
+            y={boxSelection.y}
+            width={boxSelection.w}
+            height={boxSelection.h}
+            color="#000000"
+            opacity="0.2"
+          />
+        )}
       </g>
     </svg>
   );

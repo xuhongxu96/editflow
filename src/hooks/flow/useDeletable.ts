@@ -12,7 +12,7 @@ export const useDeletableNode = () => {
       e => {
         const key = e.key;
         if (key === 'Backspace' || key === 'Delete') {
-          selectedNodeIds.forEach(nodeId => dispatch({ type: 'deleteNode', id: nodeId }));
+          dispatch({ type: 'deleteNodes', ids: Array.from(selectedNodeIds) });
         }
       },
       [dispatch, selectedNodeIds]
@@ -30,7 +30,7 @@ export const useDeletableEdge = () => {
       e => {
         const key = e.key;
         if (key === 'Backspace' || key === 'Delete') {
-          selectedEdgeIds.forEach(edgeId => dispatch({ type: 'deleteEdge', id: edgeId }));
+          dispatch({ type: 'deleteEdges', ids: Array.from(selectedEdgeIds) });
         }
       },
       [dispatch, selectedEdgeIds]

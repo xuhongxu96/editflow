@@ -15,7 +15,7 @@ export const useEditableEdge = (clientRect: Rect) => {
 
   const [startMoving, stopMoving, onCanvasMouseMove] = useMoving(
     useCallback(
-      (offset, e) => {
+      (_offset, _initPos, e) => {
         if (selectedPort && e) {
           setDraftEdge({
             edge: makeEdgeState({

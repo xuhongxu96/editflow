@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { IOffset, Point, makePoint } from 'models/BasicTypes';
+import { IOffset, IPoint } from 'models/BasicTypes';
 
 export interface LimitRect {
   left?: number;
@@ -13,13 +13,13 @@ export type StopMovingFunction = (cancel: boolean) => boolean;
 export type MovingEventListener = (e: React.MouseEvent | MouseEvent) => boolean;
 
 export function useMoving(
-  callback: (offset: IOffset, e?: React.MouseEvent | MouseEvent) => void
+  callback: (offset: IOffset, initPos: IPoint, e?: React.MouseEvent | MouseEvent) => void
 ): [StartMovingFunction, StopMovingFunction, MovingEventListener] {
-  const [initPos, setInitPos] = useState<Point>();
+  const [initPos, setInitPos] = useState<IPoint>();
   const [limit, setLimit] = useState<LimitRect>();
 
   const startMoving = useCallback<StartMovingFunction>((e, limit) => {
-    const initPos = makePoint({ x: e.pageX, y: e.pageY });
+    const initPos = { x: e.pageX, y: e.pageY };
     setInitPos(initPos);
     setLimit(limit);
   }, []);
@@ -27,7 +27,7 @@ export function useMoving(
   const stopMoving = useCallback<StopMovingFunction>(
     cancel => {
       if (initPos) {
-        if (cancel) callback(makePoint({ x: 0, y: 0 }));
+        if (cancel) callback({ x: 0, y: 0 }, { ...initPos });
         setInitPos(undefined);
         return true;
       } else {
@@ -49,7 +49,7 @@ export function useMoving(
           if (limit.bottom !== undefined && offset.y > limit.bottom) offset.y = limit.bottom;
         }
 
-        callback(offset, e);
+        callback(offset, { ...initPos }, e);
         return true;
       }
       return false;

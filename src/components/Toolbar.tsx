@@ -17,8 +17,8 @@ export const Toolbar: React.FC<React.PropsWithChildren<{}>> = props => {
       <button onClick={() => dispatch({ type: 'redo' })}>redo</button>
       <button
         onClick={() => {
-          flowState.selectedEdgeIds.forEach(edgeId => dispatch({ type: 'deleteEdge', id: edgeId }));
-          flowState.selectedNodeIds.forEach(nodeId => dispatch({ type: 'deleteNode', id: nodeId }));
+          dispatch({ type: 'deleteEdges', ids: Array.from(flowState.selectedEdgeIds) });
+          dispatch({ type: 'deleteNodes', ids: Array.from(flowState.selectedNodeIds) });
         }}
       >
         Delete

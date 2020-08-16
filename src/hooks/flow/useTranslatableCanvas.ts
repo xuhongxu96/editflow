@@ -5,7 +5,7 @@ import { IOffset } from 'models/BasicTypes';
 import { useEventListener } from 'hooks/useEventListener';
 
 export const useTranslatableCanvas = () => {
-  const { viewBound } = useFlowContext();
+  const { viewBound, scale } = useFlowContext();
   const dispatch = useFlowDispatchContext();
   const [initViewBound, setInitViewBound] = useState<IOffset>();
 
@@ -16,12 +16,12 @@ export const useTranslatableCanvas = () => {
           dispatch({
             type: 'setViewOffset',
             offset: {
-              x: initViewBound.x - offset.x,
-              y: initViewBound.y - offset.y,
+              x: initViewBound.x - offset.x / scale,
+              y: initViewBound.y - offset.y / scale,
             },
           });
       },
-      [dispatch, initViewBound]
+      [dispatch, scale, initViewBound]
     )
   );
 

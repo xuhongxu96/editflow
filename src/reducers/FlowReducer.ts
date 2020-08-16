@@ -513,36 +513,44 @@ const reducers = {
     return {
       action: { type: 'addEdge', ...action, id: edgeId },
       undoFn: undoFlow => {
-        reducers.deleteEdge(undoFlow, { id: edgeId });
+        reducers.deleteEdges(undoFlow, { ids: [edgeId] });
       },
     };
   },
-  deleteEdge: (flow: FlowState, action: { id: string }): ReducerReturnType => {
-    const { id } = action;
-    const edge = flow.raw.edges[id];
-    if (edge) {
-      const startPortIndex = flow.outputPortMap.get(edge.start.nodeId)!.get(edge.start.portName)!;
-      const startPort: IPortMeta = {
-        nodeId: edge.start.nodeId,
-        io: 'output',
-        index: startPortIndex,
-        raw: flow.raw.nodes[edge.start.nodeId].output[startPortIndex],
-      };
-      const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)!.get(edge.end.portName)!;
-      const endPort: IPortMeta = {
-        nodeId: edge.end.nodeId,
-        io: 'input',
-        index: endPortIndex,
-        raw: flow.raw.nodes[edge.end.nodeId].input[endPortIndex],
-      };
+  deleteEdges: (flow: FlowState, action: { ids: string[] }): ReducerReturnType => {
+    const idEdges = action.ids
+      .map(id => [id, flow.raw.edges[id]] as [string, Edge])
+      .filter(([id, edge]) => edge !== undefined);
 
-      removeStateForEdge(flow, id, edge);
-      flow.deleteIn(['raw', 'edges', id]);
+    if (idEdges.length > 0) {
+      const undoInfo = idEdges.map(([id, edge]) => {
+        const startPortIndex = flow.outputPortMap.get(edge.start.nodeId)!.get(edge.start.portName)!;
+        const startPort: IPortMeta = {
+          nodeId: edge.start.nodeId,
+          io: 'output',
+          index: startPortIndex,
+          raw: flow.raw.nodes[edge.start.nodeId].output[startPortIndex],
+        };
+        const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)!.get(edge.end.portName)!;
+        const endPort: IPortMeta = {
+          nodeId: edge.end.nodeId,
+          io: 'input',
+          index: endPortIndex,
+          raw: flow.raw.nodes[edge.end.nodeId].input[endPortIndex],
+        };
+
+        removeStateForEdge(flow, id, edge);
+        flow.deleteIn(['raw', 'edges', id]);
+
+        return { id, startPort, endPort };
+      });
 
       return {
-        action: { type: 'deleteEdge', ...action },
+        action: { type: 'deleteEdges', ...action },
         undoFn: (undoFlow, style) => {
-          reducers.addEdge(undoFlow, { id, startPort, endPort }, style);
+          undoInfo.forEach(o => {
+            reducers.addEdge(undoFlow, o, style);
+          });
         },
       };
     }
@@ -564,23 +572,33 @@ const reducers = {
     return {
       action: { type: 'addNode', ...action, id: nodeId },
       undoFn: (undoFlow, style) => {
-        reducers.deleteNode(undoFlow, { id: nodeId });
+        reducers.deleteNodes(undoFlow, { ids: [nodeId] });
       },
     };
   },
-  deleteNode: (flow: FlowState, action: { id: string }): ReducerReturnType => {
-    const { id } = action;
-    const node = flow.raw.nodes[id];
-    if (node) {
-      const edgeIds = Array.from(flow.nodeEdgeMap.get(id)!.keys());
-      const undoDeleteEdges = edgeIds.map(edgeId => reducers.deleteEdge(flow, { id: edgeId }));
-      removeStateForNode(flow, id, node);
-      flow.deleteIn(['raw', 'node', id]);
+  deleteNodes: (flow: FlowState, action: { ids: string[] }): ReducerReturnType => {
+    const idNodes = action.ids
+      .map(id => [id, flow.raw.nodes[id]] as [string, Node])
+      .filter(([id, node]) => node !== undefined);
+
+    if (idNodes.length > 0) {
+      const undoDeleteEdges: ReducerReturnType[] = [];
+
+      idNodes.forEach(([id, node]) => {
+        const edgeIds = Array.from(flow.nodeEdgeMap.get(id)!.keys());
+        undoDeleteEdges.push(
+          ...edgeIds.map(edgeId => reducers.deleteEdges(flow, { ids: [edgeId] }))
+        );
+        removeStateForNode(flow, id, node);
+        flow.deleteIn(['raw', 'node', id]);
+      });
 
       return {
-        action: { type: 'deleteNode', ...action },
+        action: { type: 'deleteNodes', ...action },
         undoFn: (undoFlow, style) => {
-          reducers.addNode(undoFlow, { id, node }, style);
+          idNodes.forEach(([id, node]) => {
+            reducers.addNode(undoFlow, { id, node }, style);
+          });
           undoDeleteEdges.forEach(o => o && o.undoFn(undoFlow, style));
         },
       };
@@ -603,14 +621,14 @@ const reducers = {
     const draftNode = flow.raw.nodes['draft'];
     if (draftNode) {
       if (action.cancel) {
-        reducers.deleteNode(flow, { id: 'draft' });
+        reducers.deleteNodes(flow, { ids: ['draft'] });
         return;
       }
 
       const nodeId = style.generateNodeId(draftNode, flow);
       const undo = reducers.addNode(flow, { id: nodeId, node: draftNode }, style);
       reducers.setSelectNodes(flow, { ids: [nodeId] });
-      reducers.deleteNode(flow, { id: 'draft' });
+      reducers.deleteNodes(flow, { ids: ['draft'] });
       return undo;
     }
   },
