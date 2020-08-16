@@ -341,11 +341,12 @@ const reducers = {
     action.layouts.forEach(o => {
       const [id, layout] = o;
       flow.update('nodeIdQuadTree', u => u.remove(flow.raw.nodes[id].layout, id));
-      flow.setIn(['raw', 'nodes', id, 'layout'], layout);
+      flow.raw.nodes[id].layout = layout;
       flow.update('nodeIdQuadTree', u => u.insert(layout, id));
       flow.set('nodeBound', Basic.makeRect(expandRectToContain(flow.nodeBound, layout)));
       reducers.updateEdgeStates(flow, { nodeId: id });
     });
+    flow.setIn(['raw', 'nodes'], Object.assign({}, flow.raw.nodes));
 
     return {
       action: { type: 'setNodeLayout', ...action },
@@ -505,7 +506,6 @@ const reducers = {
       },
     };
 
-    flow.raw.edges[edgeId] = edge;
     flow.setIn(['raw', 'edges', edgeId], edge);
     updateStateForEdge(flow, edgeId, edge);
     flow.update('visibleEdgeIds', u => u.add(edgeId));
