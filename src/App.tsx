@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Canvas } from 'components/Canvas';
-import { Flow, NodeMap, EdgeMap, Node } from 'models/Flow';
+import { Flow, NodeMap, Node } from 'models/Flow';
 import { FlowProvider } from 'contexts/FlowContext';
 import { Toolbar } from 'components/Toolbar';
 import { CanvasStyleProvider } from 'contexts/CanvasStyleContext';

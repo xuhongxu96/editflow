@@ -173,7 +173,7 @@ const reducers = {
       'viewBound',
       Basic.makeRect(
         limitRect(
-          { w: flow.viewBound.w, h: flow.viewBound.h, ...action.offset },
+          { ...action.offset, w: flow.viewBound.w, h: flow.viewBound.h },
           expandRect(flow.nodeBound, style.margin, flow.scale)
         )
       )

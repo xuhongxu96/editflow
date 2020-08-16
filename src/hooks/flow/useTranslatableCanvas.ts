@@ -28,12 +28,29 @@ export const useTranslatableCanvas = () => {
   const startTranslate = useCallback(
     e => {
       _startTranslate(e);
-      setInitViewBound(viewBound);
+      setInitViewBound(viewBound.toJS());
     },
     [_startTranslate, viewBound]
   );
 
   useEventListener('mouseup', e => stopTranslate(false));
+
+  useEventListener(
+    'keydown',
+    useCallback(
+      e => {
+        // Escape will cancel the current moving or resizing and restore the previous layout
+        if (e.key === 'Escape' && initViewBound) {
+          stopTranslate(true);
+          dispatch({
+            type: 'setViewOffset',
+            offset: initViewBound,
+          });
+        }
+      },
+      [stopTranslate, initViewBound, dispatch]
+    )
+  );
 
   return { startTranslate, stopTranslate, onTranslate };
 };
