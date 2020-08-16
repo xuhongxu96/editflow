@@ -6,8 +6,8 @@ test('expand', () => {
   expect(tree.root.bound).toStrictEqual({ x: 0, y: 0, w: 40, h: 40 });
 });
 
-test('get covered data (resolution = default/60)', () => {
-  const tree = new QuadTree<number>(10, 10);
+test('get covered data (resolution = 60)', () => {
+  const tree = new QuadTree<number>(10, 10, 60);
   tree.insert({ x: 1, y: 1, w: 20, h: 20 }, 0);
   tree.insert({ x: 10, y: 10, w: 10, h: 10 }, 1);
 
