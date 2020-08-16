@@ -160,6 +160,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
 
   FlowHooks.useDeletableNode();
   FlowHooks.useDeletableEdge();
+  FlowHooks.useUndo();
 
   const blurCanvas =
     (flow.selectedNodeIds.size > 0 || flow.selectedEdgeIds.size > 0) && draftEdge === undefined;
