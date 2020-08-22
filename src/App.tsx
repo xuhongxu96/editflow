@@ -76,7 +76,7 @@ const App: React.FC = () => {
                 setFlow(genFlow());
               }}
             >
-              change
+              Re-generate Flow
             </button>
           </Toolbar>
         </CanvasStyleProvider>

@@ -84,3 +84,23 @@ export const DecomposeHandleDirection = (
       : 'top';
   return [h, v];
 };
+
+function isClipboardApiSupport(): boolean {
+  return navigator?.clipboard?.writeText && navigator.clipboard.readText ? true : false;
+}
+
+export function copyText(text: string): Promise<void> {
+  if (isClipboardApiSupport()) return navigator.clipboard.writeText(text);
+  return new Promise<void>(resolve => {
+    localStorage.setItem('editflow.copy', text);
+    resolve();
+  });
+}
+
+export function pasteText(): Promise<string> {
+  if (isClipboardApiSupport()) return navigator.clipboard.readText();
+  return new Promise<string>(resolve => {
+    const text = localStorage.getItem('editflow.copy');
+    resolve(text === null ? '' : text);
+  });
+}

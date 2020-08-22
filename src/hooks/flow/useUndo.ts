@@ -1,7 +1,7 @@
 import { useFlowDispatchContext } from 'contexts/FlowContext';
 import { useEventListener } from 'hooks/useEventListener';
 
-export const useUndo = () => {
+export const useUndoShortcut = () => {
   const dispatch = useFlowDispatchContext();
 
   useEventListener('keydown', e => {

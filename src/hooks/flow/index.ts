@@ -1,5 +1,6 @@
 export * from './useTranslatableCanvas';
 export * from './useUndo';
+export * from './useCopyNodes';
 export * from './useBoxSelection';
 export * from './useFlowState';
 export * from './useUpdateViewOffsetByDelta';
