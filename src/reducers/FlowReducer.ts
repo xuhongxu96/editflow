@@ -124,8 +124,8 @@ function removeStateForEdge(flow: FlowState, id: string, edge: Edge) {
 }
 
 export interface CopyInfo {
-  nodes: Map<string, { node: Node; id: string }>;
-  edges: Set<{ start: IPortMeta; end: IPortMeta }>;
+  nodes: { node: Node; id: string }[];
+  edges: { start: IPortMeta; end: IPortMeta }[];
 }
 export interface UndoAction {
   action: FlowAction;
@@ -697,32 +697,39 @@ const reducers = {
             nodeId: nodes.get(edge.end.nodeId)!.id,
             io: 'input',
             index: endPortIndex,
-            raw: flow.raw.nodes[edge.end.nodeId]!.output[endPortIndex],
+            raw: flow.raw.nodes[edge.end.nodeId]!.input[endPortIndex],
           } as IPortMeta,
         };
       });
 
-    action.onCopy({ nodes, edges });
+    action.onCopy({ nodes: Array.from(nodes.values()), edges: Array.from(edges.values()) });
   },
   pasteNodes: (
     flow: FlowState,
-    action: { info: CopyInfo },
+    action: { info: CopyInfo; idMapFn?: (id: string) => string },
     style: CanvasStyle
   ): ReducerReturnType => {
     const idMap = Map<string, string>().asMutable();
     const nodeUndos = Array.from(action.info.nodes.values()).map(o => {
-      const id = style.generateNodeId(o.node, flow);
+      const id = action.idMapFn ? action.idMapFn(o.id) : style.generateNodeId(o.node, flow);
       idMap.set(o.id, id);
       return reducers.addNode(flow, { node: o.node, id }, style);
     });
     const edgeUndos = action.info.edges.map(edge => {
-      edge.start.nodeId = idMap.get(edge.start.nodeId)!;
-      edge.end.nodeId = idMap.get(edge.end.nodeId)!;
-      return reducers.addEdge(flow, { startPort: edge.start, endPort: edge.end }, style);
+      return reducers.addEdge(
+        flow,
+        {
+          startPort: { ...edge.start, nodeId: idMap.get(edge.start.nodeId)! },
+          endPort: { ...edge.end, nodeId: idMap.get(edge.end.nodeId)! },
+        },
+        style
+      );
     });
 
+    reducers.setSelectNodes(flow, { ids: Array.from(idMap.values()) });
+
     return {
-      action: { type: 'pasteNodes', ...action },
+      action: { type: 'pasteNodes', ...action, idMapFn: id => idMap.get(id)! },
       undoFn: (undoFlow, style) => {
         edgeUndos.forEach(undo => {
           undo && undo.undoFn(undoFlow, style);

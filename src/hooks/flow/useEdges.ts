@@ -13,6 +13,7 @@ export const useEdges = () => {
     selectedEdgeIds,
     nodeEdgeMap,
     edgeStateMap,
+    raw,
   } = useFlowContext();
   const dispatch = useFlowDispatchContext();
 
@@ -27,7 +28,9 @@ export const useEdges = () => {
   );
 
   useEffect(() => {
-    if (selectedNodeIds.size > 0) dispatch({ type: 'unselectAllEdges' });
+    if (selectedNodeIds.size > 0) {
+      dispatch({ type: 'unselectAllEdges' });
+    }
 
     dispatch({
       type: 'setHighlightedEdges',
@@ -40,7 +43,27 @@ export const useEdges = () => {
           .keys()
       ),
     });
-  }, [selectedNodeIds, nodeEdgeMap, dispatch]);
+
+    dispatch({
+      type: 'setHighlightedNodes',
+      ids: Array.from(
+        Array.from(selectedNodeIds.keys())
+          .reduce((p, nodeId) => {
+            nodeEdgeMap.get(nodeId)?.forEach(i => {
+              console.log(raw.edges[i]);
+              if (!selectedNodeIds.has(raw.edges[i].start.nodeId)) {
+                p.add(raw.edges[i].start.nodeId);
+              }
+              if (!selectedNodeIds.has(raw.edges[i].end.nodeId)) {
+                p.add(raw.edges[i].end.nodeId);
+              }
+            });
+            return p;
+          }, new Set<string>())
+          .keys()
+      ),
+    });
+  }, [selectedNodeIds, nodeEdgeMap, raw.edges, dispatch]);
 
   const visibleEdges = useMemo(
     () =>

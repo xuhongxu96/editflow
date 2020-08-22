@@ -1,11 +1,9 @@
-import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
+import { useFlowDispatchContext } from 'contexts/FlowContext';
 import { useCallback } from 'react';
-import { useEventListener } from 'hooks';
 import { OnNodeMouseEventListener } from 'components/Node';
 
-export const useSelectableNode = () => {
+export function useSelectableNode() {
   const dispatch = useFlowDispatchContext();
-  const { clientRect } = useFlowContext();
   const onNodeMouseDown = useCallback<OnNodeMouseEventListener>(
     (e, id, props) => {
       if (e.ctrlKey) {
@@ -13,7 +11,6 @@ export const useSelectableNode = () => {
       } else if (!props.selected) {
         dispatch({ type: 'setSelectNodes', ids: [id] });
       }
-      e.stopPropagation();
     },
     [dispatch]
   );
@@ -29,22 +26,12 @@ export const useSelectableNode = () => {
     [dispatch]
   );
 
-  useEventListener(
-    'mousedown',
-    useCallback(
-      e => {
-        if (
-          e.pageX >= clientRect.x &&
-          e.pageX <= clientRect.x + clientRect.w &&
-          e.pageY >= clientRect.y &&
-          e.pageY <= clientRect.h - clientRect.y
-        ) {
-          dispatch({ type: 'unselectAllNodes' });
-        }
-      },
-      [dispatch, clientRect]
-    )
+  const onCanvasMouseDown = useCallback(
+    e => {
+      dispatch({ type: 'unselectAllNodes' });
+    },
+    [dispatch]
   );
 
-  return { onNodeMouseDown, onNodeClick };
-};
+  return { onNodeMouseDown, onNodeClick, onCanvasMouseDown };
+}

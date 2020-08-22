@@ -36,7 +36,10 @@ export const useBoxSelection = () => {
     _stopSelection(false);
   }, [_stopSelection]);
 
-  useEventListener('mouseup', e => stopSelection());
+  useEventListener(
+    'mouseup',
+    useCallback(e => stopSelection(), [stopSelection])
+  );
 
   return { startSelection, stopSelection, onSelection, selection };
 };

@@ -32,7 +32,9 @@ export const Canvas: React.FC<CanvasProps> = props => {
   const {
     onNodeClick,
     onNodeMouseDown: onNodeMouseDownForSelectableNode,
+    onCanvasMouseDown: onCanvasMouseDownForSelectableNode,
   } = FlowHooks.useSelectableNode();
+
   const {
     onCanvasMouseMove: onCanvasMouseMoveForMovableNode,
     onNodeMouseDown: onNodeMouseDownForMovableNode,
@@ -51,7 +53,10 @@ export const Canvas: React.FC<CanvasProps> = props => {
     draftEdge,
   } = FlowHooks.useEditableEdge(rootClientRect);
 
-  const { onEdgeMouseDown } = FlowHooks.useSelectableEdge();
+  const {
+    onEdgeMouseDown,
+    onCanvasMouseDown: onCanvasMouseDownForSelectableEdge,
+  } = FlowHooks.useSelectableEdge();
 
   const onNodeMouseDown = useCallback<OnNodeMouseEventListener>(
     (e, nodeId, props) => {
@@ -132,13 +137,20 @@ export const Canvas: React.FC<CanvasProps> = props => {
 
   const onCanvasMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      onCanvasMouseDownForSelectableNode(e);
+      onCanvasMouseDownForSelectableEdge(e);
       if (e.ctrlKey) {
         startSelection(e);
       } else {
         startTranslate(e);
       }
     },
-    [startTranslate, startSelection]
+    [
+      onCanvasMouseDownForSelectableNode,
+      onCanvasMouseDownForSelectableEdge,
+      startTranslate,
+      startSelection,
+    ]
   );
 
   const onCanvasMouseMove = useCallback(
