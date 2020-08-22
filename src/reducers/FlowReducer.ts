@@ -657,8 +657,7 @@ const reducers = {
   },
   copyNodes: (
     flow: FlowState,
-    action: { ids: string[]; onCopy: (info: CopyInfo) => void },
-    style: CanvasStyle
+    action: { ids: string[]; onCopy: (info: CopyInfo) => void }
   ): ReducerReturnType => {
     const nodes = action.ids
       .map(id => [id, flow.raw.nodes[id]] as [string, Node])
