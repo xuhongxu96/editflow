@@ -123,6 +123,10 @@ function removeStateForEdge(flow: FlowState, id: string, edge: Edge) {
   flow.set('newlyVisibleEdgeIds', flow.newlyVisibleEdgeIds.delete(id));
 }
 
+export interface CopyInfo {
+  nodes: Map<string, { node: Node; id: string }>;
+  edges: Set<{ start: IPortMeta; end: IPortMeta }>;
+}
 export interface UndoAction {
   action: FlowAction;
   undoFn: (flow: FlowState, style: CanvasStyle) => void;
@@ -650,6 +654,84 @@ const reducers = {
       const undoAction = reducers[redoAction.type](flow, redoAction as any, style);
       flow.update('undoStack', u => u.push(undoAction as UndoAction));
     }
+  },
+  copyNodes: (
+    flow: FlowState,
+    action: { ids: string[]; onCopy: (info: CopyInfo) => void },
+    style: CanvasStyle
+  ): ReducerReturnType => {
+    const nodes = action.ids
+      .map(id => [id, flow.raw.nodes[id]] as [string, Node])
+      .filter(([_, o]) => o !== undefined)
+      .reduce((p, [id, node], i) => {
+        return p.set(id, { node, id: i.toString() });
+      }, Map<string, { node: Node; id: string }>());
+
+    const edgeIds = Set<string>().asMutable();
+    action.ids.forEach(id => {
+      edgeIds.union(
+        flow.nodeEdgeMap
+          .get(id)
+          ?.filter(
+            edgeId =>
+              nodes.has(flow.raw.edges[edgeId]?.start.nodeId) &&
+              nodes.has(flow.raw.edges[edgeId]?.end.nodeId)
+          ) ?? []
+      );
+    });
+
+    const edges = edgeIds
+      .map(id => flow.raw.edges[id])
+      .filter(o => o !== undefined)
+      .map(edge => {
+        const startPortIndex = flow.outputPortMap.get(edge.start.nodeId)!.get(edge.start.portName)!;
+        const endPortIndex = flow.inputPortMap.get(edge.end.nodeId)!.get(edge.end.portName)!;
+        return {
+          start: {
+            nodeId: nodes.get(edge.start.nodeId)!.id,
+            io: 'output',
+            index: startPortIndex,
+            raw: flow.raw.nodes[edge.start.nodeId]!.output[startPortIndex],
+          } as IPortMeta,
+          end: {
+            nodeId: nodes.get(edge.end.nodeId)!.id,
+            io: 'input',
+            index: endPortIndex,
+            raw: flow.raw.nodes[edge.end.nodeId]!.output[endPortIndex],
+          } as IPortMeta,
+        };
+      });
+
+    action.onCopy({ nodes, edges });
+  },
+  pasteNodes: (
+    flow: FlowState,
+    action: { info: CopyInfo },
+    style: CanvasStyle
+  ): ReducerReturnType => {
+    const idMap = Map<string, string>().asMutable();
+    const nodeUndos = Array.from(action.info.nodes.values()).map(o => {
+      const id = style.generateNodeId(o.node, flow);
+      idMap.set(o.id, id);
+      return reducers.addNode(flow, { node: o.node, id }, style);
+    });
+    const edgeUndos = action.info.edges.map(edge => {
+      edge.start.nodeId = idMap.get(edge.start.nodeId)!;
+      edge.end.nodeId = idMap.get(edge.end.nodeId)!;
+      return reducers.addEdge(flow, { startPort: edge.start, endPort: edge.end }, style);
+    });
+
+    return {
+      action: { type: 'pasteNodes', ...action },
+      undoFn: (undoFlow, style) => {
+        edgeUndos.forEach(undo => {
+          undo && undo.undoFn(undoFlow, style);
+        });
+        nodeUndos.forEach(undo => {
+          undo && undo.undoFn(undoFlow, style);
+        });
+      },
+    };
   },
 };
 
