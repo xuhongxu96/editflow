@@ -1,4 +1,11 @@
-import { FlowState, makeEdgeState, makePortMeta, IPortMeta } from 'models/FlowState';
+import {
+  FlowState,
+  makeEdgeState,
+  makePortMeta,
+  IPortMeta,
+  UndoAction,
+  CopyInfo,
+} from 'models/FlowState';
 import * as Basic from 'models/BasicTypes';
 import {
   valueof,
@@ -123,14 +130,6 @@ function removeStateForEdge(flow: FlowState, id: string, edge: Edge) {
   flow.set('newlyVisibleEdgeIds', flow.newlyVisibleEdgeIds.delete(id));
 }
 
-export interface CopyInfo {
-  nodes: { node: Node; id: string }[];
-  edges: { start: IPortMeta; end: IPortMeta }[];
-}
-export interface UndoAction {
-  action: FlowAction;
-  undoFn: (flow: FlowState, style: CanvasStyle) => void;
-}
 type ReducerReturnType = UndoAction | void | null | undefined;
 
 const reducers = {

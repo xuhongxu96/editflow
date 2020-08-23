@@ -70,16 +70,17 @@ const App: React.FC = () => {
 
         <CanvasStyleProvider>
           <Canvas width="80%" height="600" />
-          <Toolbar>
-            <button
-              onClick={() => {
-                setFlow(genFlow());
-              }}
-            >
-              Re-generate Flow
-            </button>
-          </Toolbar>
         </CanvasStyleProvider>
+
+        <Toolbar>
+          <button
+            onClick={() => {
+              setFlow(genFlow());
+            }}
+          >
+            Re-generate Flow
+          </button>
+        </Toolbar>
       </FlowProvider>
 
       <textarea

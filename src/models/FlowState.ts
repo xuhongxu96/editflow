@@ -1,8 +1,9 @@
-import { Flow, Port } from 'models/Flow';
+import { Flow, Port, Node } from 'models/Flow';
 import { QuadTree } from 'algorithms/quadtree';
 import { Rect, IPoint, makeRect } from 'models/BasicTypes';
 import { Map, Set, List, Record, RecordOf } from 'immutable';
-import { UndoAction, FlowAction } from 'reducers/FlowReducer';
+import { FlowAction } from 'reducers/FlowReducer';
+import { CanvasStyle } from './CanvasStyle';
 
 type NodeId = string;
 type EdgeId = string;
@@ -33,6 +34,16 @@ export const makePortMeta = Record<IPortMeta>({
 });
 
 export type NodePortEdgeMap = Map<NodeId, Map<PortName, Set<EdgeId>>>;
+
+export interface CopyInfo {
+  nodes: { node: Node; id: string }[];
+  edges: { start: IPortMeta; end: IPortMeta }[];
+}
+
+export interface UndoAction {
+  action: FlowAction;
+  undoFn: (flow: FlowState, style: CanvasStyle) => void;
+}
 
 export interface IFlowState {
   raw: Flow;
