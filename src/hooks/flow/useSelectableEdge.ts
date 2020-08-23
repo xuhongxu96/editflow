@@ -2,7 +2,7 @@ import { useFlowDispatchContext, useFlowContext } from 'contexts/FlowContext';
 import { useCallback, useEffect } from 'react';
 
 export const useSelectableEdge = () => {
-  const { selectedEdgeIds, selectedNodeIds, raw } = useFlowContext();
+  const { selectedEdgeIds, raw } = useFlowContext();
   const dispatch = useFlowDispatchContext();
 
   const onCanvasMouseDown = useCallback(
@@ -15,9 +15,7 @@ export const useSelectableEdge = () => {
   useEffect(() => {
     if (selectedEdgeIds.size > 0) {
       dispatch({ type: 'unselectAllNodes' });
-    }
 
-    if (selectedNodeIds.isEmpty()) {
       dispatch({
         type: 'setHighlightedNodes',
         ids: Array.from(
@@ -31,7 +29,7 @@ export const useSelectableEdge = () => {
         ),
       });
     }
-  }, [raw.edges, selectedNodeIds, selectedEdgeIds, dispatch]);
+  }, [raw.edges, selectedEdgeIds, dispatch]);
 
   const onEdgeMouseDown = useCallback(
     (e, edgeId) => {

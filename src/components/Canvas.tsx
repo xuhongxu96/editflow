@@ -27,7 +27,13 @@ export const Canvas: React.FC<CanvasProps> = props => {
   const updateViewOffsetByDelta = FlowHooks.useUpdateViewOffsetByDelta();
 
   const { newlyVisibleNodes, visibleNodes, highlightedNodes, selectedNodes } = FlowHooks.useNodes();
-  const { newlyVisibleEdges, visibleEdges, highlightedEdges, selectedEdges } = FlowHooks.useEdges();
+  const {
+    newlyVisibleEdges,
+    visibleEdges,
+    highlightedEdges,
+    selectedEdges,
+    onCanvasMouseDown: onCanvasMouseDownForEdges,
+  } = FlowHooks.useEdges();
 
   const {
     onNodeClick,
@@ -137,6 +143,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
 
   const onCanvasMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      onCanvasMouseDownForEdges(e);
       onCanvasMouseDownForSelectableNode(e);
       onCanvasMouseDownForSelectableEdge(e);
       if (e.ctrlKey) {
@@ -146,6 +153,7 @@ export const Canvas: React.FC<CanvasProps> = props => {
       }
     },
     [
+      onCanvasMouseDownForEdges,
       onCanvasMouseDownForSelectableNode,
       onCanvasMouseDownForSelectableEdge,
       startTranslate,
@@ -219,16 +227,9 @@ export const Canvas: React.FC<CanvasProps> = props => {
                   selected={flow.selectedNodeIds.has(id)}
                   {...node}
                   {...nodeHandlers}
-                  {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})}
                 />
               )),
-            [
-              newlyVisibleNodes,
-              flow.hoveredNodeId,
-              flow.selectedNodeIds,
-              nodeHandlers,
-              hoveredNodeHandlers,
-            ]
+            [newlyVisibleNodes, flow.selectedNodeIds, nodeHandlers]
           )}
 
           {useMemo(
@@ -240,39 +241,23 @@ export const Canvas: React.FC<CanvasProps> = props => {
                   selected={flow.selectedNodeIds.has(id)}
                   {...node}
                   {...nodeHandlers}
-                  {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})}
                 />
               )),
-            [
-              visibleNodes,
-              flow.hoveredNodeId,
-              flow.selectedNodeIds,
-              nodeHandlers,
-              hoveredNodeHandlers,
-            ]
+            [visibleNodes, flow.selectedNodeIds, nodeHandlers]
           )}
         </g>
 
-        {useMemo(
-          () =>
-            highlightedNodes.map(([id, node]) => (
-              <Node
-                key={id}
-                id={id}
-                draftLayout={flow.draftNodeLayout.get(id)}
-                highlighted={true}
-                {...node}
-                {...nodeHandlers}
-                {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})}
-              />
-            )),
-          [
-            highlightedNodes,
-            flow.hoveredNodeId,
-            flow.draftNodeLayout,
-            nodeHandlers,
-            hoveredNodeHandlers,
-          ]
+        {/* If not dragging draft edge, and hovered node is not selected */}
+        {flow.hoveredNodeId && !draftEdge && !flow.selectedNodeIds.has(flow.hoveredNodeId) && (
+          <Node
+            key={flow.hoveredNodeId}
+            id={flow.hoveredNodeId}
+            draftLayout={flow.draftNodeLayout.get(flow.hoveredNodeId)}
+            selected={false}
+            {...flow.raw.nodes[flow.hoveredNodeId]}
+            {...nodeHandlers}
+            {...hoveredNodeHandlers}
+          />
         )}
 
         {useMemo(
@@ -291,6 +276,21 @@ export const Canvas: React.FC<CanvasProps> = props => {
 
         {useMemo(
           () =>
+            highlightedNodes.map(([id, node]) => (
+              <Node
+                key={id}
+                id={id}
+                draftLayout={flow.draftNodeLayout.get(id)}
+                highlighted={true}
+                {...node}
+                {...nodeHandlers}
+              />
+            )),
+          [highlightedNodes, flow.draftNodeLayout, nodeHandlers]
+        )}
+
+        {useMemo(
+          () =>
             selectedNodes.map(([id, node]) => (
               <Node
                 key={id}
@@ -299,16 +299,22 @@ export const Canvas: React.FC<CanvasProps> = props => {
                 selected={true}
                 {...node}
                 {...nodeHandlers}
-                {...(flow.hoveredNodeId === id ? hoveredNodeHandlers : {})}
               />
             )),
-          [
-            selectedNodes,
-            flow.hoveredNodeId,
-            flow.draftNodeLayout,
-            nodeHandlers,
-            hoveredNodeHandlers,
-          ]
+          [selectedNodes, flow.draftNodeLayout, nodeHandlers]
+        )}
+
+        {/* If dragging draft edge or hovered node is selected */}
+        {flow.hoveredNodeId && (draftEdge || flow.selectedNodeIds.has(flow.hoveredNodeId)) && (
+          <Node
+            key={flow.hoveredNodeId}
+            id={flow.hoveredNodeId}
+            draftLayout={flow.draftNodeLayout.get(flow.hoveredNodeId)}
+            selected={flow.selectedNodeIds.has(flow.hoveredNodeId)}
+            {...flow.raw.nodes[flow.hoveredNodeId]}
+            {...nodeHandlers}
+            {...hoveredNodeHandlers}
+          />
         )}
 
         {useMemo(

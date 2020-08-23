@@ -9,6 +9,7 @@ export const useNodes = () => {
     visibleNodeIds,
     highlightedNodeIds,
     selectedNodeIds,
+    hoveredNodeId,
     raw,
   } = useFlowContext();
   const dispatch = useFlowDispatchContext();
@@ -30,27 +31,33 @@ export const useNodes = () => {
   const newlyVisibleNodes = useMemo(
     () =>
       newlyVisibleNodeIds
-        .filter(i => !selectedNodeIds.has(i) && !highlightedNodeIds.has(i))
+        .filter(i => !selectedNodeIds.has(i) && !highlightedNodeIds.has(i) && i !== hoveredNodeId)
         .map(i => [i, raw.nodes[i]] as [string, Node]),
-    [newlyVisibleNodeIds, highlightedNodeIds, selectedNodeIds, raw.nodes]
+    [newlyVisibleNodeIds, highlightedNodeIds, selectedNodeIds, hoveredNodeId, raw.nodes]
   );
 
   const visibleNodes = useMemo(
     () =>
       Array.from(visibleNodeIds.keys())
-        .filter(i => !selectedNodeIds.has(i) && !highlightedNodeIds.has(i))
+        .filter(i => !selectedNodeIds.has(i) && !highlightedNodeIds.has(i) && i !== hoveredNodeId)
         .map(i => [i, raw.nodes[i]] as [string, Node]),
-    [visibleNodeIds, highlightedNodeIds, selectedNodeIds, raw.nodes]
+    [visibleNodeIds, highlightedNodeIds, selectedNodeIds, hoveredNodeId, raw.nodes]
   );
 
   const highlightedNodes = useMemo(
-    () => Array.from(highlightedNodeIds.keys()).map(i => [i, raw.nodes[i]] as [string, Node]),
-    [highlightedNodeIds, raw.nodes]
+    () =>
+      Array.from(highlightedNodeIds.keys())
+        .filter(i => i !== hoveredNodeId)
+        .map(i => [i, raw.nodes[i]] as [string, Node]),
+    [highlightedNodeIds, hoveredNodeId, raw.nodes]
   );
 
   const selectedNodes = useMemo(
-    () => Array.from(selectedNodeIds.keys()).map(i => [i, raw.nodes[i]] as [string, Node]),
-    [selectedNodeIds, raw.nodes]
+    () =>
+      Array.from(selectedNodeIds.keys())
+        .filter(i => i !== hoveredNodeId)
+        .map(i => [i, raw.nodes[i]] as [string, Node]),
+    [selectedNodeIds, hoveredNodeId, raw.nodes]
   );
 
   return { newlyVisibleNodes, visibleNodes, highlightedNodes, selectedNodes };

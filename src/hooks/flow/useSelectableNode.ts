@@ -11,6 +11,7 @@ export function useSelectableNode() {
       } else if (!props.selected) {
         dispatch({ type: 'setSelectNodes', ids: [id] });
       }
+      e.stopPropagation();
     },
     [dispatch]
   );

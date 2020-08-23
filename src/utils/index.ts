@@ -56,7 +56,7 @@ export const limitRect = (r: IRect, limit: IRect): IRect => {
 export const getPortPosition = (node: Node, type: 'input' | 'output', index: number): IPoint => {
   return {
     x: node.layout.x + (node.layout.w * (index + 1)) / (node[type].length + 1),
-    y: type === 'input' ? node.layout.y : node.layout.y + node.layout.h,
+    y: type === 'input' ? node.layout.y - 2 : node.layout.y + node.layout.h + 2,
   };
 };
 
@@ -68,7 +68,7 @@ export const getPortDraftPosition = (
 ): IPoint => {
   return {
     x: draftLayout.x + (draftLayout.w * (index + 1)) / (node[type].length + 1),
-    y: type === 'input' ? draftLayout.y : draftLayout.y + draftLayout.h,
+    y: type === 'input' ? draftLayout.y - 2 : draftLayout.y + draftLayout.h + 2,
   };
 };
 

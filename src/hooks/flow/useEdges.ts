@@ -1,5 +1,5 @@
 import { useFlowContext, useFlowDispatchContext } from 'contexts/FlowContext';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
 import { IEdgeState } from 'models/FlowState';
 
 export const useEdges = () => {
@@ -27,42 +27,49 @@ export const useEdges = () => {
     [visibleNodeIds, dispatch]
   );
 
+  const onCanvasMouseDown = useCallback(
+    e => {
+      dispatch({ type: 'setHighlightedEdges', ids: [] });
+      dispatch({ type: 'setHighlightedNodes', ids: [] });
+    },
+    [dispatch]
+  );
+
   useEffect(() => {
     if (selectedNodeIds.size > 0) {
       dispatch({ type: 'unselectAllEdges' });
+
+      dispatch({
+        type: 'setHighlightedEdges',
+        ids: Array.from(
+          Array.from(selectedNodeIds.keys())
+            .reduce((p, nodeId) => {
+              nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
+              return p;
+            }, new Set<string>())
+            .keys()
+        ),
+      });
+
+      dispatch({
+        type: 'setHighlightedNodes',
+        ids: Array.from(
+          Array.from(selectedNodeIds.keys())
+            .reduce((p, nodeId) => {
+              nodeEdgeMap.get(nodeId)?.forEach(i => {
+                if (!selectedNodeIds.has(raw.edges[i].start.nodeId)) {
+                  p.add(raw.edges[i].start.nodeId);
+                }
+                if (!selectedNodeIds.has(raw.edges[i].end.nodeId)) {
+                  p.add(raw.edges[i].end.nodeId);
+                }
+              });
+              return p;
+            }, new Set<string>())
+            .keys()
+        ),
+      });
     }
-
-    dispatch({
-      type: 'setHighlightedEdges',
-      ids: Array.from(
-        Array.from(selectedNodeIds.keys())
-          .reduce((p, nodeId) => {
-            nodeEdgeMap.get(nodeId)?.forEach(i => p.add(i));
-            return p;
-          }, new Set<string>())
-          .keys()
-      ),
-    });
-
-    dispatch({
-      type: 'setHighlightedNodes',
-      ids: Array.from(
-        Array.from(selectedNodeIds.keys())
-          .reduce((p, nodeId) => {
-            nodeEdgeMap.get(nodeId)?.forEach(i => {
-              console.log(raw.edges[i]);
-              if (!selectedNodeIds.has(raw.edges[i].start.nodeId)) {
-                p.add(raw.edges[i].start.nodeId);
-              }
-              if (!selectedNodeIds.has(raw.edges[i].end.nodeId)) {
-                p.add(raw.edges[i].end.nodeId);
-              }
-            });
-            return p;
-          }, new Set<string>())
-          .keys()
-      ),
-    });
   }, [selectedNodeIds, nodeEdgeMap, raw.edges, dispatch]);
 
   const visibleEdges = useMemo(
@@ -97,5 +104,5 @@ export const useEdges = () => {
     [selectedEdgeIds, edgeStateMap]
   );
 
-  return { newlyVisibleEdges, visibleEdges, highlightedEdges, selectedEdges };
+  return { newlyVisibleEdges, visibleEdges, highlightedEdges, selectedEdges, onCanvasMouseDown };
 };
