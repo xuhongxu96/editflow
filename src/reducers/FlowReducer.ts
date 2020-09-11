@@ -337,11 +337,16 @@ const reducers = {
     flow: FlowState,
     action: { layouts: [string, Basic.IRect][] }
   ): ReducerReturnType => {
-    const oldLayouts = action.layouts.map(([id, _]) => {
+    const layouts = action.layouts.filter(([id, layout]) => {
+      const { x, y, w, h } = flow.raw.nodes[id].layout;
+      return !(layout.x === x && layout.y === y && layout.w === w && layout.h === h);
+    });
+
+    const oldLayouts = layouts.map(([id, _]) => {
       return [id, flow.raw.nodes[id].layout] as [string, Basic.IRect];
     });
 
-    action.layouts.forEach(o => {
+    layouts.forEach(o => {
       const [id, layout] = o;
       flow.update('nodeIdQuadTree', u => u.remove(flow.raw.nodes[id].layout, id));
       flow.raw.nodes[id].layout = layout;
